@@ -1,0 +1,85 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "teste@gmail.com",
+      "password": "123",
+
+      "saldo_final": 1520.75,
+
+      "preferencias": {
+        "categorias_favoritas": ["Alimentação", "Transporte"],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+
+      "extratos": [
+        {
+          "id": 1,
+          "tipo": "credito",
+          "descricao": "Salário Mensal",
+          "valor": 2500.00,
+          "data": "2025-01-05"
+        },
+        {
+          "id": 2,
+          "tipo": "debito",
+          "descricao": "Supermercado",
+          "valor": 320.50,
+          "data": "2025-01-10"
+        },
+        {
+          "id": 3,
+          "tipo": "debito",
+          "descricao": "Transporte",
+          "valor": 58.75,
+          "data": "2025-01-12"
+        },
+        {
+          "id": 4,
+          "tipo": "credito",
+          "descricao": "Reembolso Trabalho",
+          "valor": 150.00,
+          "data": "2025-01-13"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "email": "outro@gmail.com",
+      "password": "456",
+
+      "saldo_final": 820.20,
+
+      "preferencias": {
+        "categorias_favoritas": ["Educação", "Lazer"],
+        "tema_app": "light",
+        "notificacoes": false
+      },
+
+      "extratos": [
+        {
+          "id": 1,
+          "tipo": "credito",
+          "descricao": "Freelance",
+          "valor": 900.00,
+          "data": "2025-01-03"
+        },
+        {
+          "id": 2,
+          "tipo": "debito",
+          "descricao": "Cinema",
+          "valor": 45.00,
+          "data": "2025-01-06"
+        },
+        {
+          "id": 3,
+          "tipo": "debito",
+          "descricao": "Curso Online",
+          "valor": 235.80,
+          "data": "2025-01-07"
+        }
+      ]
+    }
+  ]
+}
