@@ -7,7 +7,7 @@
 
 .background-color{
     background-color: #030718;
-    height: 100vh;
+    min-height: 100vh;
     width: 100%;
 }
 
@@ -26,6 +26,25 @@
   margin: 0 auto;
 }
 
+.custom-input-balance {
+  background-color: #0d1117 !important;
+  border: 1px solid #30363d !important;
+  color: white !important;
+  padding: 12px 14px;
+  border-radius: 10px;
+  transition: all 0.2s ease-in-out;
+}
+
+.custom-input-balance::placeholder {
+  color: #6b7280 !important;
+}
+
+.custom-input-balance:focus {
+  border: 1px solid #3A5BFF !important;
+  box-shadow: 0 0 6px rgba(58, 91, 255, 0.4);
+  background-color: #11161d !important;
+  outline: none !important;
+}
 
 
 

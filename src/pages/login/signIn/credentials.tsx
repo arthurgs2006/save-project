@@ -24,11 +24,17 @@ export default function Credentials({ onNext }) {
   function handleSubmit(e) {
     e.preventDefault();
 
+    if (!formData.name.trim()) {
+      alert("Digite seu nome completo.");
+      return;
+    }
+
     if (formData.password !== formData.confirm) {
       alert("As senhas não coincidem");
       return;
     }
 
+    // ✅ Envia dados para CreditProfile
     onNext({
       name: formData.name,
       email: formData.email,
@@ -73,103 +79,73 @@ export default function Credentials({ onNext }) {
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <Form onSubmit={handleSubmit}>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-              >
-                <FormGroup className="text-start">
-                  <Label htmlFor="name" className="fw-bold text-white">
-                    Nome completo
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Seu nome"
-                    required
-                    className="custom-input"
-                    onChange={handleChange}
-                  />
-                </FormGroup>
-              </motion.div>
+              <FormGroup className="text-start">
+                <Label htmlFor="name" className="fw-bold text-white">
+                  Nome completo
+                </Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="Seu nome"
+                  required
+                  className="custom-input"
+                  onChange={handleChange}
+                />
+              </FormGroup>
 
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3, duration: 0.6 }}
-              >
-                <FormGroup className="text-start">
-                  <Label htmlFor="email" className="fw-bold text-white">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="@email.com"
-                    required
-                    className="custom-input"
-                    onChange={handleChange}
-                  />
-                </FormGroup>
-              </motion.div>
+              <FormGroup className="text-start">
+                <Label htmlFor="email" className="fw-bold text-white">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="@email.com"
+                  required
+                  className="custom-input"
+                  onChange={handleChange}
+                />
+              </FormGroup>
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
-              >
-                <FormGroup className="text-start">
-                  <Label htmlFor="password" className="fw-bold text-white">
-                    Senha
-                  </Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="********"
-                    required
-                    className="custom-input"
-                    onChange={handleChange}
-                  />
-                </FormGroup>
-              </motion.div>
+              <FormGroup className="text-start">
+                <Label htmlFor="password" className="fw-bold text-white">
+                  Senha
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="********"
+                  required
+                  className="custom-input"
+                  onChange={handleChange}
+                />
+              </FormGroup>
 
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-              >
-                <FormGroup className="text-start">
-                  <Label htmlFor="confirm" className="fw-bold text-white">
-                    Confirmar senha
-                  </Label>
-                  <Input
-                    id="confirm"
-                    name="confirm"
-                    type="password"
-                    placeholder="********"
-                    required
-                    className="custom-input"
-                    onChange={handleChange}
-                  />
-                </FormGroup>
-              </motion.div>
+              <FormGroup className="text-start">
+                <Label htmlFor="confirm" className="fw-bold text-white">
+                  Confirmar senha
+                </Label>
+                <Input
+                  id="confirm"
+                  name="confirm"
+                  type="password"
+                  placeholder="********"
+                  required
+                  className="custom-input"
+                  onChange={handleChange}
+                />
+              </FormGroup>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.6 }}
+              <Button
+                color="primary"
+                type="submit"
+                className="w-100 mt-3 rounded-pill fw-bold py-2"
               >
-                <Button
-                  color="primary"
-                  type="submit"
-                  className="w-100 mt-3 rounded-pill fw-bold py-2"
-                >
-                  Cadastrar
-                </Button>
-              </motion.div>
+                Cadastrar
+              </Button>
             </Form>
           </motion.div>
         </motion.div>

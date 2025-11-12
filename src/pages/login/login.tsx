@@ -9,7 +9,7 @@ import {
 } from "reactstrap";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { hashPassword } from "../../utils/hashPassword";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -24,7 +24,6 @@ export default function LoginPage() {
     const password = (form.elements.namedItem("password") as HTMLInputElement).value;
 
     try {
-      // Busca todos os usuários no JSON Server
       const res = await fetch("http://localhost:3001/users");
 
       if (!res.ok) {
@@ -34,10 +33,10 @@ export default function LoginPage() {
       }
 
       const users = await res.json();
+      const hashedPassword = await hashPassword(password); // 👈 uso centralizado
 
-      // Localiza usuário por email e senha
       const user = users.find(
-        (u: any) => u.email === email && u.password === password
+        (u: any) => u.email === email && u.password === hashedPassword
       );
 
       if (!user) {
@@ -46,12 +45,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Salva usuário logado no localStorage
       localStorage.setItem("loggedUser", JSON.stringify(user));
-
-      // Redireciona para home
       navigate("/homescreen");
-
     } catch (err) {
       alert("Erro ao conectar ao servidor");
       console.error(err);
@@ -63,7 +58,6 @@ export default function LoginPage() {
   return (
     <main className="d-flex align-items-center justify-content-center vh-100 vw-100 background-color">
       <Container className="d-flex justify-content-center align-items-center flex-column">
-        
         <motion.div
           className="text-white w-100"
           initial={{ opacity: 0, y: 40 }}
@@ -87,41 +81,22 @@ export default function LoginPage() {
             }}
           >
             <Form onSubmit={handleLogin}>
-              
               <FormGroup className="text-start">
                 <Label htmlFor="email" className="fw-bold text-white">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email" 
-                  type="email" 
-                  placeholder="@email.com" 
-                  required
-                />
+                <Input id="email" name="email" type="email" placeholder="@email.com" required />
               </FormGroup>
 
               <FormGroup className="text-start">
                 <Label htmlFor="password" className="fw-bold text-white">Senha</Label>
-                <Input 
-                  id="password" 
-                  name="password" 
-                  type="password" 
-                  placeholder="********" 
-                  required
-                />
+                <Input id="password" name="password" type="password" placeholder="********" required />
               </FormGroup>
 
-              <Button
-                color="primary"
-                type="submit"
-                className="w-100 mt-3 rounded-pill fw-bold py-2"
-                disabled={loading}
-              >
+              <Button color="primary" type="submit" className="w-100 mt-3 rounded-pill fw-bold py-2" disabled={loading}>
                 {loading ? "Entrando..." : "Entrar"}
               </Button>
             </Form>
           </motion.div>
         </motion.div>
-
       </Container>
     </main>
   );

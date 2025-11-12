@@ -1,8 +1,8 @@
 import { useState } from "react";
-import CardButton from "./cardButton"; // ✅ agora usando o novo componente
+import CardButton from "./cardButton";
 import { Container, Row, Col } from "reactstrap";
 
-export default function CreditProfile() {
+export default function SelectGrid({ onChange }) {
   const [selecionados, setSelecionados] = useState<number[]>([]);
 
   const categorias = [
@@ -18,14 +18,20 @@ export default function CreditProfile() {
   ];
 
   function toggle(id: number) {
-    setSelecionados((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+    const updated = selecionados.includes(id)
+      ? selecionados.filter((x) => x !== id)
+      : [...selecionados, id];
+
+    setSelecionados(updated);
+    const nomesSelecionados = categorias
+      .filter((c) => updated.includes(c.id))
+      .map((c) => c.nome);
+
+    onChange(nomesSelecionados);
   }
 
   return (
     <Container className="d-flex flex-column gap-5 justify-content-center">
-
       <main>
         <Row className="g-3 mt-3">
           {categorias.map((cat) => {
@@ -33,10 +39,7 @@ export default function CreditProfile() {
 
             return (
               <Col xs="4" key={cat.id}>
-                <CardButton
-                  active={ativo}
-                  onClick={() => toggle(cat.id)}
-                >
+                <CardButton active={ativo} onClick={() => toggle(cat.id)}>
                   <i
                     className={`${cat.icon} fs-3`}
                     style={{
@@ -50,7 +53,6 @@ export default function CreditProfile() {
           })}
         </Row>
       </main>
-
     </Container>
   );
 }

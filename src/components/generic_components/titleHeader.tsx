@@ -9,7 +9,7 @@ interface HeaderProps {
   extraActions?: ExtraAction[];
 }
 
-export default function ({ title = "Título da Página", backLink = "/", extraActions = [] }: HeaderProps) {
+export default function ({ title = "Título da Página", backLink = "/homescreen", extraActions = [] }: HeaderProps) {
   return (
     <header className=" py-2 mb-3">
       <Container fluid>

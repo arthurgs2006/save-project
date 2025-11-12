@@ -11,3 +11,6 @@ function App() {
 }
 
 export default App;
+
+// INICIAR SERVER:
+// json-server database/users.json --port 3001

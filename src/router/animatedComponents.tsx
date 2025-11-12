@@ -19,6 +19,8 @@ import Profile from '../pages/user/profile.tsx'
 import DetailsID from '../pages/extract_details/$id.tsx'
 import Settings from '../pages/settings/settings.tsx'
 import NotFound from '../pages/NotFound/NotFound.tsx'
+import Deposit from '../pages/manageBalance/deposit.tsx'
+import Debts from '../pages/manageBalance/dept.tsx'
 import { AnimatePresence } from 'framer-motion'
 
 export default function AnimatedRoutes() {
@@ -37,6 +39,8 @@ export default function AnimatedRoutes() {
                     <Route path="/expenses" element={<Incomes />} /> 
                     <Route path="/$id" element={<DetailsID />} /> 
                     <Route path="/settings" element={<Settings />} /> 
+                    <Route path="/deposit" element={<Deposit />} /> 
+                    <Route path="/debts" element={<Debts />} /> 
                     <Route path="/homescreen" element={<Homescreen />} /> 
                     <Route path="*" element={<NotFound />} /> 
                 </Routes>

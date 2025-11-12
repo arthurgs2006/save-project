@@ -1,31 +1,31 @@
 {
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "email": "teste@gmail.com",
       "password": "123",
-
       "saldo_final": 1520.75,
-
       "preferencias": {
-        "categorias_favoritas": ["Alimentação", "Transporte"],
+        "categorias_favoritas": [
+          "Alimentação",
+          "Transporte"
+        ],
         "tema_app": "dark",
         "notificacoes": true
       },
-
       "extratos": [
         {
           "id": 1,
           "tipo": "credito",
           "descricao": "Salário Mensal",
-          "valor": 2500.00,
+          "valor": 2500,
           "data": "2025-01-05"
         },
         {
           "id": 2,
           "tipo": "debito",
           "descricao": "Supermercado",
-          "valor": 320.50,
+          "valor": 320.5,
           "data": "2025-01-10"
         },
         {
@@ -39,45 +39,257 @@
           "id": 4,
           "tipo": "credito",
           "descricao": "Reembolso Trabalho",
-          "valor": 150.00,
+          "valor": 150,
           "data": "2025-01-13"
         }
       ]
     },
     {
-      "id": 2,
+      "id": "2",
       "email": "outro@gmail.com",
       "password": "456",
-
-      "saldo_final": 820.20,
-
+      "saldo_final": 820.2,
       "preferencias": {
-        "categorias_favoritas": ["Educação", "Lazer"],
+        "categorias_favoritas": [
+          "Educação",
+          "Lazer"
+        ],
         "tema_app": "light",
         "notificacoes": false
       },
-
       "extratos": [
         {
           "id": 1,
           "tipo": "credito",
           "descricao": "Freelance",
-          "valor": 900.00,
+          "valor": 900,
           "data": "2025-01-03"
         },
         {
           "id": 2,
           "tipo": "debito",
           "descricao": "Cinema",
-          "valor": 45.00,
+          "valor": 45,
           "data": "2025-01-06"
         },
         {
           "id": 3,
           "tipo": "debito",
           "descricao": "Curso Online",
-          "valor": 235.80,
+          "valor": 235.8,
           "data": "2025-01-07"
+        }
+      ]
+    },
+    {
+      "id": "5843e204-9a2c-41f2-9c00-27e2cfb43a6a",
+      "email": "arthurgonsal@hotmail.com",
+      "password": "123",
+      "saldo_final": 0,
+      "preferencias": {
+        "categorias_favoritas": [],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "e6d54854-be20-4604-bf27-646d5f5e7e11",
+      "email": "test3e@gmail.com",
+      "password": "123",
+      "saldo_final": 0,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Alimentação",
+          "Contas"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "5686370b-24a3-48b0-9f38-b79e90ccd836",
+      "name": "dados",
+      "email": "teste123@gmail.com",
+      "password": "123",
+      "saldo_final": 0,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Educação",
+          "Contas"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "1a4abfb5-4537-4713-bba2-dca29f364aab",
+      "name": "Arthur Gonçalves Saldanha",
+      "email": "teste@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 0,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Alimentação",
+          "Compras"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "dbbdd3fc-a4cf-4286-abd7-6505ee49822e",
+      "name": "Arthur Gonçalves Saldanha",
+      "email": "teste12322@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 0,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Moradia",
+          "Compras"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "4347fd69-6102-404e-b0e8-a856d1682164",
+      "email": "tassadadseste@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 0,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Educação",
+          "Outros"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "dc3cad1f-cd12-4c70-a9dd-44ca1486f0e9",
+      "email": "teste@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 0,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Alimentação",
+          "Contas"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "32ca3858-405a-46a8-b8b7-44444cb15352",
+      "email": "tesasdasdasdte@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 100.03,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Saúde",
+          "Compras"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "fe2b0ab9-afad-4fb2-ae4d-61b31820adc4",
+      "email": "user@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 876.45,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Alimentação",
+          "Educação"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": 1762910944276,
+      "email": "amanda@email.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 123.55,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Alimentação",
+          "Educação"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": 1762911296412,
+      "nome": "QDASD",
+      "email": "testasddase@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 123.31,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Educação",
+          "Compras"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": []
+    },
+    {
+      "id": "e9236740-7172-47c4-9ad8-466d86a1bc55",
+      "nome": "dados",
+      "email": "dados@gmail.com",
+      "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+      "saldo_final": 6007.87,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Educação",
+          "Compras",
+          "Contas"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": [
+        {
+          "id": 1762912572110,
+          "tipo": "credito",
+          "descricao": "Depósito realizado",
+          "valor": 122.33,
+          "data": "2025-11-12"
+        },
+        {
+          "id": 1762912581471,
+          "tipo": "credito",
+          "descricao": "Depósito realizado",
+          "valor": 11,
+          "data": "2025-11-12"
+        },
+        {
+          "id": 1762912761518,
+          "tipo": "debito",
+          "descricao": "Saque realizado",
+          "valor": 800.12,
+          "data": "2025-11-12"
+        },
+        {
+          "id": 1762912770734,
+          "tipo": "debito",
+          "descricao": "Saque realizado",
+          "valor": 82,
+          "data": "2025-11-12"
         }
       ]
     }
