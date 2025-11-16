@@ -152,7 +152,7 @@
       "name": "Arthur Gonçalves Saldanha",
       "email": "teste@gmail.com",
       "password": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-      "saldo_final": 9878,
+      "saldo_final": 13666,
       "preferencias": {
         "categorias_favoritas": [
           "Alimentação",
@@ -196,34 +196,49 @@
           "descricao": "Débito da meta: Comprar Note",
           "valor": 4679,
           "data": "2025-11-16"
+        },
+        {
+          "id": 1763304629862,
+          "tipo": "credito",
+          "descricao": "Depósito na meta: Comprar Note",
+          "valor": 5000,
+          "data": "2025-11-16"
         }
       ],
       "goals": [
         {
-          "id": 1763256729936,
-          "name": "Comprar Note",
-          "value": 900,
+          "id": 1763305075617,
+          "name": "Comprar Sofa",
+          "value": 1212,
           "image": "",
           "deposits": [
             {
-              "id": 1763256738768,
-              "value": 500,
-              "time": "15/11/2025, 22:32:18"
+              "id": 1763305086701,
+              "value": 1212,
+              "time": "16/11/2025, 11:58:06"
             }
-          ]
+          ],
+          "checked": true
+        }
+      ],
+      "recurringDebts": [
+        {
+          "id": 1763303601683,
+          "name": "Netflix",
+          "value": 35.22,
+          "category": "Streaming",
+          "frequency": "monthly",
+          "billingDate": 12,
+          "description": "Streaming Netflix"
         },
         {
-          "id": 1763257304960,
-          "name": "Comprar Sofa",
-          "value": 6000,
-          "image": "",
-          "deposits": [
-            {
-              "id": 1763257304962,
-              "amount": 500,
-              "date": "2025-11-16T01:41:44.960Z"
-            }
-          ]
+          "id": 1763304313735,
+          "name": "Amazon prime",
+          "value": 11.88,
+          "category": "Streaming",
+          "frequency": "monthly",
+          "billingDate": 6,
+          "description": ""
         }
       ]
     },

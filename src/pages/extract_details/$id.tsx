@@ -1,17 +1,50 @@
 import { Container, Row, Col, Card, Button } from "reactstrap";
-import { Link } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
+
+import { useEffect, useState } from "react";
+
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
 
 export default function ReceitasPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [transaction, setTransaction] = useState<any>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("loggedUser");
+    if (!storedUser) return navigate("/login");
+
+    const user = JSON.parse(storedUser);
+
+    const t = user.extratos.find((item: any) => String(item.id) === String(id));
+
+    setTransaction(t || null);
+  }, [id]);
+
+  if (!transaction) {
+    return (
+      <div className="min-vh-100 text-white d-flex flex-column justify-content-center align-items-center" style={{ backgroundColor: "#0d1117" }}>
+        <p>Movimentação não encontrada.</p>
+        <Button color="secondary" onClick={() => navigate(-1)}>Voltar</Button>
+      </div>
+    );
+  }
+
+  const tipoLabel = transaction.tipo === "credito" ? "Depósito" : "Saque";
+  const valorFormatado = `R$ ${transaction.valor.toFixed(2).replace(".", ",")}`;
+
   return (
     <div className="min-vh-100 text-white" style={{ backgroundColor: "#0d1117" }}>
       <Container className="py-3">
-        {/* Cabeçalhos */}
+
         <AccountHeader />
-        <TitleHeader title="Item 1" />
+
+        {/* Nome da tela = tipo da movimentação */}
+        <TitleHeader title={tipoLabel} />
 
         {/* Card principal */}
         <Card
@@ -22,12 +55,27 @@ export default function ReceitasPage() {
             maxWidth: "350px",
           }}
         >
-          <h6 className="text-secondary mb-1">Nome do Emprego LTDA</h6>
-          <small className="text-muted">0x5747X63...45533</small>
-          <h3 className="fw-bold mt-3 text-white">Renda</h3>
+          <h6 className="text-secondary mb-1">
+            {transaction.descricao || "Movimentação bancária"}
+          </h6>
+
+          {/* Linha de identificação (ID) */}
+          <small className="text-muted">ID: {transaction.id}</small>
+
+          {/* <h3 className="fw-bold mt-3 text-white">{tipoLabel}</h3> */}
+
+          {/* Valor */}
+          <h2 className={`fw-bold mt-3 ${transaction.tipo === "credito" ? "text-success" : "text-danger"}`}>
+            {valorFormatado}
+          </h2>
 
           {/* Ações */}
           <div className="d-flex justify-content-center align-items-center gap-4 mt-4">
+
+            {/* Voltar */}
+          
+
+            {/* Copiar ID */}
             <Button
               color="link"
               className="text-white rounded-circle"
@@ -35,50 +83,48 @@ export default function ReceitasPage() {
                 backgroundColor: "#1a1f2b",
                 border: "1px solid #2a2f3a",
               }}
+              onClick={() => navigator.clipboard.writeText(transaction.id)}
             >
-              <i className="bi bi-arrow-down-circle fs-4"></i>
+              <i className="bi bi-clipboard fs-4"></i>
             </Button>
-            <div className="d-flex flex-column align-items-center">
-              <Button
-                color="link"
-                className="text-white rounded-circle"
-                style={{
-                  backgroundColor: "#1a1f2b",
-                  border: "1px solid #2a2f3a",
-                }}
-              >
-                <i className="bi bi-clipboard fs-4"></i>
-              </Button>
-             
-            </div>
           </div>
         </Card>
-        <Row className="mt-5 g-3 text-start mx-3" >
+
+        {/* Detalhes */}
+        <Row className="mt-5 g-3 text-start mx-3">
+
           <Col xs="6">
             <h6 className="text-secondary">Status</h6>
             <span className="text-success fw-semibold">Concluído</span>
           </Col>
+
           <Col xs="6">
             <h6 className="text-secondary">Data</h6>
-            <span>Out 6, 2025</span>
+            <span>{transaction.data}</span>
           </Col>
+
           <Col xs="6">
             <h6 className="text-secondary">Valor</h6>
-            <span>R$ 1.500,00</span>
+            <span>{valorFormatado}</span>
           </Col>
+
           <Col xs="6">
             <h6 className="text-secondary">Descrição</h6>
-            <span>Exemplo</span>
+            <span>{transaction.descricao || "Sem descrição"}</span>
           </Col>
+
           <Col xs="6">
-            <h6 className="text-secondary">Endereço</h6>
-            <span>0x5747X63</span>
+            <h6 className="text-secondary">Origem/Destino</h6>
+            <span>{transaction.endereco || "---"}</span>
           </Col>
+
           <Col xs="6">
-            <h6 className="text-secondary">Nome Endereço</h6>
-            <span>Emprego LTDA</span>
+            <h6 className="text-secondary">Tipo</h6>
+            <span>{tipoLabel}</span>
           </Col>
+
         </Row>
+
       </Container>
     </div>
   );

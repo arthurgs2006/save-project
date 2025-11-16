@@ -20,6 +20,8 @@ import NotFound from '../pages/NotFound/NotFound.tsx';
 import Deposit from '../pages/manageBalance/deposit.tsx';
 import Debts from '../pages/manageBalance/dept.tsx';
 import CreateGoal from '../pages/goals/createGoal.tsx';
+import RegisterRecurringDebt from '../pages/recurring_expenses/registerRecurringDebt.tsx';
+import RecurringDebtsMenu from '../pages/recurring_expenses/menuRecurringDebts.tsx';
 
 export default function AnimatedRoutes() {
   const location = useLocation();
@@ -78,7 +80,9 @@ export default function AnimatedRoutes() {
             <Route path="/deposit" element={<Deposit />} />
             <Route path="/debts" element={<Debts />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/$id" element={<DetailsID />} />
+            <Route path="/registerDebt/newRecurringDebt" element={<RegisterRecurringDebt />} />
+            <Route path="/registerDebt" element={<RecurringDebtsMenu />} />
+            <Route path="/transaction/:id" element={<DetailsID />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>

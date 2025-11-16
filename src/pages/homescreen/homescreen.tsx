@@ -19,21 +19,24 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedUser");
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      fetch(`http://localhost:3001/users/${parsedUser.id}`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data) => {
-          if (data) {
-            setUser(data);
-            localStorage.setItem("loggedUser", JSON.stringify(data));
-          }
-        })
-        .catch(() => console.warn("Servidor indisponível."));
-    } else {
+
+    if (!storedUser) {
       window.location.href = "/login";
+      return;
     }
+
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+
+    fetch(`http://localhost:3001/users/${parsedUser.id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          setUser(data);
+          localStorage.setItem("loggedUser", JSON.stringify(data));
+        }
+      })
+      .catch(() => console.warn("Servidor indisponível."));
   }, []);
 
   if (!user) {
@@ -43,10 +46,15 @@ export default function HomeScreen() {
       </div>
     );
   }
+  const freqMap: any = {
+  monthly: "Mensal",
+  weekly: "Semanal",
+  yearly: "Anual",
+  };
 
-  const ultimosExtratos = [...(user.extratos || [])]
-    .reverse()
-    .slice(0, 4);
+
+  const ultimosExtratos = [...(user.extratos || [])].reverse().slice(0, 4);
+  const recurringDebts = user.recurringDebts || []; // <-- lista vinda do backend/json
 
   return (
     <div className="background-color text-white min-vh-100 d-flex flex-column">
@@ -54,6 +62,7 @@ export default function HomeScreen() {
         <AccountHeader name={user.nome} />
 
         <main className="pt-4 flex-grow-1">
+          {/* SALDO */}
           <div className="text-center mb-5">
             <p className="text-secondary mb-1">Saldo bancário</p>
             <h1 className="fw-bold text-info">
@@ -61,9 +70,11 @@ export default function HomeScreen() {
             </h1>
           </div>
 
+          {/* GRÁFICO */}
           <GraphicCard />
 
-         <nav className="d-flex justify-content-center gap-5 mt-5">
+          {/* NAVEGAÇÃO */}
+          <nav className="d-flex justify-content-center gap-5 mt-5">
             <Button
               color="link"
               className="text-white p-0 nav-btn-custom"
@@ -86,7 +97,6 @@ export default function HomeScreen() {
               </div>
             </Button>
 
-            {/* NOVO BOTÃO: METAS */}
             <Button
               color="link"
               className="text-white p-0 nav-btn-custom"
@@ -97,19 +107,32 @@ export default function HomeScreen() {
                 <div className="nav-label mt-1 small">Metas</div>
               </div>
             </Button>
+
+            {/* NOVO BOTÃO → DÉBITOS RECORRENTES */}
+            <Button
+              color="link"
+              className="text-white p-0 nav-btn-custom"
+              onClick={() => navigate("/registerDebt")}
+            >
+              <div className="nav-icon-wrapper text-center">
+                <i className="bi bi-repeat fs-2"></i>
+                <div className="nav-label mt-1 small">Recorrentes</div>
+              </div>
+            </Button>
           </nav>
 
-
-
+          {/* ÚLTIMAS MOVIMENTAÇÕES */}
           <section className="mt-5 text-start">
             <h5 className="mb-3">Últimas Movimentações</h5>
 
             {ultimosExtratos.length > 0 ? (
               <ListGroup flush>
-                {ultimosExtratos.map((item) => (
+                {ultimosExtratos.map((item: any) => (
                   <ListGroupItem
                     key={item.id}
                     className="d-flex justify-content-between align-items-center bg-dark text-white border-0 rounded mb-2 p-3"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => navigate(`/transaction/${item.id}`)}
                   >
                     <div>
                       <p className="mb-1 fw-bold">
@@ -117,44 +140,51 @@ export default function HomeScreen() {
                       </p>
                       <small className="text-secondary">{item.data}</small>
                     </div>
+
                     <span
                       className={`fw-bold ${
-                        item.tipo === "credito"
-                          ? "text-success"
-                          : "text-danger"
+                        item.tipo === "credito" ? "text-success" : "text-danger"
                       }`}
                     >
-                      {item.tipo === "credito" ? "+" : "-"}R${" "}
+                      {item.tipo === "credito" ? "+" : "-"}R{" "}
                       {item.valor.toFixed(2).replace(".", ",")}
                     </span>
                   </ListGroupItem>
                 ))}
               </ListGroup>
             ) : (
-              <p className="text-secondary">Nenhuma movimentação recente.</p>
+              <h1 className="text-secondary">Nenhuma movimentação recente.</h1>
             )}
           </section>
 
-          <section className="mt-5 text-start flex-grow-1">
-            <h5 className="mb-3">Próximas Despesas</h5>
-            <Card className="bg-dark border-0 text-white rounded">
-              <CardBody className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="mb-0 text-secondary">Saldo Atual</p>
-                  <h4 className="fw-bold mb-0">
-                    R$ {Number(user.saldo_final).toFixed(2).replace(".", ",")}
-                  </h4>
-                </div>
+          {/* PRÓXIMOS DÉBITOS RECORRENTES */}
+          <section className="mt-5 text-start">
+            <h5 className="mb-3">Débitos Recorrentes</h5>
 
-                <div className="text-end">
-                  <p className="mb-0 text-secondary">Despesa Prevista</p>
-                  <h4 className="text-danger fw-bold mb-0">R$700</h4>
-                </div>
-              </CardBody>
-              <CardText className="px-3 pb-3 text-secondary small">
-                Out 12, 10:00 AM
-              </CardText>
-            </Card>
+            {recurringDebts.length > 0 ? (
+              <ListGroup flush>
+                {recurringDebts.map((debt: any) => (
+                  <ListGroupItem
+                    key={debt.id}
+                    className="d-flex justify-content-between align-items-center bg-dark text-white border-0 rounded mb-2 p-3"
+                  >
+                    <div>
+                      <p className="mb-1 fw-bold">{debt.name}</p>
+                      <small className="text-secondary">
+                        Todo dia {debt.billingDate} — {freqMap[debt.frequency] || debt.frequency}
+                      </small>
+
+                    </div>
+
+                    <span className="fw-bold text-danger">
+                      -R$ {Number(debt.value).toFixed(2).replace(".", ",")}
+                    </span>
+                  </ListGroupItem>
+                ))}
+              </ListGroup>
+            ) : (
+              <p className="text-secondary">Nenhum débito recorrente cadastrado.</p>
+            )}
           </section>
         </main>
       </Container>
