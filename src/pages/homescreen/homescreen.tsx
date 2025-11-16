@@ -63,7 +63,7 @@ export default function HomeScreen() {
 
           <GraphicCard />
 
-          <nav className="d-flex justify-content-center gap-5 mt-5">
+         <nav className="d-flex justify-content-center gap-5 mt-5">
             <Button
               color="link"
               className="text-white p-0 nav-btn-custom"
@@ -85,7 +85,21 @@ export default function HomeScreen() {
                 <div className="nav-label mt-1 small">Sacar</div>
               </div>
             </Button>
+
+            {/* NOVO BOTÃO: METAS */}
+            <Button
+              color="link"
+              className="text-white p-0 nav-btn-custom"
+              onClick={() => navigate("/goals")}
+            >
+              <div className="nav-icon-wrapper text-center">
+                <i className="bi bi-bullseye fs-2"></i>
+                <div className="nav-label mt-1 small">Metas</div>
+              </div>
+            </Button>
           </nav>
+
+
 
           <section className="mt-5 text-start">
             <h5 className="mb-3">Últimas Movimentações</h5>

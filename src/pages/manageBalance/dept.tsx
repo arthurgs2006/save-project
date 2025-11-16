@@ -16,6 +16,8 @@ import { motion } from "framer-motion";
 export default function WithdrawPage() {
   const [user, setUser] = useState<any>(null);
   const [withdrawValue, setWithdrawValue] = useState<string>("");
+  const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -39,53 +41,114 @@ export default function WithdrawPage() {
       return;
     }
 
-    if (valor > user.saldo_final) {
-      alert("Saldo insuficiente para realizar o saque!");
+    let metasAtualizadas = [...user.goals];
+    let extratosAtualizados = [...(user.extratos || [])];
+
+    // -----------------------------
+    // 🟦 CASO 1: DÉBITO SEM META
+    // -----------------------------
+    if (!selectedGoal) {
+      if (valor > user.saldo_final) {
+        alert("Saldo geral insuficiente!");
+        return;
+      }
+
+      const novoSaldo = user.saldo_final - valor;
+
+      extratosAtualizados.push({
+        id: Date.now(),
+        tipo: "debito",
+        descricao: "Débito do saldo geral",
+        valor: valor,
+        data: new Date().toISOString().split("T")[0],
+      });
+
+      return await atualizarUsuario({
+        ...user,
+        saldo_final: novoSaldo,
+        extratos: extratosAtualizados,
+        goals: metasAtualizadas,
+      });
+    }
+
+    // -----------------------------
+    // 🟩 CASO 2: DÉBITO EM META
+    // -----------------------------
+    const goal = user.goals.find((g: any) => g.id === selectedGoal);
+
+    if (!goal) {
+      alert("Meta não encontrada.");
       return;
     }
 
-    const novoSaldo = user.saldo_final - valor;
+    let totalDeposits =
+      goal.deposits?.reduce((acc: number, d: any) => acc + d.value, 0) || 0;
 
-    const novoExtrato = {
+    if (valor > totalDeposits) {
+      alert("Valor maior que o saldo disponível na meta!");
+      return;
+    }
+
+    const novoValorMeta = totalDeposits - valor;
+
+    let novosDepositos =
+      novoValorMeta > 0
+        ? [{ id: Date.now(), value: novoValorMeta }]
+        : [];
+
+    if (novoValorMeta <= 0) {
+      // remove meta
+      metasAtualizadas = metasAtualizadas.filter(
+        (g: any) => g.id !== selectedGoal
+      );
+    } else {
+      metasAtualizadas = metasAtualizadas.map((g: any) =>
+        g.id === selectedGoal ? { ...g, deposits: novosDepositos } : g
+      );
+    }
+
+    extratosAtualizados.push({
       id: Date.now(),
       tipo: "debito",
-      descricao: "Saque realizado",
+      descricao: `Débito da meta: ${goal.name}`,
       valor: valor,
       data: new Date().toISOString().split("T")[0],
-    };
+    });
 
-    const extratosAtualizados = [...(user.extratos || []), novoExtrato];
+    return await atualizarUsuario({
+      ...user,
+      goals: metasAtualizadas,
+      extratos: extratosAtualizados,
+    });
+  }
 
+  // Função que salva no backend e localStorage
+  async function atualizarUsuario(updatedUser: any) {
     try {
       setLoading(true);
 
-      // Atualiza usuário no JSON Server
-      const res = await fetch(`http://localhost:3001/users/${String(user.id)}`, {
+      const res = await fetch(`http://localhost:3001/users/${updatedUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          saldo_final: novoSaldo,
-          extratos: extratosAtualizados,
-        }),
+        body: JSON.stringify(updatedUser),
       });
 
       if (!res.ok) {
-        alert("Erro ao atualizar saldo!");
+        alert("Erro ao atualizar usuário!");
         setLoading(false);
         return;
       }
 
-      // Atualiza localmente
-      const updatedUser = { ...user, saldo_final: novoSaldo, extratos: extratosAtualizados };
       localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
       setUser(updatedUser);
-      setWithdrawValue("");
-      setSuccess(true);
 
+      setWithdrawValue("");
+      setSelectedGoal(null);
+      setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
-    } catch (error) {
-      console.error("Erro ao realizar saque:", error);
-      alert("Erro de conexão com o servidor.");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao conectar com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -102,28 +165,40 @@ export default function WithdrawPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h3 className="mb-4 text-center fw-bold">💸 Saque</h3>
+              <h3 className="mb-4 text-center fw-bold">💸 Realizar Débito</h3>
 
               {user ? (
                 <>
-                  {/* Saldo atual */}
-                  <Card className="border-0 mb-4" >
-                    <CardBody className="text-center bg-transparent">
-                      <h6 className="text-secondary mb-1">Saldo Atual</h6>
-                      <motion.h2
-                        key={user.saldo_final}
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="fw-bold text-info"
-                      >
-                        R$ {user.saldo_final?.toFixed(2).replace(".", ",") || "0,00"}
-                      </motion.h2>
-                    </CardBody>
-                  </Card>
+                  {/* Seleção de meta OPCIONAL */}
+                  <Label className="fw-bold mb-2">Meta (opcional)</Label>
+                  <Input
+                    type="select"
+                    className="mb-4 fw-bold"
+                    value={selectedGoal ?? ""}
+                    onChange={(e) =>
+                      setSelectedGoal(
+                        e.target.value === "" ? null : Number(e.target.value)
+                      )
+                    }
+                  >
+                    <option value="">Nenhuma meta (usar saldo geral)</option>
 
-                  {/* Campo de saque */}
-                  <Label className="fw-bold">Valor do Saque</Label>
+                    {user.goals?.length > 0 &&
+                      user.goals.map((g: any) => {
+                        const total = g.deposits?.reduce(
+                          (acc: number, d: any) => acc + d.value,
+                          0
+                        );
+                        return (
+                          <option key={g.id} value={g.id}>
+                            {g.name} — R$ {total.toFixed(2).replace(".", ",")}
+                          </option>
+                        );
+                      })}
+                  </Input>
+
+                  {/* Valor */}
+                  <Label className="fw-bold">Valor do débito</Label>
                   <div className="d-flex align-items-center gap-3 mb-4">
                     <span className="h4 mb-0">R$</span>
                     <Input
@@ -138,17 +213,17 @@ export default function WithdrawPage() {
                     />
                   </div>
 
-                  {/* Botão de confirmação */}
+                  {/* Botão */}
                   <Button
                     color="danger"
                     onClick={handleWithdraw}
                     disabled={loading}
                     className="w-100 fw-bold py-2 rounded-pill"
                   >
-                    {loading ? "Processando..." : "Confirmar Saque"}
+                    {loading ? "Processando..." : "Confirmar Débito"}
                   </Button>
 
-                  {/* Feedback visual */}
+                  {/* Sucesso */}
                   {success && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -156,14 +231,14 @@ export default function WithdrawPage() {
                       transition={{ duration: 0.4 }}
                       className="text-center mt-3 text-success fw-bold"
                     >
-                      ✅ Saque realizado com sucesso!
+                      ✅ Débito realizado com sucesso!
                     </motion.div>
                   )}
 
-                  {/* Histórico de débitos */}
+                  {/* Histórico */}
                   {user.extratos?.length > 0 && (
                     <div className="mt-5">
-                      <h5 className="fw-bold mb-3">📉 Histórico de Débitos</h5>
+                      <h5 className="fw-bold mb-3">📉 Últimos débitos</h5>
                       <ListGroup flush>
                         {[...user.extratos]
                           .filter((e) => e.tipo === "debito")
@@ -180,7 +255,9 @@ export default function WithdrawPage() {
                             >
                               <span>{item.descricao}</span>
                               <span className="fw-bold text-danger">
-                                - R$ {item.valor.toFixed(2).replace(".", ",")}
+                                - R$ {item.valor
+                                  .toFixed(2)
+                                  .replace(".", ",")}
                               </span>
                             </ListGroupItem>
                           ))}

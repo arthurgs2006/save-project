@@ -15,16 +15,22 @@ import { motion } from "framer-motion";
 
 export default function DepositPage() {
   const [user, setUser] = useState<any>(null);
+
   const [depositValue, setDepositValue] = useState<string>("");
+  const [selectedGoal, setSelectedGoal] = useState<string>("none");
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Carrega usuário do localStorage ao iniciar
+  // Carrega usuário completo do JSON Server
   useEffect(() => {
-    const storedUser = localStorage.getItem("loggedUser");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const stored = localStorage.getItem("loggedUser");
+    if (!stored) return;
+
+    const parsed = JSON.parse(stored);
+    fetch(`http://localhost:3001/users/${parsed.id}`)
+      .then((res) => res.json())
+      .then((data) => setUser(data));
   }, []);
 
   async function handleDeposit() {
@@ -35,53 +41,77 @@ export default function DepositPage() {
 
     const deposit = Number(depositValue);
     if (isNaN(deposit) || deposit <= 0) {
-      alert("Digite um valor de depósito válido!");
+      alert("Digite um valor válido!");
       return;
     }
 
-    const novoSaldo = (user.saldo_final || 0) + deposit;
+    const newBalance = (user.saldo_final || 0) + deposit;
 
-    // Cria novo registro de extrato
-    const novoExtrato = {
+    // Extrato geral
+    const newStatement = {
       id: Date.now(),
       tipo: "credito",
-      descricao: "Depósito realizado",
+      descricao:
+        selectedGoal === "none"
+          ? "Depósito realizado"
+          : `Depósito na meta: ${
+              user.goals.find((g: any) => g.id === Number(selectedGoal))?.name
+            }`,
       valor: deposit,
       data: new Date().toISOString().split("T")[0],
     };
 
-    const extratosAtualizados = [...(user.extratos || []), novoExtrato];
+    let updatedGoals = [...(user.goals || [])];
+
+    // Se usuário escolheu uma meta, adiciona depósito dentro dela
+    if (selectedGoal !== "none") {
+      updatedGoals = updatedGoals.map((goal: any) => {
+        if (goal.id === Number(selectedGoal)) {
+          return {
+            ...goal,
+            deposits: [
+              ...(goal.deposits || []),
+              {
+                id: Date.now(),
+                value: deposit,
+                time: new Date().toISOString(),
+              },
+            ],
+          };
+        }
+        return goal;
+      });
+    }
+
+    const updatedUser = {
+      ...user,
+      saldo_final: newBalance,
+      extratos: [...(user.extratos || []), newStatement],
+      goals: updatedGoals,
+    };
 
     try {
       setLoading(true);
 
-      // Atualiza usuário no JSON Server
-      const res = await fetch(`http://localhost:3001/users/${String(user.id)}`, {
-        method: "PATCH",
+      const res = await fetch(`http://localhost:3001/users/${user.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          saldo_final: novoSaldo,
-          extratos: extratosAtualizados,
-        }),
+        body: JSON.stringify(updatedUser),
       });
 
-      if (!res.ok) {
-        alert("Erro ao atualizar saldo!");
-        setLoading(false);
-        return;
-      }
+      if (!res.ok) throw new Error("Erro ao atualizar dados");
 
-      // Atualiza dados localmente
-      const updatedUser = { ...user, saldo_final: novoSaldo, extratos: extratosAtualizados };
       localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
       setUser(updatedUser);
+
       setDepositValue("");
+      setSelectedGoal("none");
       setSuccess(true);
 
-      setTimeout(() => setSuccess(false), 2000); // animação de sucesso por 2s
-    } catch (error) {
-      console.error("Erro ao realizar depósito:", error);
-      alert("Erro de conexão com o servidor.");
+      setTimeout(() => setSuccess(false), 2000);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao realizar depósito.");
     } finally {
       setLoading(false);
     }
@@ -101,10 +131,17 @@ export default function DepositPage() {
             >
               <h3 className="mb-4 text-center fw-bold">💰 Depósito</h3>
 
-              {user ? (
+              {!user ? (
+                <p className="text-center text-secondary">
+                  Carregando informações...
+                </p>
+              ) : (
                 <>
                   {/* Saldo atual */}
-                  <Card className="border-0 mb-4" style={{ backgroundColor: "rgba(255,255,255,0.08)" }}>
+                  <Card
+                    className="border-0 mb-4"
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+                  >
                     <CardBody className="text-center">
                       <h6 className="text-secondary mb-1">Saldo Atual</h6>
                       <motion.h2
@@ -114,14 +151,17 @@ export default function DepositPage() {
                         transition={{ duration: 0.3 }}
                         className="fw-bold text-success"
                       >
-                        R$ {user.saldo_final?.toFixed(2).replace(".", ",") || "0,00"}
+                        R$
+                        {user.saldo_final
+                          ?.toFixed(2)
+                          .replace(".", ",") || "0,00"}
                       </motion.h2>
                     </CardBody>
                   </Card>
 
-                  {/* Campo de depósito */}
+                  {/* Campo de valor */}
                   <Label className="fw-bold">Valor do Depósito</Label>
-                  <div className="d-flex align-items-center gap-3 mb-4">
+                  <div className="d-flex align-items-center gap-3 mb-3">
                     <span className="h4 mb-0">R$</span>
                     <Input
                       type="number"
@@ -135,7 +175,23 @@ export default function DepositPage() {
                     />
                   </div>
 
-                  {/* Botão de confirmação */}
+                  {/* Seleção de meta */}
+                  <Label className="fw-bold mt-3">Direcionar depósito para</Label>
+                  <Input
+                    type="select"
+                    className="mb-4"
+                    value={selectedGoal}
+                    onChange={(e) => setSelectedGoal(e.target.value)}
+                  >
+                    <option value="none">Saldo geral</option>
+                    {user.goals?.map((g: any) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </Input>
+
+                  {/* Botão */}
                   <Button
                     color="success"
                     onClick={handleDeposit}
@@ -145,23 +201,22 @@ export default function DepositPage() {
                     {loading ? "Processando..." : "Confirmar Depósito"}
                   </Button>
 
-                  {/* Feedback visual */}
+                  {/* Sucesso */}
                   {success && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
                       transition={{ duration: 0.4 }}
                       className="text-center mt-3 text-success fw-bold"
                     >
-                      ✅ Depósito realizado com sucesso!
+                      ✅ Depósito realizado!
                     </motion.div>
                   )}
 
-                  {/* Histórico de extratos */}
+                  {/* Extratos */}
                   {user.extratos?.length > 0 && (
                     <div className="mt-5">
-                      <h5 className="fw-bold mb-3">📜 Histórico de Depósitos</h5>
+                      <h5 className="fw-bold mb-3">📜 Histórico</h5>
                       <ListGroup flush>
                         {[...user.extratos]
                           .reverse()
@@ -185,8 +240,6 @@ export default function DepositPage() {
                     </div>
                   )}
                 </>
-              ) : (
-                <p className="text-center text-secondary">Carregando informações...</p>
               )}
             </motion.div>
           </Col>

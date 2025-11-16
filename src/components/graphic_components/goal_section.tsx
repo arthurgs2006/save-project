@@ -1,23 +1,70 @@
 import { Card, CardBody, Col, Row } from "reactstrap";
 
-export default function () {  
-    return (
-        <>
-            <Card className="goal-card border-0">
-                <CardBody>
-                <Row>
-                    <Col xs="2" className="d-flex align-items-center justify-content-center">
-                    <div className="goal-indicator"></div>
-                    </Col>
-                    <Col>
-                    <p className="goal-type mb-0">Apartamento</p>
-                    <h6 className="goal-title mb-1">Quitar apartamento</h6>
-                    <p className="goal-date mb-0">Nov 2026</p>
-                    </Col>
-                </Row>
-                <h6 className="goal-value mt-3 mb-0">R$6.000,00</h6>
-                </CardBody>
-            </Card>
-        </>
-    )
-  }
+interface GoalSectionProps {
+  name: string;
+  image: string;
+  targetValue: number;
+  currentValue: number;
+}
+
+export default function GoalSection({
+  name,
+  image,
+  targetValue,
+  currentValue
+}: GoalSectionProps) {
+
+  const formattedTarget = targetValue.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+  });
+
+  const formattedCurrent = currentValue.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+  });
+
+  const remaining = (targetValue - currentValue) > 0 ? 
+    targetValue - currentValue : 0;
+
+  const formattedRemaining = remaining.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+  });
+
+  return (
+    <Card className="goal-card border-0 shadow-sm p-2">
+      <CardBody>
+
+        <Row>
+          {/* Ícone ou imagem da meta */}
+          <Col xs="3" className="d-flex align-items-center justify-content-center">
+            <img
+              src={image}
+              alt={name}
+              className="img-fluid"
+              style={{ width: "60px", height: "60px", borderRadius: "12px" }}
+            />
+          </Col>
+
+          {/* Nome + status */}
+          <Col>
+            <p className="goal-type mb-0 text-secondary">Meta</p>
+            <h6 className="goal-title mb-1">{name}</h6>
+
+            <p className="goal-date mb-0 text-secondary" style={{ fontSize: "0.85rem" }}>
+              Faltam R$ {formattedRemaining}
+            </p>
+          </Col>
+        </Row>
+
+        {/* Valor total */}
+        <h6 className="goal-value mt-3 mb-0">
+          Valor total: R$ {formattedTarget}
+        </h6>
+
+        {/* Valor atual */}
+        <p className="text-secondary mb-0" style={{ fontSize: "0.85rem" }}>
+          Já depositado: R$ {formattedCurrent}
+        </p>
+      </CardBody>
+    </Card>
+  );
+}

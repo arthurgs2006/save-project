@@ -11,6 +11,164 @@
     width: 100%;
 }
 
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Loader circular animado */
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-block;
+  border-top: 4px solid #FFF;
+  border-right: 4px solid transparent;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+  position: relative;
+}
+
+.loader::after {
+  content: '';  
+  box-sizing: border-box;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border-left: 4px solid #FF3D00;
+  border-bottom: 4px solid transparent;
+  animation: rotation 0.5s linear infinite reverse;
+}
+
+/* Animação de rotação */
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Search bar --- */
+.search-container {
+  background: #11161f;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid #1f2937;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: white;
+  outline: none;
+  padding-left: 8px;
+}
+
+.search-btn {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* --- Cards de metas --- */
+.goals-list {
+  list-style: none;
+}
+
+.goal-card {
+  background: #11161f;
+  padding: 16px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  border: 1px solid #1f2937;
+  transition: 0.25s ease;
+}
+
+.goal-card:hover {
+  background: #141b27;
+  transform: translateY(-2px);
+}
+
+.goal-content {
+  gap: 12px;
+}
+
+.goal-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: #00c853; /* verde bonito */
+  cursor: pointer;
+}
+
+/* Info da meta */
+.goal-info {
+  padding-left: 4px;
+}
+
+.goal-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.goal-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.goal-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #00c853;
+}
+
+/* --- Botão editar --- */
+.edit-btn {
+  background-color: #00c853 !important;
+  border: none !important;
+  padding: 10px 20px;
+  border-radius: 12px;
+  color: black !important;
+  font-weight: 600;
+  transition: 0.25s;
+}
+
+.edit-btn:hover {
+  background-color: #00e676 !important;
+}
+
+
+/* Texto com fade pulsante */
+.loading-text {
+  margin-top: 20px;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  animation: fadeIn 1.6s ease-in-out infinite;
+}
+
+/* Fade pulsante */
+@keyframes fadeIn {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.4;
+  }
+}
+
+
 /* WelcomePage.css */
 
 
