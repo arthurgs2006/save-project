@@ -71,7 +71,7 @@ export default function HomeScreen() {
           </div>
 
           {/* GRÁFICO */}
-          <GraphicCard />
+          <GraphicCard user={user} />
 
           {/* NAVEGAÇÃO */}
           <nav className="d-flex justify-content-center gap-5 mt-5">
