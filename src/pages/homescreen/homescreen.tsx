@@ -46,15 +46,15 @@ export default function HomeScreen() {
       </div>
     );
   }
+
   const freqMap: any = {
-  monthly: "Mensal",
-  weekly: "Semanal",
-  yearly: "Anual",
+    monthly: "Mensal",
+    weekly: "Semanal",
+    yearly: "Anual",
   };
 
-
   const ultimosExtratos = [...(user.extratos || [])].reverse().slice(0, 4);
-  const recurringDebts = user.recurringDebts || []; // <-- lista vinda do backend/json
+  const recurringDebts = user.recurringDebts || [];
 
   return (
     <div className="background-color text-white min-vh-100 d-flex flex-column">
@@ -62,7 +62,6 @@ export default function HomeScreen() {
         <AccountHeader name={user.nome} />
 
         <main className="pt-4 flex-grow-1">
-          {/* SALDO */}
           <div className="text-center mb-5">
             <p className="text-secondary mb-1">Saldo bancário</p>
             <h1 className="fw-bold text-info">
@@ -70,11 +69,9 @@ export default function HomeScreen() {
             </h1>
           </div>
 
-          {/* GRÁFICO */}
           <GraphicCard user={user} />
 
-          {/* NAVEGAÇÃO */}
-          <nav className="d-flex justify-content-center gap-5 mt-5">
+          <nav className="d-flex justify-content-center gap-4 mt-5 flex-wrap">
             <Button
               color="link"
               className="text-white p-0 nav-btn-custom"
@@ -108,7 +105,6 @@ export default function HomeScreen() {
               </div>
             </Button>
 
-            {/* NOVO BOTÃO → DÉBITOS RECORRENTES */}
             <Button
               color="link"
               className="text-white p-0 nav-btn-custom"
@@ -121,7 +117,6 @@ export default function HomeScreen() {
             </Button>
           </nav>
 
-          {/* ÚLTIMAS MOVIMENTAÇÕES */}
           <section className="mt-5 text-start">
             <h5 className="mb-3">Últimas Movimentações</h5>
 
@@ -146,7 +141,7 @@ export default function HomeScreen() {
                         item.tipo === "credito" ? "text-success" : "text-danger"
                       }`}
                     >
-                      {item.tipo === "credito" ? "+" : "-"}R{" "}
+                      {item.tipo === "credito" ? "+" : "-"}R${" "}
                       {item.valor.toFixed(2).replace(".", ",")}
                     </span>
                   </ListGroupItem>
@@ -157,7 +152,6 @@ export default function HomeScreen() {
             )}
           </section>
 
-          {/* PRÓXIMOS DÉBITOS RECORRENTES */}
           <section className="mt-5 text-start">
             <h5 className="mb-3">Débitos Recorrentes</h5>
 
@@ -173,7 +167,6 @@ export default function HomeScreen() {
                       <small className="text-secondary">
                         Todo dia {debt.billingDate} — {freqMap[debt.frequency] || debt.frequency}
                       </small>
-
                     </div>
 
                     <span className="fw-bold text-danger">

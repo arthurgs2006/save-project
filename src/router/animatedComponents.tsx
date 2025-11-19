@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 
 import LoadingScreen from '../components/routerComponents/loadingScreen.tsx';
-
-// importações das páginas...
 import WelcomePage from '../pages/login/welcome_page.tsx';
 import LoginPage from '../pages/login/login.tsx';
 import SigninPage from '../pages/login/signIn.tsx';
@@ -27,7 +25,6 @@ export default function AnimatedRoutes() {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
 
-  // Rotas que devem exibir loading
   const routesWithLoading = [
     "/homescreen",
     "/profile",
@@ -48,7 +45,7 @@ export default function AnimatedRoutes() {
     setLoading(true);
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 600);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [location.pathname]);
@@ -67,16 +64,16 @@ export default function AnimatedRoutes() {
             <Route path="/homescreen" element={<Homescreen />} />
             <Route path="/profile" element={<Profile />} />
 
-            {/* Metas */}
+
             <Route path="/goals" element={<Goals />} />
             <Route path="/goals/create" element={<CreateGoal />} />
             <Route path="/edit-goal/:id" element={<EditGoals />} />
 
-            {/* Entradas / Saídas */}
+
             <Route path="/incomes" element={<Incomes />} />
             <Route path="/expenses" element={<Expenses />} />
 
-            {/* Outros */}
+  
             <Route path="/deposit" element={<Deposit />} />
             <Route path="/debts" element={<Debts />} />
             <Route path="/settings" element={<Settings />} />

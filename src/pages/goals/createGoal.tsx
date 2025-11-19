@@ -12,27 +12,38 @@ export default function CreateGoalPage() {
 
   const [user, setUser] = useState<any>(null);
 
-  // Estados da nova meta
   const [name, setName] = useState("");
   const [value, setValue] = useState<string>("");
-  const [image, setImage] = useState("");
 
-  // Valor inicial opcional da meta
   const [initialDeposit, setInitialDeposit] = useState<string>("");
-
-  // Valor digitado no campo de redirecionamento
   const [depositValue, setDepositValue] = useState<string>("");
 
-  // Valor total realmente direcionado (pode ser somado várias vezes)
   const [redirectedAmount, setRedirectedAmount] = useState<number>(0);
+  const [icon, setIcon] = useState<string>(""); 
 
-  // Carrega o usuário logado
+  const randomIcons = [
+    "bi-piggy-bank-fill",
+    "bi-bag-fill",
+    "bi-gift-fill",
+    "bi-coin",
+    "bi-cash-coin",
+    "bi-star-fill",
+  ];
+
+  const getRandomIcon = () => {
+    const index = Math.floor(Math.random() * randomIcons.length);
+    return randomIcons[index];
+  };
+
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("loggedUser") || "{}");
 
     fetch(`http://localhost:3001/users/${storedUser.id}`)
       .then((res) => res.json())
       .then((data) => setUser(data));
+
+
+    setIcon(getRandomIcon());
   }, []);
 
   if (!user) {
@@ -43,7 +54,6 @@ export default function CreateGoalPage() {
     );
   }
 
-  // 👉 Direcionar saldo geral ANTES de criar a meta
   const handleRedirectFunds = () => {
     if (!depositValue) return;
 
@@ -54,10 +64,8 @@ export default function CreateGoalPage() {
       return;
     }
 
-    // Soma ao total já direcionado
     setRedirectedAmount((prev) => prev + amount);
 
-    // Atualiza saldo do usuário no estado
     const updatedUser = {
       ...user,
       saldo_final: user.saldo_final - amount,
@@ -69,22 +77,22 @@ export default function CreateGoalPage() {
     alert(`R$ ${amount.toFixed(2)} direcionados para esta meta.`);
   };
 
-  // 👉 Criar meta
   const handleCreateGoal = async (e: any) => {
     e.preventDefault();
 
     const numericValue = Number(value);
     const initDep = Number(initialDeposit);
 
+    const goalIcon = icon;
+
     const newGoal = {
       id: Date.now(),
       name,
       value: numericValue,
-      image,
+      image: goalIcon, 
       deposits: []
     };
 
-    // Depósito inicial manual
     if (initDep > 0) {
       newGoal.deposits.push({
         id: Date.now() + 1,
@@ -93,7 +101,6 @@ export default function CreateGoalPage() {
       });
     }
 
-    // Depósito vindo do saldo geral
     if (redirectedAmount > 0) {
       newGoal.deposits.push({
         id: Date.now() + 2,
@@ -102,7 +109,6 @@ export default function CreateGoalPage() {
       });
     }
 
-    // Atualiza o usuário com a nova meta
     const updatedUser = {
       ...user,
       saldo_final: user.saldo_final,
@@ -130,12 +136,11 @@ export default function CreateGoalPage() {
 
         <main className="mt-4">
 
-          {/* Direcionar valor inicial opcional */}
           {user.balance > 0 && (
             <Card className="mb-4 text-dark">
               <CardBody>
                 <h6 className="fw-bold">Direcionar saldo disponível</h6>
-                <p className="mb-2">Saldo atual: <strong>R$ {user.balance.toFixed(2)}</strong></p>
+                <p className="mb-2">Saldo atual: <strong>R$ {user.balance?.toFixed(2) || '0.00'}</strong></p>
 
                 <Input
                   type="number"
@@ -153,12 +158,11 @@ export default function CreateGoalPage() {
             </Card>
           )}
 
-          {/* Preview da Meta */}
-          {name && Number(value) > 0 && (
+          {name && Number(value) > 0 && icon && ( 
             <>
               <GoalSection
                 name={name}
-                image={image}
+                image={icon} 
                 targetValue={Number(value)}
                 currentValue={(Number(initialDeposit) || 0) + redirectedAmount}
               />
@@ -173,7 +177,6 @@ export default function CreateGoalPage() {
             </>
           )}
 
-          {/* Formulário */}
           <Form onSubmit={handleCreateGoal} className="mt-4">
             
             <FormGroup>
@@ -201,18 +204,6 @@ export default function CreateGoalPage() {
               />
             </FormGroup>
 
-            <FormGroup>
-              <Label for="goalImage">URL da Imagem</Label>
-              <Input
-                id="goalImage"
-                type="text"
-                placeholder="Ex: https://imagem.com/notebook.png"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-              />
-            </FormGroup>
-
-            {/* Direcionar saldo geral */}
             <section className="mt-5">
               <h6 className="mb-3">Direcionar saldo geral para esta meta</h6>
 
@@ -231,21 +222,21 @@ export default function CreateGoalPage() {
                 color="primary"
                 className="fw-bold w-100"
                 onClick={handleRedirectFunds}
-                disabled={!depositValue}
+                disabled={!depositValue || Number(depositValue) <= 0 || Number(depositValue) > user.saldo_final} // Melhoria na desativação
               >
                 Direcionar para Meta
               </Button>
 
               <p className="text-secondary mt-2 small">
-                Saldo disponível: R${" "}
-                {user.saldo_final.toLocaleString("pt-BR", {
+                Saldo disponível:{" "}
+                R${user.saldo_final.toLocaleString("pt-BR", {
                   minimumFractionDigits: 2,
                 })}
               </p>
             </section>
 
             <div className="mt-4 d-flex gap-3">
-              <Button color="success" type="submit">
+              <Button color="success" type="submit" disabled={!name || Number(value) <= 0}>
                 Criar Meta
               </Button>
 

@@ -9,123 +9,110 @@ import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
 
 export default function ReceitasPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const [transaction, setTransaction] = useState<any>(null);
+  const [transaction, setTransaction] = useState<any>(null);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("loggedUser");
-    if (!storedUser) return navigate("/login");
+  useEffect(() => {
+    const storedUser = localStorage.getItem("loggedUser");
+    if (!storedUser) return navigate("/login");
 
-    const user = JSON.parse(storedUser);
+    const user = JSON.parse(storedUser);
 
-    const t = user.extratos.find((item: any) => String(item.id) === String(id));
+    const t = user.extratos.find((item: any) => String(item.id) === String(id));
 
-    setTransaction(t || null);
-  }, [id]);
+    setTransaction(t || null);
+  }, [id]);
 
-  if (!transaction) {
-    return (
-      <div className="min-vh-100 text-white d-flex flex-column justify-content-center align-items-center" style={{ backgroundColor: "#0d1117" }}>
-        <p>Movimentação não encontrada.</p>
-        <Button color="secondary" onClick={() => navigate(-1)}>Voltar</Button>
-      </div>
-    );
-  }
+  if (!transaction) {
+    return (
+      <div className="min-vh-100 text-white d-flex flex-column justify-content-center align-items-center" style={{ backgroundColor: "#0d1117" }}>
+        <Button color="secondary" onClick={() => navigate(-1)}>Voltar</Button>
+      </div>
+    );
+  }
 
-  const tipoLabel = transaction.tipo === "credito" ? "Depósito" : "Saque";
-  const valorFormatado = `R$ ${transaction.valor.toFixed(2).replace(".", ",")}`;
+  const tipoLabel = transaction.tipo === "credito" ? "Depósito" : "Saque";
+  const valorFormatado = `R$ ${transaction.valor.toFixed(2).replace(".", ",")}`;
 
-  return (
-    <div className="min-vh-100 text-white" style={{ backgroundColor: "#0d1117" }}>
-      <Container className="py-3">
+  return (
+    <div className="min-vh-100 text-white" style={{ backgroundColor: "#0d1117" }}>
+      <Container className="py-3">
 
-        <AccountHeader />
+        <AccountHeader />
 
-        {/* Nome da tela = tipo da movimentação */}
-        <TitleHeader title={tipoLabel} />
+        <TitleHeader title={tipoLabel} />
 
-        {/* Card principal */}
-        <Card
-          className="text-center mt-4 mx-auto p-4 border-0"
-          style={{
-            backgroundColor: "#111827",
-            borderRadius: "20px",
-            maxWidth: "350px",
-          }}
-        >
-          <h6 className="text-secondary mb-1">
-            {transaction.descricao || "Movimentação bancária"}
-          </h6>
+        <Card
+          className="text-center mt-4 mx-auto p-4 border-0"
+          style={{
+            backgroundColor: "#111827",
+            borderRadius: "20px",
+            maxWidth: "350px",
+          }}
+        >
+          <h6 className="text-secondary mb-1">
+            {transaction.descricao || "Movimentação bancária"}
+          </h6>
 
-          {/* Linha de identificação (ID) */}
-          <small className="text-muted">ID: {transaction.id}</small>
+          <small className="text-muted">ID: {transaction.id}</small>
 
-          {/* <h3 className="fw-bold mt-3 text-white">{tipoLabel}</h3> */}
+          <h2 className={`fw-bold mt-3 ${transaction.tipo === "credito" ? "text-success" : "text-danger"}`}>
+            {valorFormatado}
+          </h2>
 
-          {/* Valor */}
-          <h2 className={`fw-bold mt-3 ${transaction.tipo === "credito" ? "text-success" : "text-danger"}`}>
-            {valorFormatado}
-          </h2>
+          <div className="d-flex justify-content-center align-items-center gap-4 mt-4">
 
-          {/* Ações */}
-          <div className="d-flex justify-content-center align-items-center gap-4 mt-4">
+            <Button
+              color="link"
+              className="text-white rounded-circle"
+              style={{
+                backgroundColor: "#1a1f2b",
+                border: "1px solid #2a2f3a",
+              }}
+              onClick={() => navigator.clipboard.writeText(transaction.id)}
+            >
+              <i className="bi bi-clipboard fs-4"></i>
+            </Button>
+          </div>
+        </Card>
 
-            {/* Voltar */}
-          
+        <Row className="mt-5 g-3 text-start mx-3">
 
-            {/* Copiar ID */}
-            <Button
-              color="link"
-              className="text-white rounded-circle"
-              style={{
-                backgroundColor: "#1a1f2b",
-                border: "1px solid #2a2f3a",
-              }}
-              onClick={() => navigator.clipboard.writeText(transaction.id)}
-            >
-              <i className="bi bi-clipboard fs-4"></i>
-            </Button>
-          </div>
-        </Card>
+          <Col xs="6">
+            <h6 className="text-secondary">Status</h6>
+            <span className="text-success fw-semibold">Concluído</span>
+          </Col>
 
-        {/* Detalhes */}
-        <Row className="mt-5 g-3 text-start mx-3">
+          <Col xs="6">
+            <h6 className="text-secondary">Data</h6>
+            <span>{transaction.data}</span>
+          </Col>
 
-          <Col xs="6">
-            <h6 className="text-secondary">Status</h6>
-            <span className="text-success fw-semibold">Concluído</span>
-          </Col>
+          <Col xs="6">
+            <h6 className="text-secondary">Valor</h6>
+            <span>{valorFormatado}</span>
+          </Col>
 
-          <Col xs="6">
-            <h6 className="text-secondary">Data</h6>
-            <span>{transaction.data}</span>
-          </Col>
+          <Col xs="6">
+            <h6 className="text-secondary">Descrição</h6>
+            <span>{transaction.descricao || "Sem descrição"}</span>
+          </Col>
 
-          <Col xs="6">
-            <h6 className="text-secondary">Valor</h6>
-            <span>{valorFormatado}</span>
-          </Col>
+          <Col xs="6">
+            <h6 className="text-secondary">Origem/Destino</h6>
+            <span>{transaction.endereco || "---"}</span>
+          </Col>
 
-          <Col xs="6">
-            <h6 className="text-secondary">Descrição</h6>
-            <span>{transaction.descricao || "Sem descrição"}</span>
-          </Col>
+          <Col xs="6">
+            <h6 className="text-secondary">Tipo</h6>
+            <span>{tipoLabel}</span>
+          </Col>
 
-          <Col xs="6">
-            <h6 className="text-secondary">Origem/Destino</h6>
-            <span>{transaction.endereco || "---"}</span>
-          </Col>
+        </Row>
 
-          <Col xs="6">
-            <h6 className="text-secondary">Tipo</h6>
-            <span>{tipoLabel}</span>
-          </Col>
-
-        </Row>
-
-      </Container>
-    </div>
-  );
+      </Container>
+    </div>
+  );
 }

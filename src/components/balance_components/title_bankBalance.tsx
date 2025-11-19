@@ -1,7 +1,6 @@
 
 import { useBankBalance } from "./get_bankBalance";
 import type { GetBankBalanceOptions } from "./get_bankBalance";
-
 type Props = {
     userId?: string;
     token?: string;

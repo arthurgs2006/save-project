@@ -17,7 +17,6 @@ export default function CreditProfile({ credentials, onFinish }) {
   }
 
   async function finishStep() {
-    // ✅ Apenas prepara os dados para o próximo step — sem cadastro!
     const passwordHashed = await hashPassword(credentials.password);
 
     onFinish({

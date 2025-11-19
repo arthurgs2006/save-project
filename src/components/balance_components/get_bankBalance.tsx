@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 
-// Tipos das opções para buscar o saldo
+
 export type GetBankBalanceOptions = {
   userId?: string | number;
 };
 
-// Função que realmente busca o saldo no JSON Server
+
 export async function getBankBalance(
   options: GetBankBalanceOptions = {}
 ): Promise<number> {
   const { userId = 1 } = options;
 
   try {
-    // Endpoint do JSON Server rodando em http://localhost:3001
+
     const res = await fetch(`http://localhost:3001/users/${userId}`);
 
     if (!res.ok) {
@@ -21,12 +21,12 @@ export async function getBankBalance(
 
     const user = await res.json();
 
-    // ✅ Campo padrão correto no novo modelo
+
     if (typeof user.saldo_final === "number") {
       return user.saldo_final;
     }
 
-    // ✅ Compatibilidade com versões antigas que usavam "balance"
+
     if (typeof user.balance === "number") {
       return user.balance;
     }
@@ -39,7 +39,7 @@ export async function getBankBalance(
   }
 }
 
-// Hook React para usar saldo no frontend
+
 export function useBankBalance(options: GetBankBalanceOptions = {}) {
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);

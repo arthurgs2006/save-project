@@ -2,14 +2,14 @@ import { Card, CardBody, Col, Row } from "reactstrap";
 
 interface GoalSectionProps {
   name: string;
-  image: string;
+  image: string; 
   targetValue: number;
   currentValue: number;
 }
 
 export default function GoalSection({
   name,
-  image,
+  image, 
   targetValue,
   currentValue
 }: GoalSectionProps) {
@@ -22,7 +22,7 @@ export default function GoalSection({
     minimumFractionDigits: 2,
   });
 
-  const remaining = (targetValue - currentValue) > 0 ? 
+  const remaining = (targetValue - currentValue) > 0 ?
     targetValue - currentValue : 0;
 
   const formattedRemaining = remaining.toLocaleString("pt-BR", {
@@ -34,20 +34,26 @@ export default function GoalSection({
       <CardBody>
 
         <Row>
-          {/* Ícone ou imagem da meta */}
+      
           <Col xs="3" className="d-flex align-items-center justify-content-center">
-            <img
-              src={image}
-              alt={name}
-              className="img-fluid"
-              style={{ width: "60px", height: "60px", borderRadius: "12px" }}
-            />
+            <div
+              style={{ 
+                width: "60px", 
+                height: "60px", 
+                borderRadius: "12px", 
+                backgroundColor: "#3A5BFF", 
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <i className={`bi ${image} fs-3 text-white`}></i> 
+            </div>
           </Col>
 
-          {/* Nome + status */}
           <Col>
             <p className="goal-type mb-0 text-secondary">Meta</p>
-            <h6 className="goal-title mb-1">{name}</h6>
+            <h6 className="goal-title mb-1 text-white">{name}</h6>
 
             <p className="goal-date mb-0 text-secondary" style={{ fontSize: "0.85rem" }}>
               Faltam R$ {formattedRemaining}
@@ -55,12 +61,10 @@ export default function GoalSection({
           </Col>
         </Row>
 
-        {/* Valor total */}
         <h6 className="goal-value mt-3 mb-0">
           Valor total: R$ {formattedTarget}
         </h6>
 
-        {/* Valor atual */}
         <p className="text-secondary mb-0" style={{ fontSize: "0.85rem" }}>
           Já depositado: R$ {formattedCurrent}
         </p>

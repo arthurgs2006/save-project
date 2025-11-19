@@ -6,7 +6,7 @@ export default function ButtonW_100({
 }: {
   label?: string;
   onClick?: () => void;
-  to?: string;     // ✅ Agora é opcional
+  to?: string;
 }) {
   const baseStyle = {
     borderRadius: "40px",
@@ -17,18 +17,18 @@ export default function ButtonW_100({
   };
 
   const events = {
-    onMouseEnter: (e) => {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
       e.currentTarget.style.filter = "brightness(1.15)";
       e.currentTarget.style.transform = "translateY(-2px)";
     },
-    onMouseLeave: (e) => {
+    onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
       e.currentTarget.style.filter = "brightness(1)";
       e.currentTarget.style.transform = "translateY(0px)";
     },
-    onMouseDown: (e) => {
+    onMouseDown: (e: React.MouseEvent<HTMLElement>) => {
       e.currentTarget.style.transform = "scale(0.97)";
     },
-    onMouseUp: (e) => {
+    onMouseUp: (e: React.MouseEvent<HTMLElement>) => {
       e.currentTarget.style.transform = "translateY(-2px)";
     }
   };
@@ -36,17 +36,16 @@ export default function ButtonW_100({
   return (
     <div className="pb-4 w-100">
       {to ? (
-        // ✅ Link SOMENTE quando for pedido
         <Link
           to={to}
           onClick={onClick}
           className="continue-btn d-flex justify-content-center align-items-center w-100 text-white text-decoration-none"
+          style={baseStyle}
           {...events}
         >
           {label}
         </Link>
       ) : (
-        // ✅ Botão normal: NÃO navega automaticamente
         <button
           type="button"
           onClick={onClick}

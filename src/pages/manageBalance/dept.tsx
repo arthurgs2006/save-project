@@ -12,6 +12,7 @@ import {
   ListGroupItem,
 } from "reactstrap";
 import { motion } from "framer-motion";
+import TitleHeader from "../../components/generic_components/titleHeader";
 
 export default function WithdrawPage() {
   const [user, setUser] = useState<any>(null);
@@ -21,7 +22,6 @@ export default function WithdrawPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Carrega usuário logado
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedUser");
     if (storedUser) {
@@ -44,9 +44,6 @@ export default function WithdrawPage() {
     let metasAtualizadas = [...user.goals];
     let extratosAtualizados = [...(user.extratos || [])];
 
-    // -----------------------------
-    // 🟦 CASO 1: DÉBITO SEM META
-    // -----------------------------
     if (!selectedGoal) {
       if (valor > user.saldo_final) {
         alert("Saldo geral insuficiente!");
@@ -71,9 +68,6 @@ export default function WithdrawPage() {
       });
     }
 
-    // -----------------------------
-    // 🟩 CASO 2: DÉBITO EM META
-    // -----------------------------
     const goal = user.goals.find((g: any) => g.id === selectedGoal);
 
     if (!goal) {
@@ -92,12 +86,9 @@ export default function WithdrawPage() {
     const novoValorMeta = totalDeposits - valor;
 
     let novosDepositos =
-      novoValorMeta > 0
-        ? [{ id: Date.now(), value: novoValorMeta }]
-        : [];
+      novoValorMeta > 0 ? [{ id: Date.now(), value: novoValorMeta }] : [];
 
     if (novoValorMeta <= 0) {
-      // remove meta
       metasAtualizadas = metasAtualizadas.filter(
         (g: any) => g.id !== selectedGoal
       );
@@ -122,7 +113,6 @@ export default function WithdrawPage() {
     });
   }
 
-  // Função que salva no backend e localStorage
   async function atualizarUsuario(updatedUser: any) {
     try {
       setLoading(true);
@@ -165,11 +155,10 @@ export default function WithdrawPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h3 className="mb-4 text-center fw-bold">💸 Realizar Débito</h3>
+              <TitleHeader title="Debitar" />
 
               {user ? (
                 <>
-                  {/* Seleção de meta OPCIONAL */}
                   <Label className="fw-bold mb-2">Meta (opcional)</Label>
                   <Input
                     type="select"
@@ -197,7 +186,6 @@ export default function WithdrawPage() {
                       })}
                   </Input>
 
-                  {/* Valor */}
                   <Label className="fw-bold">Valor do débito</Label>
                   <div className="d-flex align-items-center gap-3 mb-4">
                     <span className="h4 mb-0">R$</span>
@@ -213,7 +201,6 @@ export default function WithdrawPage() {
                     />
                   </div>
 
-                  {/* Botão */}
                   <Button
                     color="danger"
                     onClick={handleWithdraw}
@@ -223,7 +210,6 @@ export default function WithdrawPage() {
                     {loading ? "Processando..." : "Confirmar Débito"}
                   </Button>
 
-                  {/* Sucesso */}
                   {success && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -235,7 +221,6 @@ export default function WithdrawPage() {
                     </motion.div>
                   )}
 
-                  {/* Histórico */}
                   {user.extratos?.length > 0 && (
                     <div className="mt-5">
                       <h5 className="fw-bold mb-3">📉 Últimos débitos</h5>
@@ -266,7 +251,9 @@ export default function WithdrawPage() {
                   )}
                 </>
               ) : (
-                <p className="text-center text-secondary">Carregando informações...</p>
+                <p className="text-center text-secondary">
+                  Carregando informações...
+                </p>
               )}
             </motion.div>
           </Col>

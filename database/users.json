@@ -207,18 +207,11 @@
       ],
       "goals": [
         {
-          "id": 1763305075617,
-          "name": "Comprar Sofa",
-          "value": 1212,
-          "image": "",
-          "deposits": [
-            {
-              "id": 1763305086701,
-              "value": 1212,
-              "time": "16/11/2025, 11:58:06"
-            }
-          ],
-          "checked": true
+          "id": 1763522665627,
+          "name": "Comprar Imóvel",
+          "value": 122222,
+          "image": "bi-piggy-bank-fill",
+          "deposits": []
         }
       ],
       "recurringDebts": [
@@ -423,6 +416,87 @@
           "descricao": "Saque realizado",
           "valor": 200,
           "data": "2025-11-13"
+        }
+      ]
+    },
+    {
+      "id": "1cb51057-a0e5-422a-9c53-7641dcb40955",
+      "nome": "Isadora Mian",
+      "email": "isadoramian@gmail.com",
+      "password": "ee53460fde7435aa03b388e9e39d2f507f69819867de7a47021840be6faca709",
+      "saldo_final": 300,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Transporte",
+          "Compras",
+          "Contas"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": [
+        {
+          "id": 1763517227329,
+          "tipo": "credito",
+          "descricao": "Depósito realizado",
+          "valor": 1400,
+          "data": "2025-11-19"
+        },
+        {
+          "id": 1763517533641,
+          "tipo": "debito",
+          "descricao": "Débito do saldo geral",
+          "valor": 500,
+          "data": "2025-11-19"
+        },
+        {
+          "id": 1763517563641,
+          "tipo": "debito",
+          "descricao": "Débito do saldo geral",
+          "valor": 500,
+          "data": "2025-10-19"
+        },
+        {
+          "id": 1763519063641,
+          "tipo": "debito",
+          "descricao": "Débito do saldo geral",
+          "valor": 200,
+          "data": "2025-09-19"
+        }
+      ],
+      "goals": [
+        {
+          "id": 1763517435658,
+          "name": "Ir para Paris",
+          "value": 8000,
+          "image": "https://www.google.com/url?sa=i&url=https%3A%2F%2Fpt.wikipedia.org%2Fwiki%2FParis&psig=AOvVaw2bZnrfMJtjpCL-Cv-_Upsu&ust=1763603799435000&source=images&cd=vfe&opi=89978449&ved=0CBUQjRxqFwoTCMjMsqGO_ZADFQAAAAAdAAAAABAE",
+          "deposits": [
+            {
+              "id": 1763517435660,
+              "amount": 2000,
+              "date": "2025-11-19T01:57:15.658Z"
+            }
+          ]
+        }
+      ],
+      "recurringDebts": [
+        {
+          "id": 1763517296042,
+          "name": "Unhas",
+          "value": 130,
+          "category": "Outros",
+          "frequency": "monthly",
+          "billingDate": 1,
+          "description": "Minha Prima que faz minha unha."
+        },
+        {
+          "id": 1763517341217,
+          "name": "Seguro",
+          "value": 270,
+          "category": "Transporte",
+          "frequency": "monthly",
+          "billingDate": 10,
+          "description": "Seguro do Carro."
         }
       ]
     }

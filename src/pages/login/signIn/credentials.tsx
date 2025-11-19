@@ -34,7 +34,6 @@ export default function Credentials({ onNext }) {
       return;
     }
 
-    // ✅ Envia dados para CreditProfile
     onNext({
       name: formData.name,
       email: formData.email,

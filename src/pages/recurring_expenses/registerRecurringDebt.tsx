@@ -28,7 +28,7 @@ export default function RegisterRecurringDebt() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Carrega o usuário logado
+
   useEffect(() => {
     const storedUser = localStorage.getItem("loggedUser");
     if (storedUser) {
@@ -36,7 +36,6 @@ export default function RegisterRecurringDebt() {
     }
   }, []);
 
-  // Envia dados para o backend
   async function handleSubmit(e: any) {
     e.preventDefault();
 
@@ -56,7 +55,7 @@ export default function RegisterRecurringDebt() {
       value: Number(value),
       category,
       frequency,
-      billingDate: Number(billingDate), // apenas o dia
+      billingDate: Number(billingDate), 
       description,
     };
 
@@ -82,8 +81,6 @@ export default function RegisterRecurringDebt() {
 
       localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
       setUser(updatedUser);
-
-      // limpar campos
       setName("");
       setValue("");
       setCategory("");
@@ -105,7 +102,10 @@ export default function RegisterRecurringDebt() {
     <div className="min-vh-100 text-white background-color">
       <Container className="pb-5">
         <AccountHeader />
-        <TitleHeader title="Registrar Débito Recorrente" />
+        <TitleHeader 
+            title="Registrar Débito Recorrente" 
+            backLink="/registerDebt/" 
+          />
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -156,6 +156,7 @@ export default function RegisterRecurringDebt() {
                     <option>Saúde</option>
                     <option>Transporte</option>
                     <option>Serviços</option>
+                    <option>Estética</option>
                     <option>Outros</option>
                   </Input>
                 </FormGroup>

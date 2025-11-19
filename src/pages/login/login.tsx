@@ -33,7 +33,7 @@ export default function LoginPage() {
       }
 
       const users = await res.json();
-      const hashedPassword = await hashPassword(password); // 👈 uso centralizado
+      const hashedPassword = await hashPassword(password); 
 
       const user = users.find(
         (u: any) => u.email === email && u.password === hashedPassword

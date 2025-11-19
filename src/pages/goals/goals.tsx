@@ -12,7 +12,6 @@ export default function GoalsPage() {
 
   const navigate = useNavigate();
 
-  // Carregar metas
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("loggedUser") || "{}");
     if (!user.id) return;
@@ -25,7 +24,6 @@ export default function GoalsPage() {
       .catch(err => console.error("Erro ao carregar metas:", err));
   }, []);
 
-  // Salvar metas
   const persistGoals = async (updatedGoals: any[]) => {
     const user = JSON.parse(localStorage.getItem("loggedUser") || "{}");
     if (!user.id) return;
@@ -39,13 +37,11 @@ export default function GoalsPage() {
     });
   };
 
-  // Remover meta
   const handleDelete = async (goalId: number) => {
     const updatedGoals = goals.filter(g => g.id !== goalId);
     persistGoals(updatedGoals);
   };
 
-  // MARCAR / DESMARCAR CHECKBOX
   const toggleGoalCheck = (goalId: number) => {
     const updatedGoals = goals.map(g =>
       g.id === goalId ? { ...g, checked: !g.checked } : g
@@ -53,17 +49,15 @@ export default function GoalsPage() {
     persistGoals(updatedGoals);
   };
 
-  // MARCAR COMO CONCLUÍDA PELO BOTÃO
   const markAsCompleted = (goalId: number) => {
     const updatedGoals = goals.map(g =>
       g.id === goalId ? { ...g, checked: true } : g
     );
     persistGoals(updatedGoals);
 
-    setActiveTab("completed"); // muda de aba automaticamente
+    setActiveTab("completed");
   };
 
-  // Filtragem
   const filteredGoals = goals.filter(goal =>
     goal.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -71,13 +65,28 @@ export default function GoalsPage() {
   const pendingGoals = filteredGoals.filter(g => !g.checked);
   const completedGoals = filteredGoals.filter(g => g.checked);
 
+  const IconRenderer = ({ iconClass }) => (
+    <div
+      style={{
+        width: "40px",
+        height: "40px",
+        borderRadius: "4px",
+        backgroundColor: "#3A5BFF",
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
+    >
+      <i className={`bi ${iconClass} fs-5 text-white`}></i>
+    </div>
+  );
+
   return (
     <div className="min-vh-100 text-white background-color py-4">
       <Container>
         <AccountHeader />
         <TitleHeader title="Metas" showCreateButton />
 
-        {/* Alternância */}
         <div className="d-flex gap-3 my-3">
           <Button
             color={activeTab === "pending" ? "success" : "secondary"}
@@ -96,7 +105,6 @@ export default function GoalsPage() {
           </Button>
         </div>
 
-        {/* Busca */}
         <InputGroup className="mb-4">
           <Input
             value={search}
@@ -109,11 +117,9 @@ export default function GoalsPage() {
           </InputGroupText>
         </InputGroup>
 
-        {/* Listagem */}
         <main>
           <ul className="list-unstyled">
 
-            {/* === PENDENTES === */}
             {activeTab === "pending" && (
               <>
                 {pendingGoals.length === 0 ? (
@@ -134,13 +140,10 @@ export default function GoalsPage() {
 
                         <div className="d-flex justify-content-between align-items-center w-100">
                           <div className="d-flex align-items-center gap-3">
-                            <img
-                              src={goal.image}
-                              alt="goal"
-                              className="rounded"
-                              width={40}
-                              height={40}
-                            />
+                            
+                   
+                            <IconRenderer iconClass={goal.image} />
+                            
                             <strong>{goal.name}</strong>
                           </div>
 
@@ -159,7 +162,6 @@ export default function GoalsPage() {
                           Editar
                         </Button>
 
-                        {/* BOTÃO CONCLUIR */}
                         <Button
                           color="info"
                           className="px-3 fw-bold py-1"
@@ -183,7 +185,6 @@ export default function GoalsPage() {
               </>
             )}
 
-            {/* === CONCLUÍDAS === */}
             {activeTab === "completed" && (
               <>
                 {completedGoals.length === 0 ? (
@@ -205,13 +206,9 @@ export default function GoalsPage() {
 
                         <div className="d-flex justify-content-between align-items-center w-100">
                           <div className="d-flex align-items-center gap-3">
-                            <img
-                              src={goal.image}
-                              alt="goal"
-                              className="rounded"
-                              width={40}
-                              height={40}
-                            />
+                            
+                            <IconRenderer iconClass={goal.image} />
+
                             <strong className="text-decoration-line-through">{goal.name}</strong>
                           </div>
 

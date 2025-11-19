@@ -73,7 +73,7 @@ export default function EditGoalPage() {
     );
   }
 
-  // Corrige depósitos inconsistentes: dep.value OR dep.amount
+
   const totalDeposits =
     (goal.deposits || []).reduce(
       (acc: number, dep: any) => acc + Number(dep.value ?? dep.amount ?? 0),
@@ -84,7 +84,7 @@ export default function EditGoalPage() {
 
   const percentage = Math.min((totalDeposits / numericValue) * 100, 100);
 
-  // Salvar informações editadas
+
   function handleSave() {
     const updatedGoal = {
       ...goal,
@@ -167,7 +167,10 @@ export default function EditGoalPage() {
     <div className="edit-goal-page min-vh-100 text-white background-color py-4">
       <Container>
         <AccountHeader name={user?.nome} />
-        <TitleHeader title={`Editar Meta`} />
+         <TitleHeader 
+                  title="Editar Meta"
+                  backLink="/goals"
+                />
 
         <main className="mt-4">
           <GoalSection
@@ -179,7 +182,7 @@ export default function EditGoalPage() {
 
           <ProgressBar percentage={Number(percentage.toFixed(0))} />
 
-          {/* Formulário */}
+   
           <section className="mt-4">
             <h6 className="mb-3">Editar Informações</h6>
 
@@ -222,7 +225,7 @@ export default function EditGoalPage() {
             </Form>
           </section>
 
-          {/* Direcionar Saldo */}
+
           <section className="mt-5">
             <h6 className="mb-3">Direcionar saldo geral para esta meta</h6>
 
@@ -254,7 +257,7 @@ export default function EditGoalPage() {
             </p>
           </section>
 
-          {/* Depósitos */}
+  
           <section className="mt-4">
             <h6 className="mb-3">Depósitos</h6>
 
