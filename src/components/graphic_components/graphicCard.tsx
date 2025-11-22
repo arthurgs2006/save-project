@@ -1,33 +1,47 @@
 import { useEffect, useState } from "react";
 
+interface Extrato {
+  data: string;
+  valor: number | string;
+  tipo: "credito" | "debito";
+}
+
+interface User {
+  id: number | string;
+  extratos: Extrato[];
+}
+
+interface MesHistorico {
+  mes: string;
+  valor: number;
+  atual: boolean;
+  futuro: boolean;
+}
+
 export default function GraphicCard() {
-  const [history, setHistory] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [history, setHistory] = useState<MesHistorico[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function load() {
       const stored = localStorage.getItem("loggedUser");
       if (!stored) return;
 
-      const parsed = JSON.parse(stored);
+      const parsed: { id: number | string } = JSON.parse(stored);
 
       try {
         const res = await fetch(`http://localhost:3001/users/${parsed.id}`);
-        const user = await res.json();
+        const user: User = await res.json();
 
         if (!user || !user.extratos) {
           setHistory([]);
           return;
         }
 
-        const extratos = user.extratos;
+        const map: Record<string, number> = {};
+        const gastosMensais: number[] = [];
 
-        // Agrupamento de valores por mês
-        const map: any = {};
-        const countDeposits: any = {};
-        const countDebits: any = {};
-
-        extratos.forEach((item: any) => {
+        user.extratos.forEach((item) => {
           const d = new Date(item.data);
           if (isNaN(d.getTime())) return;
 
@@ -38,39 +52,19 @@ export default function GraphicCard() {
           const valor = Number(item.valor);
           const real = item.tipo === "credito" ? valor : -valor;
 
-          // Soma valores
           map[key] = (map[key] || 0) + real;
 
-          // Conta quantidade
-          if (item.tipo === "credito") {
-            countDeposits[key] = (countDeposits[key] || 0) + 1;
-          } else {
-            countDebits[key] = (countDebits[key] || 0) + 1;
-          }
+          if (item.tipo === "debito") gastosMensais.push(valor);
         });
 
-        // Média das quantidades para projetar futuro
-        const valoresDeposito = Object.values(countDeposits);
-        const valoresDebito = Object.values(countDebits);
-
-        const mediaDepositos =
-          valoresDeposito.length > 0
-            ? valoresDeposito.reduce((a: any, b: any) => a + b, 0) /
-              valoresDeposito.length
-            : 0;
-
         const mediaGastos =
-          valoresDebito.length > 0
-            ? valoresDebito.reduce((a: any, b: any) => a + b, 0) /
-              valoresDebito.length
+          gastosMensais.length > 0
+            ? gastosMensais.reduce((a, b) => a + b, 0) / gastosMensais.length
             : 0;
 
-        // PROJEÇÃO baseada na diferença
-        const projeção = mediaDepositos - mediaGastos;
-
-        // 3 meses passados, atual, 2 futuros
         const hoje = new Date();
-        const meses = [];
+        const meses: MesHistorico[] = [];
+        let saldoAtual = 0;
 
         for (let i = -3; i <= 2; i++) {
           const d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
@@ -83,14 +77,15 @@ export default function GraphicCard() {
             .toLocaleString("pt-BR", { month: "short" })
             .replace(".", "");
 
+          const valorMes =
+            i <= 0 ? map[key] || 0 : Math.round(saldoAtual - mediaGastos);
+
+          if (i <= 0) saldoAtual += valorMes;
+          else saldoAtual = valorMes;
+
           meses.push({
             mes: nome.charAt(0).toUpperCase() + nome.slice(1),
-            valor:
-              i < 0
-                ? map[key] || 0 // passado real
-                : i === 0
-                ? map[key] || 0 // mês atual real
-                : projeção, // futuro baseado na diferença depósitos - gastos
+            valor: valorMes,
             atual: i === 0,
             futuro: i > 0,
           });
@@ -126,10 +121,7 @@ export default function GraphicCard() {
             }`}
             style={{
               width: "22px",
-              height: `${Math.max(
-                (Math.abs(item.valor) / max) * 100,
-                12
-              )}px`,
+              height: `${Math.max((Math.abs(item.valor) / max) * 100, 12)}px`,
               transition: "0.3s",
             }}
           ></div>

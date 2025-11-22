@@ -424,7 +424,7 @@
       "nome": "Isadora Mian",
       "email": "isadoramian@gmail.com",
       "password": "ee53460fde7435aa03b388e9e39d2f507f69819867de7a47021840be6faca709",
-      "saldo_final": 300,
+      "saldo_final": 777.3299999999999,
       "preferencias": {
         "categorias_favoritas": [
           "Transporte",
@@ -462,6 +462,13 @@
           "descricao": "Débito do saldo geral",
           "valor": 200,
           "data": "2025-09-19"
+        },
+        {
+          "id": 1763838558763,
+          "tipo": "credito",
+          "descricao": "Depósito realizado",
+          "valor": 600,
+          "data": "2025-11-22"
         }
       ],
       "goals": [
@@ -475,6 +482,19 @@
               "id": 1763517435660,
               "amount": 2000,
               "date": "2025-11-19T01:57:15.658Z"
+            }
+          ]
+        },
+        {
+          "id": 1763836901220,
+          "name": "Comprar mobília",
+          "value": 4500,
+          "image": "bi-piggy-bank-fill",
+          "deposits": [
+            {
+              "id": 1763836901222,
+              "amount": 122.67,
+              "date": "2025-11-22T18:41:41.220Z"
             }
           ]
         }
@@ -497,6 +517,65 @@
           "frequency": "monthly",
           "billingDate": 10,
           "description": "Seguro do Carro."
+        }
+      ]
+    },
+    {
+      "id": "925d6152-58c6-4dc3-b22f-673d14d8f5a9",
+      "nome": "Usuario_Teste",
+      "email": "userteste@gmail.com",
+      "password": "143c11469dc79783192aec171626657e2ca736cbb278506c535f88d0c2da944a",
+      "saldo_final": 3429.67,
+      "preferencias": {
+        "categorias_favoritas": [
+          "Alimentação",
+          "Moradia",
+          "Contas"
+        ],
+        "tema_app": "dark",
+        "notificacoes": true
+      },
+      "extratos": [
+        {
+          "id": 1763523473873,
+          "tipo": "credito",
+          "descricao": "Depósito realizado",
+          "valor": 50,
+          "data": "2025-11-19"
+        },
+        {
+          "id": 1763523483210,
+          "tipo": "debito",
+          "descricao": "Débito do saldo geral",
+          "valor": 21,
+          "data": "2025-11-19"
+        }
+      ],
+      "goals": [
+        {
+          "id": 1763523546250,
+          "name": "Comprar Notebook",
+          "value": 4000,
+          "image": "bi-star-fill",
+          "deposits": [
+            {
+              "id": 1763523546252,
+              "amount": 600,
+              "date": "2025-11-19T03:39:06.250Z"
+            }
+          ],
+          "checked": true
+        }
+      ],
+      "recurringDebts": [
+        {
+          "id": 1763523510170,
+          "name": "Amazon",
+          "value": 15.77,
+          "category": "Streaming",
+          "frequency": "monthly",
+          "billingDate": 10,
+          "description": "Amazon Prime."
         }
       ]
     }

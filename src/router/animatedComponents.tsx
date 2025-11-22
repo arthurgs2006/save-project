@@ -20,13 +20,13 @@ import Debts from '../pages/manageBalance/dept.tsx';
 import CreateGoal from '../pages/goals/createGoal.tsx';
 import RegisterRecurringDebt from '../pages/recurring_expenses/registerRecurringDebt.tsx';
 import RecurringDebtsMenu from '../pages/recurring_expenses/menuRecurringDebts.tsx';
+import Benefits from '../pages/benefits/Benefits.tsx';
 
 export default function AnimatedRoutes() {
   const location = useLocation();
   const [loading, setLoading] = useState(true);
 
   const routesWithLoading = [
-    "/homescreen",
     "/profile",
     "/goals",
     "/settings",
@@ -68,7 +68,8 @@ export default function AnimatedRoutes() {
             <Route path="/goals" element={<Goals />} />
             <Route path="/goals/create" element={<CreateGoal />} />
             <Route path="/edit-goal/:id" element={<EditGoals />} />
-
+            <Route path="/benefits" element={<Benefits />} />
+            
 
             <Route path="/incomes" element={<Incomes />} />
             <Route path="/expenses" element={<Expenses />} />

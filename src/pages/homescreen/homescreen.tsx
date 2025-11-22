@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
-  Card,
-  CardBody,
-  CardText,
   Button,
   ListGroup,
   ListGroupItem,
 } from "reactstrap";
+import { motion } from "framer-motion"; 
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
@@ -59,9 +57,15 @@ export default function HomeScreen() {
   return (
     <div className="background-color text-white min-vh-100 d-flex flex-column">
       <Container className="py-4 flex-grow-1 d-flex flex-column">
+
         <AccountHeader name={user.nome} />
 
-        <main className="pt-4 flex-grow-1">
+        <motion.main
+          className="pt-4 flex-grow-1"
+          initial={{ opacity: 0, y: 20 }}  
+          animate={{ opacity: 1, y: 0 }}   
+          transition={{ duration: 0.45 }}    
+        >
           <div className="text-center mb-5">
             <p className="text-secondary mb-1">Saldo bancário</p>
             <h1 className="fw-bold text-info">
@@ -72,6 +76,7 @@ export default function HomeScreen() {
           <GraphicCard user={user} />
 
           <nav className="d-flex justify-content-center gap-4 mt-5 flex-wrap">
+        
             <Button
               color="link"
               className="text-white p-0 nav-btn-custom"
@@ -117,6 +122,7 @@ export default function HomeScreen() {
             </Button>
           </nav>
 
+     
           <section className="mt-5 text-start">
             <h5 className="mb-3">Últimas Movimentações</h5>
 
@@ -150,9 +156,30 @@ export default function HomeScreen() {
             ) : (
               <h1 className="text-secondary">Nenhuma movimentação recente.</h1>
             )}
-          </section>
+             
 
-          <section className="mt-5 text-start">
+          </section>
+            <section id="benefits" className="mt-3">
+                <ListGroupItem
+                className="d-flex justify-content-between align-items-center bg-dark text-white border-0 rounded p-3 shadow-sm benefit-item"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/benefits")}
+              >
+                    <div>
+                      <p className="mb-1 fw-bold">
+                        <i className="bi bi-currency-dollar text-success" ></i> Benefícios para Estudantes de Baixa Renda
+                      </p>
+                      <small className="text-secondary">
+                        Descubra auxílios governamentais, bolsas e programas de crédito estudantil
+                      </small>
+                    </div>
+
+                    <i className="bi bi-chevron-right text-secondary fs-5"></i>
+              </ListGroupItem>
+            </section>
+          
+
+          <section className="mt-4 text-start">
             <h5 className="mb-3">Débitos Recorrentes</h5>
 
             {recurringDebts.length > 0 ? (
@@ -179,7 +206,7 @@ export default function HomeScreen() {
               <p className="text-secondary">Nenhum débito recorrente cadastrado.</p>
             )}
           </section>
-        </main>
+        </motion.main>
       </Container>
     </div>
   );
