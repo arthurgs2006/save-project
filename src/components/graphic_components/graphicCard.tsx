@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 
 interface Extrato {
   data: string;
@@ -18,91 +18,59 @@ interface MesHistorico {
   futuro: boolean;
 }
 
-export default function GraphicCard() {
-  const [history, setHistory] = useState<MesHistorico[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+export default function GraphicCard({ user }: { user: User }) {
+  const history = useMemo(() => {
+    if (!user || !user.extratos) return [];
 
-  useEffect(() => {
-    async function load() {
-      const stored = localStorage.getItem("loggedUser");
-      if (!stored) return;
+    const map: Record<string, number> = {};
+    const gastosMensais: number[] = [];
 
-      const parsed: { id: number | string } = JSON.parse(stored);
+    user.extratos.forEach((item) => {
+      const d = new Date(item.data);
+      if (isNaN(d.getTime())) return;
 
-      try {
-        const res = await fetch(`http://localhost:3001/users/${parsed.id}`);
-        const user: User = await res.json();
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const valor = Number(item.valor);
+      const real = item.tipo === "credito" ? valor : -valor;
 
-        if (!user || !user.extratos) {
-          setHistory([]);
-          return;
-        }
+      map[key] = (map[key] || 0) + real;
 
-        const map: Record<string, number> = {};
-        const gastosMensais: number[] = [];
+      if (item.tipo === "debito") gastosMensais.push(valor);
+    });
 
-        user.extratos.forEach((item) => {
-          const d = new Date(item.data);
-          if (isNaN(d.getTime())) return;
+    const mediaGastos =
+      gastosMensais.length > 0
+        ? gastosMensais.reduce((a, b) => a + b, 0) / gastosMensais.length
+        : 0;
 
-          const key = `${d.getFullYear()}-${String(
-            d.getMonth() + 1
-          ).padStart(2, "0")}`;
+    const hoje = new Date();
+    const meses: MesHistorico[] = [];
+    let saldoAtual = 0;
 
-          const valor = Number(item.valor);
-          const real = item.tipo === "credito" ? valor : -valor;
+    for (let i = -3; i <= 2; i++) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
 
-          map[key] = (map[key] || 0) + real;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
-          if (item.tipo === "debito") gastosMensais.push(valor);
-        });
+      const nome = d.toLocaleString("pt-BR", { month: "short" }).replace(".", "");
 
-        const mediaGastos =
-          gastosMensais.length > 0
-            ? gastosMensais.reduce((a, b) => a + b, 0) / gastosMensais.length
-            : 0;
+      const valorMes =
+        i <= 0 ? map[key] || 0 : Math.round(saldoAtual - mediaGastos);
 
-        const hoje = new Date();
-        const meses: MesHistorico[] = [];
-        let saldoAtual = 0;
+      if (i <= 0) saldoAtual += valorMes;
+      else saldoAtual = valorMes;
 
-        for (let i = -3; i <= 2; i++) {
-          const d = new Date(hoje.getFullYear(), hoje.getMonth() + i, 1);
-
-          const key = `${d.getFullYear()}-${String(
-            d.getMonth() + 1
-          ).padStart(2, "0")}`;
-
-          const nome = d
-            .toLocaleString("pt-BR", { month: "short" })
-            .replace(".", "");
-
-          const valorMes =
-            i <= 0 ? map[key] || 0 : Math.round(saldoAtual - mediaGastos);
-
-          if (i <= 0) saldoAtual += valorMes;
-          else saldoAtual = valorMes;
-
-          meses.push({
-            mes: nome.charAt(0).toUpperCase() + nome.slice(1),
-            valor: valorMes,
-            atual: i === 0,
-            futuro: i > 0,
-          });
-        }
-
-        setHistory(meses);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
+      meses.push({
+        mes: nome.charAt(0).toUpperCase() + nome.slice(1),
+        valor: valorMes,
+        atual: i === 0,
+        futuro: i > 0,
+      });
     }
 
-    load();
-  }, []);
+    return meses;
+  }, [user]);
 
-  if (loading) return <p className="text-center text-secondary">Carregando gráfico...</p>;
   if (history.length === 0) return null;
 
   const max = Math.max(...history.map((h) => Math.abs(h.valor)), 1);

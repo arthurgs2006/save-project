@@ -6,13 +6,36 @@ import {
   ListGroup,
   ListGroupItem,
 } from "reactstrap";
-import { motion } from "framer-motion"; 
+import { motion } from "framer-motion";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
 
+interface Extrato {
+  id: number | string;
+  data: string;
+  valor: number;
+  tipo: "credito" | "debito";
+}
+
+interface RecurringDebt {
+  id: number | string;
+  name: string;
+  value: number;
+  billingDate: string;
+  frequency: string;
+}
+
+interface User {
+  id: number | string;
+  nome: string;
+  saldo_final: number;
+  extratos: Extrato[];
+  recurringDebts: RecurringDebt[];
+}
+
 export default function HomeScreen() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +46,7 @@ export default function HomeScreen() {
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser);
+    const parsedUser: User = JSON.parse(storedUser);
     setUser(parsedUser);
 
     fetch(`http://localhost:3001/users/${parsedUser.id}`)
@@ -45,7 +68,7 @@ export default function HomeScreen() {
     );
   }
 
-  const freqMap: any = {
+  const freqMap: Record<string, string> = {
     monthly: "Mensal",
     weekly: "Semanal",
     yearly: "Anual",
@@ -57,14 +80,13 @@ export default function HomeScreen() {
   return (
     <div className="background-color text-white min-vh-100 d-flex flex-column">
       <Container className="py-4 flex-grow-1 d-flex flex-column">
-
         <AccountHeader name={user.nome} />
 
         <motion.main
           className="pt-4 flex-grow-1"
-          initial={{ opacity: 0, y: 20 }}  
-          animate={{ opacity: 1, y: 0 }}   
-          transition={{ duration: 0.45 }}    
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
         >
           <div className="text-center mb-5">
             <p className="text-secondary mb-1">Saldo bancário</p>
@@ -76,7 +98,6 @@ export default function HomeScreen() {
           <GraphicCard user={user} />
 
           <nav className="d-flex justify-content-center gap-4 mt-5 flex-wrap">
-        
             <Button
               color="link"
               className="text-white p-0 nav-btn-custom"
@@ -122,13 +143,12 @@ export default function HomeScreen() {
             </Button>
           </nav>
 
-     
           <section className="mt-5 text-start">
             <h5 className="mb-3">Últimas Movimentações</h5>
 
             {ultimosExtratos.length > 0 ? (
               <ListGroup flush>
-                {ultimosExtratos.map((item: any) => (
+                {ultimosExtratos.map((item) => (
                   <ListGroupItem
                     key={item.id}
                     className="d-flex justify-content-between align-items-center bg-dark text-white border-0 rounded mb-2 p-3"
@@ -148,7 +168,7 @@ export default function HomeScreen() {
                       }`}
                     >
                       {item.tipo === "credito" ? "+" : "-"}R${" "}
-                      {item.valor.toFixed(2).replace(".", ",")}
+                      {Number(item.valor).toFixed(2).replace(".", ",")}
                     </span>
                   </ListGroupItem>
                 ))}
@@ -156,35 +176,33 @@ export default function HomeScreen() {
             ) : (
               <h1 className="text-secondary">Nenhuma movimentação recente.</h1>
             )}
-             
-
           </section>
-            <section id="benefits" className="mt-3">
-                <ListGroupItem
-                className="d-flex justify-content-between align-items-center bg-dark text-white border-0 rounded p-3 shadow-sm benefit-item"
-                style={{ cursor: "pointer" }}
-                onClick={() => navigate("/benefits")}
-              >
-                    <div>
-                      <p className="mb-1 fw-bold">
-                        <i className="bi bi-currency-dollar text-success" ></i> Benefícios para Estudantes de Baixa Renda
-                      </p>
-                      <small className="text-secondary">
-                        Descubra auxílios governamentais, bolsas e programas de crédito estudantil
-                      </small>
-                    </div>
 
-                    <i className="bi bi-chevron-right text-secondary fs-5"></i>
-              </ListGroupItem>
-            </section>
-          
+          <section id="benefits" className="mt-3">
+            <ListGroupItem
+              className="d-flex justify-content-between align-items-center bg-dark text-white border-0 rounded p-3 shadow-sm benefit-item"
+              style={{ cursor: "pointer" }}
+              onClick={() => navigate("/benefits")}
+            >
+              <div>
+                <p className="mb-1 fw-bold">
+                  <i className="bi bi-currency-dollar text-success"></i> Benefícios para Estudantes de Baixa Renda
+                </p>
+                <small className="text-secondary">
+                  Descubra auxílios governamentais, bolsas e programas de crédito estudantil
+                </small>
+              </div>
+
+              <i className="bi bi-chevron-right text-secondary fs-5"></i>
+            </ListGroupItem>
+          </section>
 
           <section className="mt-4 text-start">
             <h5 className="mb-3">Débitos Recorrentes</h5>
 
             {recurringDebts.length > 0 ? (
               <ListGroup flush>
-                {recurringDebts.map((debt: any) => (
+                {recurringDebts.map((debt) => (
                   <ListGroupItem
                     key={debt.id}
                     className="d-flex justify-content-between align-items-center bg-dark text-white border-0 rounded mb-2 p-3"
