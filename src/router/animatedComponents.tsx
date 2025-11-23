@@ -24,7 +24,7 @@ import Benefits from '../pages/benefits/Benefits.tsx';
 
 export default function AnimatedRoutes() {
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const routesWithLoading = [
     "/profile",
@@ -51,41 +51,36 @@ export default function AnimatedRoutes() {
   }, [location.pathname]);
 
   return (
-    <>
+    <div style={{ position: 'relative' }}>
       {loading && <LoadingScreen />}
 
-      {!loading && (
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="" element={<WelcomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signin" element={<SigninPage />} />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<WelcomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signin" element={<SigninPage />} />
 
-            <Route path="/homescreen" element={<Homescreen />} />
-            <Route path="/profile" element={<Profile />} />
+          <Route path="/homescreen" element={<Homescreen />} />
+          <Route path="/profile" element={<Profile />} />
 
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/goals/create" element={<CreateGoal />} />
+          <Route path="/edit-goal/:id" element={<EditGoals />} />
+          <Route path="/benefits" element={<Benefits />} />
 
-            <Route path="/goals" element={<Goals />} />
-            <Route path="/goals/create" element={<CreateGoal />} />
-            <Route path="/edit-goal/:id" element={<EditGoals />} />
-            <Route path="/benefits" element={<Benefits />} />
-            
+          <Route path="/incomes" element={<Incomes />} />
+          <Route path="/expenses" element={<Expenses />} />
 
-            <Route path="/incomes" element={<Incomes />} />
-            <Route path="/expenses" element={<Expenses />} />
+          <Route path="/deposit" element={<Deposit />} />
+          <Route path="/debts" element={<Debts />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/registerDebt/newRecurringDebt" element={<RegisterRecurringDebt />} />
+          <Route path="/registerDebt" element={<RecurringDebtsMenu />} />
+          <Route path="/transaction/:id" element={<DetailsID />} />
 
-  
-            <Route path="/deposit" element={<Deposit />} />
-            <Route path="/debts" element={<Debts />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/registerDebt/newRecurringDebt" element={<RegisterRecurringDebt />} />
-            <Route path="/registerDebt" element={<RecurringDebtsMenu />} />
-            <Route path="/transaction/:id" element={<DetailsID />} />
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AnimatePresence>
-      )}
-    </>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AnimatePresence>
+    </div>
   );
 }
