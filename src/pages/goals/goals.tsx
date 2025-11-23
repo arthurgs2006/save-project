@@ -26,7 +26,7 @@ export default function GoalsPage() {
       setUser(parsedUser);
 
       try {
-        const res = await fetch(`http://localhost:3001/users/${parsedUser.id}`);
+        const res = await fetch(`https://database-save-app.onrender.com/users/${parsedUser.id}`);
         if (!res.ok) return;
         const data = await res.json();
 
@@ -57,7 +57,7 @@ export default function GoalsPage() {
     localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
 
     try {
-      await fetch(`http://localhost:3001/users/${user.id}`, {
+      await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ goals: updatedGoals })

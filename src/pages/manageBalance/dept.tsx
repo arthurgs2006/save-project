@@ -117,7 +117,7 @@ export default function WithdrawPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`http://localhost:3001/users/${updatedUser.id}`, {
+      const res = await fetch(`https://database-save-app.onrender.com/users/${updatedUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser),

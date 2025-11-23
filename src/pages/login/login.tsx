@@ -24,7 +24,7 @@ export default function LoginPage() {
     const password = (form.elements.namedItem("password") as HTMLInputElement).value;
 
     try {
-      const res = await fetch("http://localhost:3001/users");
+      const res = await fetch("https://database-save-app.onrender.com/users");
 
       if (!res.ok) {
         alert("Erro ao acessar servidor");

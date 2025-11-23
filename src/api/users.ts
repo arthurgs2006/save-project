@@ -60,5 +60,5 @@ app.post("/api/users", (req: Request, res: Response) => {
 
 const PORT = 5173;
 app.listen(PORT, () => {
-  console.log(`API rodando em http://localhost:${PORT}`);
+  console.log(`API rodando em https://database-save-app.vercel.app/users:${PORT}`);
 });

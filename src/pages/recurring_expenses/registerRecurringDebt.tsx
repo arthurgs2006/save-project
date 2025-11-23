@@ -67,7 +67,7 @@ export default function RegisterRecurringDebt() {
     try {
       setSaving(true);
 
-      const res = await fetch(`http://localhost:3001/users/${user.id}`, {
+      const res = await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser),

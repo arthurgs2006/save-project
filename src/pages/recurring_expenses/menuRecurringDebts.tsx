@@ -32,7 +32,7 @@ export default function RecurringDebtsMenu() {
     }
     const parsed = JSON.parse(storedUser);
     setUser(parsed);
-    fetch(`http://localhost:3001/users/${parsed.id}`)
+    fetch(`https://database-save-app.onrender.com/users/${parsed.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {
@@ -51,7 +51,7 @@ export default function RecurringDebtsMenu() {
     const novosDebitos = (user.recurringDebts || []).filter((d: any) => d.id !== id);
     const updated = { ...user, recurringDebts: novosDebitos };
     try {
-      await fetch(`http://localhost:3001/users/${user.id}`, {
+      await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),

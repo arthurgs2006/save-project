@@ -27,7 +27,7 @@ export default function SignIn() {
         extratos: [],
       };
 
-      const res = await fetch("http://localhost:3001/users", {
+      const res = await fetch("https://database-save-app.onrender.com/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newUser),

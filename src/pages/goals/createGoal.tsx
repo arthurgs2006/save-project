@@ -38,7 +38,7 @@ export default function CreateGoalPage() {
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("loggedUser") || "{}");
 
-    fetch(`http://localhost:3001/users/${storedUser.id}`)
+    fetch(`https://database-save-app.onrender.com/users/${storedUser.id}`)
       .then((res) => res.json())
       .then((data) => setUser(data));
 
@@ -115,7 +115,7 @@ export default function CreateGoalPage() {
       goals: [...(user.goals || []), newGoal]
     };
 
-    await fetch(`http://localhost:3001/users/${user.id}`, {
+    await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedUser)

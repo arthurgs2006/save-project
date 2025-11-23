@@ -13,7 +13,7 @@ export async function getBankBalance(
 
   try {
 
-    const res = await fetch(`http://localhost:3001/users/${userId}`);
+    const res = await fetch(`https://database-save-app.onrender.com/users/${userId}`);
 
     if (!res.ok) {
       throw new Error("Usuário não encontrado no JSON Server.");

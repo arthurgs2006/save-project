@@ -26,7 +26,7 @@ export default function ReceitasPage() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    fetch(`http://localhost:3001/users/${parsedUser.id}`)
+    fetch(`https://database-save-app.onrender.com/users/${parsedUser.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {

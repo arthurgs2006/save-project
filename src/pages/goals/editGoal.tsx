@@ -30,7 +30,7 @@ export default function EditGoalPage() {
       return;
     }
 
-    fetch(`http://localhost:3001/users/${storedUser.id}`)
+    fetch(`https://database-save-app.onrender.com/users/${storedUser.id}`)
       .then((res) => res.json())
       .then((data) => {
         setUser(data);
@@ -100,7 +100,7 @@ export default function EditGoalPage() {
       ),
     };
 
-    fetch(`http://localhost:3001/users/${user.id}`, {
+    fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedUser),
@@ -146,7 +146,7 @@ export default function EditGoalPage() {
       ),
     };
 
-    fetch(`http://localhost:3001/users/${user.id}`, {
+    fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updatedUser),

@@ -28,7 +28,7 @@ export default function DepositPage() {
     if (!stored) return;
 
     const parsed = JSON.parse(stored);
-    fetch(`http://localhost:3001/users/${parsed.id}`)
+    fetch(`https://database-save-app.onrender.com/users/${parsed.id}`)
       .then((res) => res.json())
       .then((data) => setUser(data));
   }, []);
@@ -91,7 +91,7 @@ export default function DepositPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`http://localhost:3001/users/${user.id}`, {
+      const res = await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser),
