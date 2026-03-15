@@ -1,242 +1,321 @@
 import { useEffect, useState } from "react";
 import {
-  Container,
-  Row,
-  Col,
-  Input,
-  Label,
-  Button,
-  Card,
-  CardBody,
-  ListGroup,
-  ListGroupItem,
+    Container,
+    Row,
+    Col,
+    Input,
+    Label,
+    Button,
+    Card,
+    CardBody,
+    ListGroup,
+    ListGroupItem,
 } from "reactstrap";
 import { motion } from "framer-motion";
 import TitleHeader from "../../components/generic_components/titleHeader";
 
+interface DepositStatement {
+    id: number;
+    tipo: string;
+    descricao: string;
+    valor: number;
+    data: string;
+}
+
+interface GoalDeposit {
+    id: number;
+    value: number;
+    time: string;
+}
+
+interface Goal {
+    id: number;
+    name: string;
+    deposits?: GoalDeposit[];
+}
+
+interface User {
+    id: number;
+    saldo_final: number;
+    extratos: DepositStatement[];
+    goals?: Goal[];
+}
+
 export default function DepositPage() {
-  const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [depositValue, setDepositValue] = useState<string>("");
+    const [selectedGoal, setSelectedGoal] = useState<string>("none");
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
-  const [depositValue, setDepositValue] = useState<string>("");
-  const [selectedGoal, setSelectedGoal] = useState<string>("none");
+    useEffect(() => {
+        const stored = localStorage.getItem("loggedUser");
+        if (!stored) return;
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+        const parsed = JSON.parse(stored);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("loggedUser");
-    if (!stored) return;
+        fetch(`https://database-save-app.onrender.com/users/${parsed.id}`)
+            .then((res) => res.json())
+            .then((data) => setUser(data))
+            .catch(() => console.warn("Erro ao carregar usuário."));
+    }, []);
 
-    const parsed = JSON.parse(stored);
-    fetch(`https://database-save-app.onrender.com/users/${parsed.id}`)
-      .then((res) => res.json())
-      .then((data) => setUser(data));
-  }, []);
+    async function handleDeposit() {
+        if (!user) {
+            alert("Usuário não encontrado. Faça login novamente.");
+            return;
+        }
 
-  async function handleDeposit() {
-    if (!user) {
-      alert("Usuário não encontrado. Faça login novamente.");
-      return;
-    }
+        const deposit = Number(depositValue);
 
-    const deposit = Number(depositValue);
-    if (isNaN(deposit) || deposit <= 0) {
-      alert("Digite um valor válido!");
-      return;
-    }
+        if (isNaN(deposit) || deposit <= 0) {
+            alert("Digite um valor válido!");
+            return;
+        }
 
-    const newBalance = (user.saldo_final || 0) + deposit;
+        const newBalance = (user.saldo_final || 0) + deposit;
 
-    const newStatement = {
-      id: Date.now(),
-      tipo: "credito",
-      descricao:
-        selectedGoal === "none"
-          ? "Depósito realizado"
-          : `Depósito na meta: ${
-              user.goals.find((g: any) => g.id === Number(selectedGoal))?.name
-            }`,
-      valor: deposit,
-      data: new Date().toISOString().split("T")[0],
-    };
+        const goalName =
+            selectedGoal === "none"
+                ? null
+                : user.goals?.find((g) => g.id === Number(selectedGoal))?.name;
 
-    let updatedGoals = [...(user.goals || [])];
+        const newStatement: DepositStatement = {
+            id: Date.now(),
+            tipo: "credito",
+            descricao:
+                selectedGoal === "none"
+                    ? "Depósito realizado"
+                    : `Depósito na meta: ${goalName}`,
+            valor: deposit,
+            data: new Date().toISOString().split("T")[0],
+        };
 
-    if (selectedGoal !== "none") {
-      updatedGoals = updatedGoals.map((goal: any) => {
-        if (goal.id === Number(selectedGoal)) {
-          return {
-            ...goal,
-            deposits: [
-              ...(goal.deposits || []),
-              {
-                id: Date.now(),
-                value: deposit,
-                time: new Date().toISOString(),
-              },
-            ],
-          };
-        }
-        return goal;
-      });
-    }
+        let updatedGoals = [...(user.goals || [])];
 
-    const updatedUser = {
-      ...user,
-      saldo_final: newBalance,
-      extratos: [...(user.extratos || []), newStatement],
-      goals: updatedGoals,
-    };
+        if (selectedGoal !== "none") {
+            updatedGoals = updatedGoals.map((goal) => {
+                if (goal.id === Number(selectedGoal)) {
+                    return {
+                        ...goal,
+                        deposits: [
+                            ...(goal.deposits || []),
+                            {
+                                id: Date.now(),
+                                value: deposit,
+                                time: new Date().toISOString(),
+                            },
+                        ],
+                    };
+                }
 
-    try {
-      setLoading(true);
+                return goal;
+            });
+        }
 
-      const res = await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedUser),
-      });
+        const updatedUser: User = {
+            ...user,
+            saldo_final: newBalance,
+            extratos: [...(user.extratos || []), newStatement],
+            goals: updatedGoals,
+        };
 
-      if (!res.ok) throw new Error("Erro ao atualizar dados");
+        try {
+            setLoading(true);
 
-      localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
-      setUser(updatedUser);
+            const res = await fetch(
+                `https://database-save-app.onrender.com/users/${user.id}`,
+                {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedUser),
+                }
+            );
 
-      setDepositValue("");
-      setSelectedGoal("none");
-      setSuccess(true);
+            if (!res.ok) {
+                throw new Error("Erro ao atualizar dados");
+            }
 
-      setTimeout(() => setSuccess(false), 2000);
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao realizar depósito.");
-    } finally {
-      setLoading(false);
-    }
-  }
+            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+            setUser(updatedUser);
+            setDepositValue("");
+            setSelectedGoal("none");
+            setSuccess(true);
 
-  return (
-    <div className="background-color text-white min-vh-100 d-flex align-items-center py-5">
-      <Container>
-        
-        <Row className="justify-content-center">
-          <Col md={6}>
-            <motion.div
-              className="p-4 rounded shadow-lg"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            
-            >
-               <TitleHeader title="Depositar"/>
-              {!user ? (
-                <p className="text-center text-secondary">
-                  Carregando informações...
-                </p>
-              ) : (
-                <>
-                  <Card
-                    className="border-0 mb-4"
-                    style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
-                  >
-                    <CardBody className="text-center">
-                      <h6 className="text-secondary mb-1">Saldo Atual</h6>
-                      <motion.h2
-                        key={user.saldo_final}
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                        className="fw-bold text-success"
-                      >
-                        R$
-                        {user.saldo_final
-                          ?.toFixed(2)
-                          .replace(".", ",") || "0,00"}
-                      </motion.h2>
-                    </CardBody>
-                  </Card>
+            setTimeout(() => setSuccess(false), 2000);
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao realizar depósito.");
+        } finally {
+            setLoading(false);
+        }
+    }
 
-                  <Label className="fw-bold">Valor do Depósito</Label>
-                  <div className="d-flex align-items-center gap-3 mb-3">
-                    <span className="h4 mb-0">R$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={depositValue}
-                      onChange={(e) => setDepositValue(e.target.value)}
-                      placeholder="0,00"
-                      className="custom-input-balance text-center fw-bold"
-                      style={{ fontSize: "1.2rem" }}
-                    />
-                  </div>
+    return (
+        <div className="background-color text-white min-vh-100 py-4 py-md-5">
+            <Container className="home-shell">
+                <Row className="justify-content-center">
+                    <Col lg={7} md={9}>
+                        <motion.div
+                            initial={{ opacity: 0, y: 28 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.45 }}
+                            className="home-main"
+                        >
+                            <TitleHeader title="Depositar" />
 
-                  <Label className="fw-bold mt-3">Direcionar depósito para</Label>
-                  <Input
-                    type="select"
-                    className="mb-4"
-                    value={selectedGoal}
-                    onChange={(e) => setSelectedGoal(e.target.value)}
-                  >
-                    <option value="none">Saldo geral</option>
-                    {user.goals?.map((g: any) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </Input>
+                            {!user ? (
+                                <div className="home-empty-state mt-4 text-center">
+                                    Carregando informações...
+                                </div>
+                            ) : (
+                                <>
+                                    <Card className="home-graph-card border-0 mb-4">
+                                        <CardBody className="text-center py-4">
+                                            <p className="home-balance-label mb-2">Saldo Atual</p>
 
-                  <Button
-                    color="success"
-                    onClick={handleDeposit}
-                    disabled={loading}
-                    className="w-100 fw-bold py-2 rounded-pill"
-                  >
-                    {loading ? "Processando..." : "Confirmar Depósito"}
-                  </Button>
+                                            <motion.h2
+                                                key={user.saldo_final}
+                                                initial={{ scale: 0.94, opacity: 0 }}
+                                                animate={{ scale: 1, opacity: 1 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="home-balance-value"
+                                                style={{ fontSize: "2.4rem" }}
+                                            >
+                                                R${" "}
+                                                {Number(user.saldo_final || 0)
+                                                    .toFixed(2)
+                                                    .replace(".", ",")}
+                                            </motion.h2>
+                                        </CardBody>
+                                    </Card>
 
-                  {success && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="text-center mt-3 text-success fw-bold"
-                    >
-                      ✅ Depósito realizado!
-                    </motion.div>
-                  )}
+                                    <section className="home-section">
+                                        <div className="home-list-item" style={{ cursor: "default" }}>
+                                            <div className="w-100">
+                                                <Label className="fw-bold mb-3 d-block">
+                                                    Valor do Depósito
+                                                </Label>
 
-                  {user.extratos?.length > 0 && (
-                    <div className="mt-5">
-                      <h5 className="fw-bold mb-3">📜 Histórico</h5>
-                      <ListGroup flush>
-                        {[...user.extratos]
-                          .reverse()
-                          .slice(0, 5)
-                          .map((item) => (
-                            <ListGroupItem
-                              key={item.id}
-                              className="d-flex justify-content-between align-items-center text-white"
-                              style={{
-                                backgroundColor: "rgba(255,255,255,0.06)",
-                                border: "none",
-                              }}
-                            >
-                              <span>{item.descricao}</span>
-                              <span className="fw-bold text-success">
-                                + R$ {item.valor.toFixed(2).replace(".", ",")}
-                              </span>
-                            </ListGroupItem>
-                          ))}
-                      </ListGroup>
-                    </div>
-                  )}
-                </>
-              )}
-            </motion.div>
-          </Col>
-        </Row>
-      </Container>
-    </div>
-  );
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <span
+                                                        className="fw-bold"
+                                                        style={{ fontSize: "1.4rem", color: "#fff" }}
+                                                    >
+                                                        R$
+                                                    </span>
+
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        value={depositValue}
+                                                        onChange={(e) => setDepositValue(e.target.value)}
+                                                        placeholder="0,00"
+                                                        className="custom-input-balance text-center fw-bold"
+                                                        style={{ fontSize: "1.2rem" }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <section className="home-section">
+                                        <div className="home-list-item" style={{ cursor: "default" }}>
+                                            <div className="w-100">
+                                                <Label className="fw-bold mb-3 d-block">
+                                                    Direcionar depósito para
+                                                </Label>
+
+                                                <Input
+                                                    type="select"
+                                                    value={selectedGoal}
+                                                    onChange={(e) => setSelectedGoal(e.target.value)}
+                                                    className="custom-input-balance"
+                                                >
+                                                    <option value="none">Saldo geral</option>
+                                                    {user.goals?.map((goal) => (
+                                                        <option key={goal.id} value={goal.id}>
+                                                            {goal.name}
+                                                        </option>
+                                                    ))}
+                                                </Input>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <section className="home-section">
+                                        <Button
+                                            color="success"
+                                            onClick={handleDeposit}
+                                            disabled={loading}
+                                            className="w-100 fw-bold py-3"
+                                            style={{
+                                                borderRadius: "18px",
+                                                fontSize: "1rem",
+                                            }}
+                                        >
+                                            {loading ? "Processando..." : "Confirmar Depósito"}
+                                        </Button>
+
+                                        {success && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.3 }}
+                                                className="text-center mt-3 fw-bold"
+                                                style={{ color: "#00c853" }}
+                                            >
+                                                ✅ Depósito realizado!
+                                            </motion.div>
+                                        )}
+                                    </section>
+
+                                    {user.extratos?.length > 0 && (
+                                        <section className="home-section mt-5">
+                                            <div className="home-section-header">
+                                                <h5 className="home-section-title">Histórico</h5>
+                                            </div>
+
+                                            <ListGroup flush className="home-list">
+                                                {[...user.extratos]
+                                                    .reverse()
+                                                    .slice(0, 5)
+                                                    .map((item) => (
+                                                        <ListGroupItem
+                                                            key={item.id}
+                                                            className="home-list-item"
+                                                            style={{ cursor: "default" }}
+                                                        >
+                                                            <div className="home-list-left">
+                                                                <div className="home-list-icon">
+                                                                    <i className="bi bi-arrow-down-left-circle"></i>
+                                                                </div>
+
+                                                                <div>
+                                                                    <p className="home-item-title mb-1">
+                                                                        {item.descricao}
+                                                                    </p>
+                                                                    <small className="home-item-subtitle">
+                                                                        {item.data}
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+
+                                                            <span className="home-item-value home-item-value-credit">
+                                                                + R$ {Number(item.valor).toFixed(2).replace(".", ",")}
+                                                            </span>
+                                                        </ListGroupItem>
+                                                    ))}
+                                            </ListGroup>
+                                        </section>
+                                    )}
+                                </>
+                            )}
+                        </motion.div>
+                    </Col>
+                </Row>
+            </Container>
+        </div>
+    );
 }
