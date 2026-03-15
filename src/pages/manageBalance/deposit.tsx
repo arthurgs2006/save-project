@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Container,
     Row,
@@ -43,22 +43,43 @@ interface User {
 
 export default function DepositPage() {
     const [user, setUser] = useState<User | null>(null);
-    const [depositValue, setDepositValue] = useState<string>("");
-    const [selectedGoal, setSelectedGoal] = useState<string>("none");
+    const [depositValue, setDepositValue] = useState("");
+    const [selectedGoal, setSelectedGoal] = useState("none");
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
-        const stored = localStorage.getItem("loggedUser");
-        if (!stored) return;
+        async function loadUser() {
+            const storedUser = localStorage.getItem("loggedUser");
 
-        const parsed = JSON.parse(stored);
+            if (!storedUser) return;
 
-        fetch(`https://database-save-app.onrender.com/users/${parsed.id}`)
-            .then((res) => res.json())
-            .then((data) => setUser(data))
-            .catch(() => console.warn("Erro ao carregar usuário."));
+            const parsedUser = JSON.parse(storedUser);
+
+            try {
+                const response = await fetch(
+                    `https://database-save-app.onrender.com/users/${parsedUser.id}`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Erro ao carregar usuário");
+                }
+
+                const data: User = await response.json();
+                setUser(data);
+            } catch {
+                console.warn("Erro ao carregar usuário.");
+            }
+        }
+
+        loadUser();
     }, []);
+
+    const recentStatements = useMemo(() => {
+        if (!user?.extratos?.length) return [];
+
+        return [...user.extratos].reverse().slice(0, 5);
+    }, [user]);
 
     async function handleDeposit() {
         if (!user) {
@@ -73,44 +94,42 @@ export default function DepositPage() {
             return;
         }
 
-        const newBalance = (user.saldo_final || 0) + deposit;
+        const now = Date.now();
+        const newBalance = Number(user.saldo_final || 0) + deposit;
 
-        const goalName =
+        const selectedGoalData =
             selectedGoal === "none"
                 ? null
-                : user.goals?.find((g) => g.id === Number(selectedGoal))?.name;
+                : user.goals?.find((goal) => goal.id === Number(selectedGoal)) || null;
 
         const newStatement: DepositStatement = {
-            id: Date.now(),
+            id: now,
             tipo: "credito",
-            descricao:
-                selectedGoal === "none"
-                    ? "Depósito realizado"
-                    : `Depósito na meta: ${goalName}`,
+            descricao: selectedGoalData
+                ? `Depósito na meta: ${selectedGoalData.name}`
+                : "Depósito realizado",
             valor: deposit,
             data: new Date().toISOString().split("T")[0],
         };
 
         let updatedGoals = [...(user.goals || [])];
 
-        if (selectedGoal !== "none") {
-            updatedGoals = updatedGoals.map((goal) => {
-                if (goal.id === Number(selectedGoal)) {
-                    return {
+        if (selectedGoalData) {
+            updatedGoals = updatedGoals.map((goal) =>
+                goal.id === selectedGoalData.id
+                    ? {
                         ...goal,
                         deposits: [
                             ...(goal.deposits || []),
                             {
-                                id: Date.now(),
+                                id: now,
                                 value: deposit,
                                 time: new Date().toISOString(),
                             },
                         ],
-                    };
-                }
-
-                return goal;
-            });
+                    }
+                    : goal
+            );
         }
 
         const updatedUser: User = {
@@ -123,7 +142,7 @@ export default function DepositPage() {
         try {
             setLoading(true);
 
-            const res = await fetch(
+            const response = await fetch(
                 `https://database-save-app.onrender.com/users/${user.id}`,
                 {
                     method: "PUT",
@@ -132,7 +151,7 @@ export default function DepositPage() {
                 }
             );
 
-            if (!res.ok) {
+            if (!response.ok) {
                 throw new Error("Erro ao atualizar dados");
             }
 
@@ -143,12 +162,19 @@ export default function DepositPage() {
             setSuccess(true);
 
             setTimeout(() => setSuccess(false), 2000);
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error(error);
             alert("Erro ao realizar depósito.");
         } finally {
             setLoading(false);
         }
+    }
+
+    function formatCurrency(value: number) {
+        return value.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
     }
 
     return (
@@ -176,22 +202,22 @@ export default function DepositPage() {
 
                                             <motion.h2
                                                 key={user.saldo_final}
-                                                initial={{ scale: 0.94, opacity: 0 }}
+                                                initial={{ scale: 0.96, opacity: 0 }}
                                                 animate={{ scale: 1, opacity: 1 }}
                                                 transition={{ duration: 0.3 }}
                                                 className="home-balance-value"
                                                 style={{ fontSize: "2.4rem" }}
                                             >
-                                                R${" "}
-                                                {Number(user.saldo_final || 0)
-                                                    .toFixed(2)
-                                                    .replace(".", ",")}
+                                                R$ {formatCurrency(Number(user.saldo_final || 0))}
                                             </motion.h2>
                                         </CardBody>
                                     </Card>
 
                                     <section className="home-section">
-                                        <div className="home-list-item" style={{ cursor: "default" }}>
+                                        <div
+                                            className="home-list-item"
+                                            style={{ cursor: "default" }}
+                                        >
                                             <div className="w-100">
                                                 <Label className="fw-bold mb-3 d-block">
                                                     Valor do Depósito
@@ -221,7 +247,10 @@ export default function DepositPage() {
                                     </section>
 
                                     <section className="home-section">
-                                        <div className="home-list-item" style={{ cursor: "default" }}>
+                                        <div
+                                            className="home-list-item"
+                                            style={{ cursor: "default" }}
+                                        >
                                             <div className="w-100">
                                                 <Label className="fw-bold mb-3 d-block">
                                                     Direcionar depósito para
@@ -271,42 +300,39 @@ export default function DepositPage() {
                                         )}
                                     </section>
 
-                                    {user.extratos?.length > 0 && (
+                                    {recentStatements.length > 0 && (
                                         <section className="home-section mt-5">
                                             <div className="home-section-header">
                                                 <h5 className="home-section-title">Histórico</h5>
                                             </div>
 
                                             <ListGroup flush className="home-list">
-                                                {[...user.extratos]
-                                                    .reverse()
-                                                    .slice(0, 5)
-                                                    .map((item) => (
-                                                        <ListGroupItem
-                                                            key={item.id}
-                                                            className="home-list-item"
-                                                            style={{ cursor: "default" }}
-                                                        >
-                                                            <div className="home-list-left">
-                                                                <div className="home-list-icon">
-                                                                    <i className="bi bi-arrow-down-left-circle"></i>
-                                                                </div>
-
-                                                                <div>
-                                                                    <p className="home-item-title mb-1">
-                                                                        {item.descricao}
-                                                                    </p>
-                                                                    <small className="home-item-subtitle">
-                                                                        {item.data}
-                                                                    </small>
-                                                                </div>
+                                                {recentStatements.map((item) => (
+                                                    <ListGroupItem
+                                                        key={item.id}
+                                                        className="home-list-item"
+                                                        style={{ cursor: "default" }}
+                                                    >
+                                                        <div className="home-list-left">
+                                                            <div className="home-list-icon">
+                                                                <i className="bi bi-arrow-down-left-circle"></i>
                                                             </div>
 
-                                                            <span className="home-item-value home-item-value-credit">
-                                                                + R$ {Number(item.valor).toFixed(2).replace(".", ",")}
-                                                            </span>
-                                                        </ListGroupItem>
-                                                    ))}
+                                                            <div>
+                                                                <p className="home-item-title mb-1">
+                                                                    {item.descricao}
+                                                                </p>
+                                                                <small className="home-item-subtitle">
+                                                                    {item.data}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+
+                                                        <span className="home-item-value home-item-value-credit">
+                                                            + R$ {formatCurrency(Number(item.valor))}
+                                                        </span>
+                                                    </ListGroupItem>
+                                                ))}
                                             </ListGroup>
                                         </section>
                                     )}
