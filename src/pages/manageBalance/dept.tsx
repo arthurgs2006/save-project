@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Container,
     Row,
@@ -16,8 +16,14 @@ import TitleHeader from "../../components/generic_components/titleHeader";
 
 interface DepositItem {
     id: number;
+    transactionId?: string;
     value: number;
     time?: string;
+    date?: string;
+    hour?: string;
+    dateTimeLabel?: string;
+    status?: "concluido";
+    method?: "saldo_manual";
 }
 
 interface Goal {
@@ -28,10 +34,19 @@ interface Goal {
 
 interface Statement {
     id: number;
+    transactionId: string;
     tipo: "credito" | "debito";
     descricao: string;
     valor: number;
     data: string;
+    hora: string;
+    dataHora: string;
+    createdAt: string;
+    status: "concluido";
+    metodo: "saldo_manual";
+    origem: "saque";
+    goalId?: number | null;
+    goalName?: string | null;
 }
 
 interface User {
@@ -43,7 +58,7 @@ interface User {
 
 export default function WithdrawPage() {
     const [user, setUser] = useState<User | null>(null);
-    const [withdrawValue, setWithdrawValue] = useState<string>("");
+    const [withdrawValue, setWithdrawValue] = useState("");
     const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
 
     const [loading, setLoading] = useState(false);
@@ -56,18 +71,62 @@ export default function WithdrawPage() {
         }
     }, []);
 
+    const recentWithdraws = useMemo(() => {
+        if (!user?.extratos?.length) return [];
+
+        return [...user.extratos]
+            .filter((item) => item.tipo === "debito")
+            .reverse()
+            .slice(0, 5);
+    }, [user]);
+
+    function formatCurrency(value: number) {
+        return value.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    function buildWithdrawMetadata() {
+        const now = new Date();
+        const timestamp = now.getTime();
+
+        const date = now.toLocaleDateString("pt-BR");
+        const hour = now.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        });
+
+        const dateTimeLabel = `${date} às ${hour}`;
+        const transactionId = `SAQ-${timestamp}-${Math.floor(
+            1000 + Math.random() * 9000
+        )}`;
+
+        return {
+            id: timestamp,
+            transactionId,
+            createdAt: now.toISOString(),
+            date,
+            hour,
+            dateTimeLabel,
+        };
+    }
+
     async function handleWithdraw() {
         if (!user) {
             alert("Usuário não encontrado. Faça login novamente.");
             return;
         }
 
-        const valor = Number(withdrawValue);
+        const valor = Number(withdrawValue.replace(",", "."));
 
         if (isNaN(valor) || valor <= 0) {
             alert("Digite um valor de saque válido!");
             return;
         }
+
+        const meta = buildWithdrawMetadata();
 
         let metasAtualizadas = [...(user.goals || [])];
         let extratosAtualizados = [...(user.extratos || [])];
@@ -81,11 +140,20 @@ export default function WithdrawPage() {
             const novoSaldo = user.saldo_final - valor;
 
             extratosAtualizados.push({
-                id: Date.now(),
+                id: meta.id,
+                transactionId: meta.transactionId,
                 tipo: "debito",
                 descricao: "Débito do saldo geral",
                 valor,
-                data: new Date().toISOString().split("T")[0],
+                data: meta.date,
+                hora: meta.hour,
+                dataHora: meta.dateTimeLabel,
+                createdAt: meta.createdAt,
+                status: "concluido",
+                metodo: "saldo_manual",
+                origem: "saque",
+                goalId: null,
+                goalName: null,
             });
 
             return await atualizarUsuario({
@@ -104,7 +172,7 @@ export default function WithdrawPage() {
         }
 
         const totalDeposits =
-            goal.deposits?.reduce((acc, d) => acc + d.value, 0) || 0;
+            goal.deposits?.reduce((acc, d) => acc + Number(d.value || 0), 0) || 0;
 
         if (valor > totalDeposits) {
             alert("Valor maior que o saldo disponível na meta!");
@@ -114,7 +182,21 @@ export default function WithdrawPage() {
         const novoValorMeta = totalDeposits - valor;
 
         const novosDepositos =
-            novoValorMeta > 0 ? [{ id: Date.now(), value: novoValorMeta }] : [];
+            novoValorMeta > 0
+                ? [
+                    {
+                        id: meta.id,
+                        transactionId: meta.transactionId,
+                        value: novoValorMeta,
+                        time: meta.createdAt,
+                        date: meta.date,
+                        hour: meta.hour,
+                        dateTimeLabel: meta.dateTimeLabel,
+                        status: "concluido" as const,
+                        method: "saldo_manual" as const,
+                    },
+                ]
+                : [];
 
         if (novoValorMeta <= 0) {
             metasAtualizadas = metasAtualizadas.filter((g) => g.id !== selectedGoal);
@@ -125,11 +207,20 @@ export default function WithdrawPage() {
         }
 
         extratosAtualizados.push({
-            id: Date.now(),
+            id: meta.id,
+            transactionId: meta.transactionId,
             tipo: "debito",
             descricao: `Débito da meta: ${goal.name}`,
             valor,
-            data: new Date().toISOString().split("T")[0],
+            data: meta.date,
+            hora: meta.hour,
+            dataHora: meta.dateTimeLabel,
+            createdAt: meta.createdAt,
+            status: "concluido",
+            metodo: "saldo_manual",
+            origem: "saque",
+            goalId: goal.id,
+            goalName: goal.name,
         });
 
         return await atualizarUsuario({
@@ -204,10 +295,7 @@ export default function WithdrawPage() {
                                                 className="home-balance-value"
                                                 style={{ fontSize: "2.4rem" }}
                                             >
-                                                R${" "}
-                                                {Number(user.saldo_final || 0)
-                                                    .toFixed(2)
-                                                    .replace(".", ",")}
+                                                R$ {formatCurrency(Number(user.saldo_final || 0))}
                                             </motion.h2>
                                         </CardBody>
                                     </Card>
@@ -234,11 +322,14 @@ export default function WithdrawPage() {
                                                     {user.goals?.length > 0 &&
                                                         user.goals.map((g) => {
                                                             const total =
-                                                                g.deposits?.reduce((acc, d) => acc + d.value, 0) || 0;
+                                                                g.deposits?.reduce(
+                                                                    (acc, d) => acc + Number(d.value || 0),
+                                                                    0
+                                                                ) || 0;
 
                                                             return (
                                                                 <option key={g.id} value={g.id}>
-                                                                    {g.name} — R$ {total.toFixed(2).replace(".", ",")}
+                                                                    {g.name} — R$ {formatCurrency(total)}
                                                                 </option>
                                                             );
                                                         })}
@@ -304,43 +395,50 @@ export default function WithdrawPage() {
                                         )}
                                     </section>
 
-                                    {user.extratos?.length > 0 && (
+                                    {recentWithdraws.length > 0 && (
                                         <section className="home-section mt-5">
                                             <div className="home-section-header">
                                                 <h5 className="home-section-title">Últimos débitos</h5>
                                             </div>
 
                                             <ListGroup flush className="home-list">
-                                                {[...user.extratos]
-                                                    .filter((e) => e.tipo === "debito")
-                                                    .reverse()
-                                                    .slice(0, 5)
-                                                    .map((item) => (
-                                                        <ListGroupItem
-                                                            key={item.id}
-                                                            className="home-list-item"
-                                                            style={{ cursor: "default" }}
-                                                        >
-                                                            <div className="home-list-left">
-                                                                <div className="home-list-icon">
-                                                                    <i className="bi bi-arrow-up-right-circle"></i>
-                                                                </div>
-
-                                                                <div>
-                                                                    <p className="home-item-title mb-1">
-                                                                        {item.descricao}
-                                                                    </p>
-                                                                    <small className="home-item-subtitle">
-                                                                        {item.data}
-                                                                    </small>
-                                                                </div>
+                                                {recentWithdraws.map((item) => (
+                                                    <ListGroupItem
+                                                        key={item.id}
+                                                        className="home-list-item"
+                                                        style={{ cursor: "default" }}
+                                                    >
+                                                        <div className="home-list-left">
+                                                            <div className="home-list-icon">
+                                                                <i className="bi bi-arrow-up-right-circle"></i>
                                                             </div>
 
-                                                            <span className="home-item-value home-item-value-debit">
-                                                                - R$ {Number(item.valor).toFixed(2).replace(".", ",")}
+                                                            <div>
+                                                                <p className="home-item-title mb-1">
+                                                                    {item.descricao}
+                                                                </p>
+
+                                                                <small className="home-item-subtitle d-block">
+                                                                    {item.dataHora}
+                                                                </small>
+
+                                                                <small className="home-item-subtitle d-block">
+                                                                    ID: {item.transactionId}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="text-end">
+                                                            <span className="home-item-value home-item-value-debit d-block">
+                                                                - R$ {formatCurrency(Number(item.valor))}
                                                             </span>
-                                                        </ListGroupItem>
-                                                    ))}
+
+                                                            <small className="home-item-subtitle">
+                                                                {item.status}
+                                                            </small>
+                                                        </div>
+                                                    </ListGroupItem>
+                                                ))}
                                             </ListGroup>
                                         </section>
                                     )}

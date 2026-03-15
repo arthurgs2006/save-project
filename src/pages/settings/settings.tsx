@@ -17,7 +17,7 @@ export default function () {
                         <h6 className="settings-section-title">Aplicativo</h6>
                         <Link to="" className="settings-link">Editar dados do perfil</Link>
                         <Link to="" className="settings-link">Aparência</Link>
-                        <Link to="" className="settings-link">Me ajuda</Link>
+                        <Link to="" className="settings-link">Ajuda</Link>
                     </div>
                 </main>
             </Container>

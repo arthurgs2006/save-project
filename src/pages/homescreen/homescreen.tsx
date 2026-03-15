@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Button, ListGroup, ListGroupItem } from "reactstrap";
 import { motion } from "framer-motion";
@@ -8,9 +8,19 @@ import GraphicCard from "../../components/graphic_components/graphicCard";
 
 interface Extrato {
     id: number | string;
+    transactionId?: string;
     data: string;
+    hora?: string;
+    dataHora?: string;
+    createdAt?: string;
+    descricao?: string;
     valor: number;
     tipo: "credito" | "debito";
+    status?: string;
+    metodo?: string;
+    origem?: string;
+    goalId?: number | null;
+    goalName?: string | null;
 }
 
 interface RecurringDebt {
@@ -34,26 +44,78 @@ export default function HomeScreen() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const storedUser = localStorage.getItem("loggedUser");
+        async function loadUser() {
+            const storedUser = localStorage.getItem("loggedUser");
 
-        if (!storedUser) {
-            window.location.href = "/login";
-            return;
+            if (!storedUser) {
+                navigate("/login");
+                return;
+            }
+
+            const parsedUser: User = JSON.parse(storedUser);
+            setUser(parsedUser);
+
+            try {
+                const response = await fetch(
+                    `https://database-save-app.onrender.com/users/${parsedUser.id}`
+                );
+
+                if (!response.ok) return;
+
+                const data: User = await response.json();
+                setUser(data);
+                localStorage.setItem("loggedUser", JSON.stringify(data));
+            } catch {
+                console.warn("Servidor indisponível.");
+            }
         }
 
-        const parsedUser: User = JSON.parse(storedUser);
-        setUser(parsedUser);
+        loadUser();
+    }, [navigate]);
 
-        fetch(`https://database-save-app.onrender.com/users/${parsedUser.id}`)
-            .then((res) => (res.ok ? res.json() : null))
-            .then((data) => {
-                if (data) {
-                    setUser(data);
-                    localStorage.setItem("loggedUser", JSON.stringify(data));
-                }
-            })
-            .catch(() => console.warn("Servidor indisponível."));
-    }, []);
+    const freqMap: Record<string, string> = {
+        monthly: "Mensal",
+        weekly: "Semanal",
+        yearly: "Anual",
+    };
+
+    const ultimosExtratos = useMemo(() => {
+        return [...(user?.extratos || [])].reverse().slice(0, 4);
+    }, [user]);
+
+    const recurringDebts = user?.recurringDebts || [];
+
+    function formatCurrency(value: number) {
+        return value.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    function getTransactionTitle(item: Extrato) {
+        if (item.descricao) return item.descricao;
+        return item.tipo === "credito" ? "Depósito" : "Débito";
+    }
+
+    function getTransactionSubtitle(item: Extrato) {
+        if (item.dataHora) return item.dataHora;
+        if (item.hora) return `${item.data} às ${item.hora}`;
+        return item.data;
+    }
+
+    function getSafeExtraInfo(item: Extrato) {
+        const parts: string[] = [];
+
+        if (item.status) {
+            parts.push(item.status);
+        }
+
+        if (item.transactionId) {
+            parts.push(`ID: ${item.transactionId}`);
+        }
+
+        return parts.join(" • ");
+    }
 
     if (!user) {
         return (
@@ -62,15 +124,6 @@ export default function HomeScreen() {
             </div>
         );
     }
-
-    const freqMap: Record<string, string> = {
-        monthly: "Mensal",
-        weekly: "Semanal",
-        yearly: "Anual",
-    };
-
-    const ultimosExtratos = [...(user.extratos || [])].reverse().slice(0, 4);
-    const recurringDebts = user.recurringDebts || [];
 
     return (
         <div className="home-apple-screen text-white min-vh-100">
@@ -86,7 +139,7 @@ export default function HomeScreen() {
                     <section className="home-balance-wrap">
                         <p className="home-balance-label">Saldo bancário</p>
                         <h1 className="home-balance-value">
-                            R$ {Number(user.saldo_final).toFixed(2).replace(".", ",")}
+                            R$ {formatCurrency(Number(user.saldo_final))}
                         </h1>
                     </section>
 
@@ -167,9 +220,18 @@ export default function HomeScreen() {
 
                                             <div>
                                                 <p className="home-item-title mb-1">
-                                                    {item.tipo === "credito" ? "Depósito" : "Débito"}
+                                                    {getTransactionTitle(item)}
                                                 </p>
-                                                <small className="home-item-subtitle">{item.data}</small>
+
+                                                <small className="home-item-subtitle d-block">
+                                                    {getTransactionSubtitle(item)}
+                                                </small>
+
+                                                {getSafeExtraInfo(item) && (
+                                                    <small className="home-item-subtitle d-block">
+                                                        {getSafeExtraInfo(item)}
+                                                    </small>
+                                                )}
                                             </div>
                                         </div>
 
@@ -180,7 +242,7 @@ export default function HomeScreen() {
                                                 }`}
                                         >
                                             {item.tipo === "credito" ? "+" : "-"}R${" "}
-                                            {Number(item.valor).toFixed(2).replace(".", ",")}
+                                            {formatCurrency(Number(item.valor))}
                                         </span>
                                     </ListGroupItem>
                                 ))}
@@ -241,7 +303,7 @@ export default function HomeScreen() {
                                         </div>
 
                                         <span className="home-item-value home-item-value-debit">
-                                            -R$ {Number(debt.value).toFixed(2).replace(".", ",")}
+                                            -R$ {formatCurrency(Number(debt.value))}
                                         </span>
                                     </ListGroupItem>
                                 ))}

@@ -16,16 +16,31 @@ import TitleHeader from "../../components/generic_components/titleHeader";
 
 interface DepositStatement {
     id: number;
+    transactionId: string;
     tipo: string;
     descricao: string;
     valor: number;
     data: string;
+    hora: string;
+    dataHora: string;
+    createdAt: string;
+    status: "concluido";
+    metodo: "saldo_manual";
+    origem: "deposito";
+    goalId?: number | null;
+    goalName?: string | null;
 }
 
 interface GoalDeposit {
     id: number;
+    transactionId: string;
     value: number;
     time: string;
+    date: string;
+    hour: string;
+    dateTimeLabel: string;
+    status: "concluido";
+    method: "saldo_manual";
 }
 
 interface Goal {
@@ -39,6 +54,15 @@ interface User {
     saldo_final: number;
     extratos: DepositStatement[];
     goals?: Goal[];
+}
+
+interface DepositMetadata {
+    id: number;
+    transactionId: string;
+    createdAt: string;
+    date: string;
+    hour: string;
+    dateTimeLabel: string;
 }
 
 export default function DepositPage() {
@@ -77,9 +101,75 @@ export default function DepositPage() {
 
     const recentStatements = useMemo(() => {
         if (!user?.extratos?.length) return [];
-
         return [...user.extratos].reverse().slice(0, 5);
     }, [user]);
+
+    function formatCurrency(value: number) {
+        return value.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    function buildDepositMetadata(): DepositMetadata {
+        const now = new Date();
+        const timestamp = now.getTime();
+
+        const date = now.toLocaleDateString("pt-BR");
+        const hour = now.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        });
+
+        return {
+            id: timestamp,
+            transactionId: `DEP-${timestamp}-${Math.floor(1000 + Math.random() * 9000)}`,
+            createdAt: now.toISOString(),
+            date,
+            hour,
+            dateTimeLabel: `${date} às ${hour}`,
+        };
+    }
+
+    function createDepositStatement(
+        meta: DepositMetadata,
+        deposit: number,
+        selectedGoalData: Goal | null
+    ): DepositStatement {
+        return {
+            id: meta.id,
+            transactionId: meta.transactionId,
+            tipo: "credito",
+            descricao: selectedGoalData
+                ? `Depósito na meta: ${selectedGoalData.name}`
+                : "Depósito realizado no saldo geral",
+            valor: deposit,
+            data: meta.date,
+            hora: meta.hour,
+            dataHora: meta.dateTimeLabel,
+            createdAt: meta.createdAt,
+            status: "concluido",
+            metodo: "saldo_manual",
+            origem: "deposito",
+            goalId: selectedGoalData?.id ?? null,
+            goalName: selectedGoalData?.name ?? null,
+        };
+    }
+
+    function createGoalDeposit(meta: DepositMetadata, deposit: number): GoalDeposit {
+        return {
+            id: meta.id,
+            transactionId: meta.transactionId,
+            value: deposit,
+            time: meta.createdAt,
+            date: meta.date,
+            hour: meta.hour,
+            dateTimeLabel: meta.dateTimeLabel,
+            status: "concluido",
+            method: "saldo_manual",
+        };
+    }
 
     async function handleDeposit() {
         if (!user) {
@@ -87,14 +177,14 @@ export default function DepositPage() {
             return;
         }
 
-        const deposit = Number(depositValue);
+        const deposit = Number(depositValue.replace(",", "."));
 
         if (isNaN(deposit) || deposit <= 0) {
             alert("Digite um valor válido!");
             return;
         }
 
-        const now = Date.now();
+        const meta = buildDepositMetadata();
         const newBalance = Number(user.saldo_final || 0) + deposit;
 
         const selectedGoalData =
@@ -102,31 +192,18 @@ export default function DepositPage() {
                 ? null
                 : user.goals?.find((goal) => goal.id === Number(selectedGoal)) || null;
 
-        const newStatement: DepositStatement = {
-            id: now,
-            tipo: "credito",
-            descricao: selectedGoalData
-                ? `Depósito na meta: ${selectedGoalData.name}`
-                : "Depósito realizado",
-            valor: deposit,
-            data: new Date().toISOString().split("T")[0],
-        };
+        const newStatement = createDepositStatement(meta, deposit, selectedGoalData);
 
         let updatedGoals = [...(user.goals || [])];
 
         if (selectedGoalData) {
+            const goalDeposit = createGoalDeposit(meta, deposit);
+
             updatedGoals = updatedGoals.map((goal) =>
                 goal.id === selectedGoalData.id
                     ? {
                         ...goal,
-                        deposits: [
-                            ...(goal.deposits || []),
-                            {
-                                id: now,
-                                value: deposit,
-                                time: new Date().toISOString(),
-                            },
-                        ],
+                        deposits: [...(goal.deposits || []), goalDeposit],
                     }
                     : goal
             );
@@ -168,13 +245,6 @@ export default function DepositPage() {
         } finally {
             setLoading(false);
         }
-    }
-
-    function formatCurrency(value: number) {
-        return value.toLocaleString("pt-BR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
     }
 
     return (
@@ -236,7 +306,9 @@ export default function DepositPage() {
                                                         step="0.01"
                                                         min="0"
                                                         value={depositValue}
-                                                        onChange={(e) => setDepositValue(e.target.value)}
+                                                        onChange={(e) =>
+                                                            setDepositValue(e.target.value)
+                                                        }
                                                         placeholder="0,00"
                                                         className="custom-input-balance text-center fw-bold"
                                                         style={{ fontSize: "1.2rem" }}
@@ -295,7 +367,7 @@ export default function DepositPage() {
                                                 className="text-center mt-3 fw-bold"
                                                 style={{ color: "#00c853" }}
                                             >
-                                                ✅ Depósito realizado!
+                                                ✅ Depósito realizado com sucesso!
                                             </motion.div>
                                         )}
                                     </section>
@@ -307,9 +379,9 @@ export default function DepositPage() {
                                             </div>
 
                                             <ListGroup flush className="home-list">
-                                                {recentStatements.map((item) => (
+                                                {recentStatements.map((transaction) => (
                                                     <ListGroupItem
-                                                        key={item.id}
+                                                        key={transaction.id}
                                                         className="home-list-item"
                                                         style={{ cursor: "default" }}
                                                     >
@@ -320,17 +392,31 @@ export default function DepositPage() {
 
                                                             <div>
                                                                 <p className="home-item-title mb-1">
-                                                                    {item.descricao}
+                                                                    {transaction.descricao}
                                                                 </p>
-                                                                <small className="home-item-subtitle">
-                                                                    {item.data}
+
+                                                                <small className="home-item-subtitle d-block">
+                                                                    {transaction.dataHora}
+                                                                </small>
+
+                                                                <small className="home-item-subtitle d-block">
+                                                                    ID: {transaction.transactionId}
                                                                 </small>
                                                             </div>
                                                         </div>
 
-                                                        <span className="home-item-value home-item-value-credit">
-                                                            + R$ {formatCurrency(Number(item.valor))}
-                                                        </span>
+                                                        <div className="text-end">
+                                                            <span className="home-item-value home-item-value-credit d-block">
+                                                                + R${" "}
+                                                                {formatCurrency(
+                                                                    Number(transaction.valor)
+                                                                )}
+                                                            </span>
+
+                                                            <small className="home-item-subtitle text-capitalize">
+                                                                {transaction.status}
+                                                            </small>
+                                                        </div>
                                                     </ListGroupItem>
                                                 ))}
                                             </ListGroup>
