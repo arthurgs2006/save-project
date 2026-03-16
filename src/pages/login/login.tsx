@@ -56,8 +56,12 @@ export default function LoginPage() {
     }
 
     return (
-        <main className="background-color text-white min-vh-100 d-flex align-items-center">
-            <Container className="home-shell">
+        <main className="home-apple-screen text-white min-vh-100 d-flex align-items-center">
+            <div className="home-bg-orb home-bg-orb-1"></div>
+            <div className="home-bg-orb home-bg-orb-2"></div>
+            <div className="home-bg-orb home-bg-orb-3"></div>
+
+            <Container className="home-shell py-4 py-md-5">
                 <motion.div
                     initial={{ opacity: 0, y: 24 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -65,20 +69,22 @@ export default function LoginPage() {
                     className="d-flex justify-content-center"
                 >
                     <div style={{ width: "100%", maxWidth: "460px" }}>
-                        <div className="text-start mb-4">
+                        <div className="text-center mb-4">
                             <p className="home-balance-label mb-2">Bem-vindo de volta</p>
+
                             <h1
-                                className="mb-2"
+                                className="home-balance-value mb-2"
                                 style={{
-                                    fontSize: "2.2rem",
-                                    fontWeight: 700,
-                                    letterSpacing: "-0.8px",
-                                    lineHeight: 1.1
+                                    fontSize: "clamp(2.3rem, 5vw, 3.4rem)",
+                                    lineHeight: 1,
                                 }}
                             >
-                                Continue a experiência
+                                Entrar
                             </h1>
-                            <p className="home-item-subtitle mb-0">com sua conta</p>
+
+                            <p className="home-item-subtitle mb-0">
+                                Continue a experiência com sua conta
+                            </p>
                         </div>
 
                         <motion.div
@@ -89,7 +95,7 @@ export default function LoginPage() {
                         >
                             <Form onSubmit={handleLogin}>
                                 <FormGroup className="mb-4">
-                                    <Label htmlFor="email" className="fw-bold mb-2">
+                                    <Label htmlFor="email" className="fw-semibold mb-2">
                                         Email
                                     </Label>
                                     <Input
@@ -103,7 +109,7 @@ export default function LoginPage() {
                                 </FormGroup>
 
                                 <FormGroup className="mb-4">
-                                    <Label htmlFor="password" className="fw-bold mb-2">
+                                    <Label htmlFor="password" className="fw-semibold mb-2">
                                         Senha
                                     </Label>
                                     <Input
@@ -119,16 +125,38 @@ export default function LoginPage() {
                                 <Button
                                     color="primary"
                                     type="submit"
-                                    className="w-100 fw-bold py-3"
+                                    className="w-100 fw-semibold py-3"
                                     disabled={loading}
                                     style={{
-                                        borderRadius: "18px",
-                                        fontSize: "1rem"
+                                        borderRadius: "999px",
+                                        fontSize: "0.98rem"
                                     }}
                                 >
                                     {loading ? "Entrando..." : "Entrar"}
                                 </Button>
                             </Form>
+
+                            <div className="text-center mt-4">
+                                <span className="home-item-subtitle">
+                                    Ainda não tem uma conta?
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={() => navigate("/signin")}
+                                    style={{
+                                        background: "transparent",
+                                        border: "none",
+                                        color: "#bfe7ff",
+                                        marginLeft: "6px",
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                        padding: 0
+                                    }}
+                                >
+                                    Criar conta
+                                </button>
+                            </div>
                         </motion.div>
                     </div>
                 </motion.div>

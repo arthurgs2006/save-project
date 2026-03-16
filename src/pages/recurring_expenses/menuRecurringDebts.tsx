@@ -120,25 +120,35 @@ export default function RecurringDebtsMenu() {
 
     if (!user) {
         return (
-            <div className="d-flex justify-content-center align-items-center text-white background-color min-vh-100">
+            <div className="home-apple-screen d-flex justify-content-center align-items-center text-white min-vh-100">
                 <div className="home-empty-state">Carregando...</div>
             </div>
         );
     }
 
     return (
-        <div className="background-color text-white min-vh-100 py-4 py-md-5">
+        <main className="home-apple-screen text-white min-vh-100 py-4 py-md-5">
+            <div className="home-bg-orb home-bg-orb-1"></div>
+            <div className="home-bg-orb home-bg-orb-2"></div>
+            <div className="home-bg-orb home-bg-orb-3"></div>
+
             <Container className="home-shell">
                 <AccountHeader name={user.nome} />
 
-                <div className="home-main">
+                <motion.div
+                    className="home-main"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                >
                     <TitleHeader title="Débitos Recorrentes" />
 
                     <section className="home-section">
                         <div className="d-flex justify-content-end">
                             <Button
                                 color="primary"
-                                className="rounded-pill d-flex align-items-center gap-2 px-3"
+                                className="fw-semibold d-flex align-items-center gap-2 px-4 py-2"
+                                style={{ borderRadius: "999px" }}
                                 onClick={() => navigate("/registerDebt/newRecurringDebt")}
                             >
                                 <i className="bi bi-plus-circle"></i>
@@ -166,30 +176,44 @@ export default function RecurringDebtsMenu() {
                                                     <i className="bi bi-arrow-repeat"></i>
                                                 </div>
 
-                                                <div>
-                                                    <p className="home-item-title mb-1">{debt.name}</p>
+                                                <div className="home-item-copy">
+                                                    <p className="home-item-title mb-1">
+                                                        {debt.name}
+                                                    </p>
 
                                                     <small className="home-item-subtitle d-block">
                                                         {freqMap[debt.frequency]} — dia {debt.billingDate}
                                                     </small>
 
                                                     {debt.category && (
-                                                        <small className="home-item-subtitle d-block">
+                                                        <small className="home-item-meta d-block">
                                                             {debt.category}
+                                                        </small>
+                                                    )}
+
+                                                    {debt.description && (
+                                                        <small className="home-item-meta d-block">
+                                                            {debt.description}
                                                         </small>
                                                     )}
                                                 </div>
                                             </div>
 
                                             <div className="d-flex align-items-center gap-3">
-                                                <span className="home-item-value">
-                                                    R$ {formatCurrency(Number(debt.value))}
+                                                <span className="home-item-value home-item-value-debit">
+                                                    - R$ {formatCurrency(Number(debt.value))}
                                                 </span>
 
                                                 <Button
                                                     color="danger"
                                                     size="sm"
-                                                    className="rounded-circle d-flex align-items-center justify-content-center"
+                                                    className="d-flex align-items-center justify-content-center"
+                                                    style={{
+                                                        borderRadius: "999px",
+                                                        width: "36px",
+                                                        height: "36px",
+                                                        padding: 0,
+                                                    }}
                                                     onClick={() => removerDebito(debt.id)}
                                                     disabled={loading}
                                                 >
@@ -206,8 +230,8 @@ export default function RecurringDebtsMenu() {
                             </div>
                         )}
                     </section>
-                </div>
+                </motion.div>
             </Container>
-        </div>
+        </main>
     );
 }

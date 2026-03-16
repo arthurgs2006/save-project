@@ -6,8 +6,6 @@ import {
     Input,
     Label,
     Button,
-    Card,
-    CardBody,
     ListGroup,
     ListGroupItem,
 } from "reactstrap";
@@ -248,14 +246,18 @@ export default function DepositPage() {
     }
 
     return (
-        <div className="background-color text-white min-vh-100 py-4 py-md-5">
+        <main className="home-apple-screen text-white min-vh-100 py-4 py-md-5">
+            <div className="home-bg-orb home-bg-orb-1"></div>
+            <div className="home-bg-orb home-bg-orb-2"></div>
+            <div className="home-bg-orb home-bg-orb-3"></div>
+
             <Container className="home-shell">
                 <Row className="justify-content-center">
                     <Col lg={7} md={9}>
                         <motion.div
-                            initial={{ opacity: 0, y: 28 }}
+                            initial={{ opacity: 0, y: 24 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.45 }}
+                            transition={{ duration: 0.4 }}
                             className="home-main"
                         >
                             <TitleHeader title="Depositar" />
@@ -266,22 +268,20 @@ export default function DepositPage() {
                                 </div>
                             ) : (
                                 <>
-                                    <Card className="home-graph-card border-0 mb-4">
-                                        <CardBody className="text-center py-4">
-                                            <p className="home-balance-label mb-2">Saldo Atual</p>
+                                    <section className="home-balance-wrap">
+                                        <p className="home-balance-label">Saldo atual</p>
 
-                                            <motion.h2
-                                                key={user.saldo_final}
-                                                initial={{ scale: 0.96, opacity: 0 }}
-                                                animate={{ scale: 1, opacity: 1 }}
-                                                transition={{ duration: 0.3 }}
-                                                className="home-balance-value"
-                                                style={{ fontSize: "2.4rem" }}
-                                            >
-                                                R$ {formatCurrency(Number(user.saldo_final || 0))}
-                                            </motion.h2>
-                                        </CardBody>
-                                    </Card>
+                                        <motion.h2
+                                            key={user.saldo_final}
+                                            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="home-balance-value"
+                                            style={{ fontSize: "clamp(2.5rem, 5vw, 3.8rem)" }}
+                                        >
+                                            R$ {formatCurrency(Number(user.saldo_final || 0))}
+                                        </motion.h2>
+                                    </section>
 
                                     <section className="home-section">
                                         <div
@@ -289,14 +289,18 @@ export default function DepositPage() {
                                             style={{ cursor: "default" }}
                                         >
                                             <div className="w-100">
-                                                <Label className="fw-bold mb-3 d-block">
-                                                    Valor do Depósito
+                                                <Label className="fw-semibold mb-3 d-block">
+                                                    Valor do depósito
                                                 </Label>
 
                                                 <div className="d-flex align-items-center gap-3">
                                                     <span
                                                         className="fw-bold"
-                                                        style={{ fontSize: "1.4rem", color: "#fff" }}
+                                                        style={{
+                                                            fontSize: "1.25rem",
+                                                            color: "#fff",
+                                                            minWidth: "30px",
+                                                        }}
                                                     >
                                                         R$
                                                     </span>
@@ -311,7 +315,7 @@ export default function DepositPage() {
                                                         }
                                                         placeholder="0,00"
                                                         className="custom-input-balance text-center fw-bold"
-                                                        style={{ fontSize: "1.2rem" }}
+                                                        style={{ fontSize: "1.08rem" }}
                                                     />
                                                 </div>
                                             </div>
@@ -324,7 +328,7 @@ export default function DepositPage() {
                                             style={{ cursor: "default" }}
                                         >
                                             <div className="w-100">
-                                                <Label className="fw-bold mb-3 d-block">
+                                                <Label className="fw-semibold mb-3 d-block">
                                                     Direcionar depósito para
                                                 </Label>
 
@@ -347,27 +351,27 @@ export default function DepositPage() {
 
                                     <section className="home-section">
                                         <Button
-                                            color="success"
+                                            color="primary"
                                             onClick={handleDeposit}
                                             disabled={loading}
-                                            className="w-100 fw-bold py-3"
+                                            className="w-100 fw-semibold py-3"
                                             style={{
-                                                borderRadius: "18px",
-                                                fontSize: "1rem",
+                                                borderRadius: "999px",
+                                                fontSize: "0.98rem",
                                             }}
                                         >
-                                            {loading ? "Processando..." : "Confirmar Depósito"}
+                                            {loading ? "Processando..." : "Confirmar depósito"}
                                         </Button>
 
                                         {success && (
                                             <motion.div
                                                 initial={{ opacity: 0, y: 8 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.3 }}
-                                                className="text-center mt-3 fw-bold"
-                                                style={{ color: "#00c853" }}
+                                                transition={{ duration: 0.25 }}
+                                                className="text-center mt-3 fw-semibold"
+                                                style={{ color: "#67d9b2" }}
                                             >
-                                                ✅ Depósito realizado com sucesso!
+                                                Depósito realizado com sucesso.
                                             </motion.div>
                                         )}
                                     </section>
@@ -387,10 +391,10 @@ export default function DepositPage() {
                                                     >
                                                         <div className="home-list-left">
                                                             <div className="home-list-icon">
-                                                                <i className="bi bi-arrow-down-left-circle"></i>
+                                                                <i className="bi bi-arrow-down-left"></i>
                                                             </div>
 
-                                                            <div>
+                                                            <div className="home-item-copy">
                                                                 <p className="home-item-title mb-1">
                                                                     {transaction.descricao}
                                                                 </p>
@@ -399,7 +403,7 @@ export default function DepositPage() {
                                                                     {transaction.dataHora}
                                                                 </small>
 
-                                                                <small className="home-item-subtitle d-block">
+                                                                <small className="home-item-meta d-block">
                                                                     ID: {transaction.transactionId}
                                                                 </small>
                                                             </div>
@@ -407,13 +411,10 @@ export default function DepositPage() {
 
                                                         <div className="text-end">
                                                             <span className="home-item-value home-item-value-credit d-block">
-                                                                + R${" "}
-                                                                {formatCurrency(
-                                                                    Number(transaction.valor)
-                                                                )}
+                                                                + R$ {formatCurrency(Number(transaction.valor))}
                                                             </span>
 
-                                                            <small className="home-item-subtitle text-capitalize">
+                                                            <small className="home-item-meta text-capitalize">
                                                                 {transaction.status}
                                                             </small>
                                                         </div>
@@ -428,6 +429,6 @@ export default function DepositPage() {
                     </Col>
                 </Row>
             </Container>
-        </div>
+        </main>
     );
 }

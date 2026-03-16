@@ -1,120 +1,193 @@
 import React, { useState, useEffect } from "react";
-import {
-  Container,
-  Carousel,
-  CarouselItem,
-  CarouselIndicators,
-  CarouselCaption,
-} from "reactstrap";
+import { Container, Carousel, CarouselItem } from "reactstrap";
 import { motion } from "framer-motion";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function WelcomePage() {
-  const items = [
-    { id: 0, text: "Seus gastos, suas metas, seu controle." },
-    { id: 1, text: "Acompanhe suas despesas e entradas de forma rápida e prática." },
-    { id: 2, text: "Defina objetivos de economia e veja seu progresso em tempo real." },
-  ];
 
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+    const items = [
+        {
+            id: 0,
+            text: "Seus gastos, suas metas, seu controle.",
+            image: "/imagem1.webp"
+        },
+        {
+            id: 1,
+            text: "Acompanhe suas despesas e entradas de forma rápida e prática.",
+            image: "/imagem2.webp"
+        },
+        {
+            id: 2,
+            text: "Defina objetivos de economia e veja seu progresso em tempo real.",
+            image: "/imagem3.webp"
+        },
+    ];
 
-  const next = () => {
-    setActiveIndex((prevIndex) =>
-      prevIndex === items.length - 1 ? 0 : prevIndex + 1
-    );
-  };
+    const [activeIndex, setActiveIndex] = useState<number>(0);
 
-  const previous = () => {
-    setActiveIndex((prevIndex) =>
-      prevIndex === 0 ? items.length - 1 : prevIndex - 1
-    );
-  };
+    const next = () => {
+        setActiveIndex((prevIndex) =>
+            prevIndex === items.length - 1 ? 0 : prevIndex + 1
+        );
+    };
 
-  const goToIndex = (newIndex: number) => setActiveIndex(newIndex);
+    const goToIndex = (newIndex: number) => setActiveIndex(newIndex);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      next();
-    }, 3000);
-    return () => clearInterval(timer);
-  }, []); 
+    useEffect(() => {
+        const timer = setInterval(() => {
+            next();
+        }, 3000);
 
-  return (
-    <main className="background-color d-flex align-items-center justify-content-center">
-      <Container>
-        <motion.div
-          className="welcome-page d-flex justify-content-center flex-column align-items-center text-center"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        >
-          <motion.h3
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            Bem-vindo ao app
-          </motion.h3>
+        return () => clearInterval(timer);
+    }, [activeIndex]);
 
-          <motion.div
-            className="brand"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.7 }}
-          >
-            save
-          </motion.div>
+    return (
+        <main className="home-apple-screen text-white min-vh-100 d-flex align-items-center">
+            <div className="home-bg-orb home-bg-orb-1"></div>
+            <div className="home-bg-orb home-bg-orb-2"></div>
+            <div className="home-bg-orb home-bg-orb-3"></div>
 
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6, duration: 1 }}
-            style={{ width: "100%", backgroundColor: "transparent", paddingBottom: "3cm" }}
-          >
-            <Carousel
-              activeIndex={activeIndex}
-              next={next}
-              previous={previous}
-              ride={undefined}
-              slide
-              fade={false}
-            >
-           
+            <Container className="home-shell py-4 py-md-5">
 
+                <motion.div
+                    className="d-flex justify-content-center"
+                    initial={{ opacity: 0, y: 26 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45 }}
+                >
 
-              {items.map((item) => (
-                <CarouselItem key={item.id}>
-                  <motion.div
-                    className="carousel-tagline d-flex align-items-center justify-content-center bg-transparent"
-                    style={{ minHeight: 105, padding: "0 1rem" }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    <div className="tagline">{item.text}</div>
-                  </motion.div>
-                  <CarouselCaption captionText="" captionHeader="" />
-                </CarouselItem>
-              ))}
-            </Carousel>
-          </motion.div>
-   
+                    <div style={{ width: "100%", maxWidth: "560px" }}>
 
-          <motion.div
-            className="actions mt-4 h-100 d-flex flex-column gap-5"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 0.8 }}
-          >
-            <a href="/login" className="btn primary" role="button">
-              Login
-            </a>
-            <a href="/signin" className="ghost ms-3" role="button">
-              Caso não tenha uma conta, cadastre-se
-            </a>
-          </motion.div>
-        </motion.div>
-      </Container>
-    </main>
-  );
+                        <div className="text-center mb-4">
+
+                            <p className="home-balance-label mb-2">
+                                Bem-vindo ao app
+                            </p>
+
+                            <motion.h1
+                                className="home-balance-value mb-2"
+                                initial={{ opacity: 0, y: -12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.45 }}
+                                style={{
+                                    fontSize: "clamp(2.4rem, 6vw, 4rem)",
+                                    textTransform: "lowercase",
+                                }}
+                            >
+                                save
+                            </motion.h1>
+
+                            <p className="home-item-subtitle mb-0">
+                                Organize sua vida financeira com clareza e controle
+                            </p>
+
+                        </div>
+
+                        <motion.div
+                            className="home-graph-card text-center"
+                            initial={{ opacity: 0, y: 18 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+
+                            <Carousel
+                                activeIndex={activeIndex}
+                                next={next}
+                                previous={next}
+                                slide
+                                fade={false}
+                                interval={false}
+                            >
+
+                                {items.map((item) => (
+
+                                    <CarouselItem key={item.id}>
+
+                                        <motion.div
+                                            className="d-flex flex-column align-items-center justify-content-center"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.35 }}
+                                        >
+
+                                            <img
+                                                src={item.image}
+                                                alt="feature"
+                                                style={{
+                                                    width: "160px",
+                                                    marginBottom: "1.2rem"
+                                                }}
+                                            />
+
+                                            <p
+                                                className="mb-0"
+                                                style={{
+                                                    fontSize: "1.08rem",
+                                                    lineHeight: 1.55,
+                                                    color: "rgba(255,255,255,0.88)",
+                                                    maxWidth: "420px",
+                                                    margin: "0 auto",
+                                                }}
+                                            >
+                                                {item.text}
+                                            </p>
+
+                                        </motion.div>
+
+                                    </CarouselItem>
+
+                                ))}
+
+                            </Carousel>
+
+                            <div className="home-balance-graph-shell">
+                                <div className="home-balance-graph">
+                                    {items.map((item, index) => (
+                                        <span
+                                            key={item.id}
+                                            className={`home-graph-dot ${index === activeIndex ? "active" : ""}`}
+                                            onClick={() => goToIndex(index)}
+                                            style={{ cursor: "pointer" }}
+                                        ></span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="d-flex flex-column gap-3 mt-4">
+
+                                <a
+                                    href="/login"
+                                    className="btn btn-primary fw-semibold py-3"
+                                    style={{
+                                        borderRadius: "999px",
+                                        fontSize: "0.98rem",
+                                    }}
+                                >
+                                    Entrar
+                                </a>
+
+                                <a
+                                    href="/signin"
+                                    className="text-decoration-none"
+                                    style={{
+                                        color: "#bfe7ff",
+                                        fontWeight: 500,
+                                        fontSize: "0.94rem",
+                                    }}
+                                >
+                                    Ainda não tem uma conta? Criar conta
+                                </a>
+
+                            </div>
+
+                        </motion.div>
+
+                    </div>
+
+                </motion.div>
+
+            </Container>
+
+        </main>
+    );
 }

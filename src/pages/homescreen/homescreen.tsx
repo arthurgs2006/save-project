@@ -127,6 +127,10 @@ export default function HomeScreen() {
 
     return (
         <div className="home-apple-screen text-white min-vh-100">
+            <div className="home-bg-orb home-bg-orb-1"></div>
+            <div className="home-bg-orb home-bg-orb-2"></div>
+            <div className="home-bg-orb home-bg-orb-3"></div>
+
             <Container className="home-shell py-4 py-md-5">
                 <AccountHeader name={user.nome} />
 
@@ -134,16 +138,23 @@ export default function HomeScreen() {
                     className="home-main"
                     initial={{ opacity: 0, y: 18 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.45 }}
                 >
                     <section className="home-balance-wrap">
                         <p className="home-balance-label">Saldo bancário</p>
-                        <h1 className="home-balance-value">
+
+                        <motion.h1
+                            className="home-balance-value"
+                            key={user.saldo_final}
+                            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            transition={{ duration: 0.35 }}
+                        >
                             R$ {formatCurrency(Number(user.saldo_final))}
-                        </h1>
+                        </motion.h1>
                     </section>
 
-                    <section className="home-graph-card">
+                    <section className="home-graph-panel">
                         <GraphicCard user={user} />
                     </section>
 
@@ -151,22 +162,22 @@ export default function HomeScreen() {
                         <nav className="home-actions-grid">
                             <Button
                                 color="link"
-                                className="home-action-btn"
+                                className="home-action-btn home-action-btn-primary"
                                 onClick={() => navigate("/deposit")}
                             >
                                 <div className="home-action-icon">
-                                    <i className="bi bi-arrow-down-circle"></i>
+                                    <i className="bi bi-arrow-down-left"></i>
                                 </div>
                                 <span className="home-action-label">Depositar</span>
                             </Button>
 
                             <Button
                                 color="link"
-                                className="home-action-btn"
+                                className="home-action-btn home-action-btn-primary"
                                 onClick={() => navigate("/debts")}
                             >
                                 <div className="home-action-icon">
-                                    <i className="bi bi-arrow-up-circle"></i>
+                                    <i className="bi bi-arrow-up-right"></i>
                                 </div>
                                 <span className="home-action-label">Sacar</span>
                             </Button>
@@ -212,13 +223,13 @@ export default function HomeScreen() {
                                             <div className="home-list-icon">
                                                 <i
                                                     className={`bi ${item.tipo === "credito"
-                                                            ? "bi-arrow-down-left-circle"
-                                                            : "bi-arrow-up-right-circle"
+                                                            ? "bi-arrow-down-left"
+                                                            : "bi-arrow-up-right"
                                                         }`}
                                                 ></i>
                                             </div>
 
-                                            <div>
+                                            <div className="home-item-copy">
                                                 <p className="home-item-title mb-1">
                                                     {getTransactionTitle(item)}
                                                 </p>
@@ -228,7 +239,7 @@ export default function HomeScreen() {
                                                 </small>
 
                                                 {getSafeExtraInfo(item) && (
-                                                    <small className="home-item-subtitle d-block">
+                                                    <small className="home-item-meta d-block">
                                                         {getSafeExtraInfo(item)}
                                                     </small>
                                                 )}
@@ -255,16 +266,20 @@ export default function HomeScreen() {
                     </section>
 
                     <section id="benefits" className="home-section">
+                        <div className="home-section-header">
+                            <h5 className="home-section-title">Benefícios</h5>
+                        </div>
+
                         <div
                             className="home-benefit-card"
                             onClick={() => navigate("/benefits")}
                         >
                             <div className="home-benefit-content">
                                 <div className="home-benefit-icon">
-                                    <i className="bi bi-currency-dollar"></i>
+                                    <i className="bi bi-stars"></i>
                                 </div>
 
-                                <div>
+                                <div className="home-item-copy">
                                     <p className="home-item-title mb-1">
                                         Benefícios para Estudantes de Baixa Renda
                                     </p>
@@ -293,7 +308,7 @@ export default function HomeScreen() {
                                                 <i className="bi bi-repeat"></i>
                                             </div>
 
-                                            <div>
+                                            <div className="home-item-copy">
                                                 <p className="home-item-title mb-1">{debt.name}</p>
                                                 <small className="home-item-subtitle">
                                                     Todo dia {debt.billingDate} —{" "}
