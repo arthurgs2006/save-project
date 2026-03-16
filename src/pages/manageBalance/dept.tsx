@@ -1,264 +1,456 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  Container,
-  Row,
-  Col,
-  Input,
-  Label,
-  Button,
-  Card,
-  CardBody,
-  ListGroup,
-  ListGroupItem,
+    Container,
+    Row,
+    Col,
+    Input,
+    Label,
+    Button,
+    ListGroup,
+    ListGroupItem,
 } from "reactstrap";
 import { motion } from "framer-motion";
 import TitleHeader from "../../components/generic_components/titleHeader";
 
+interface DepositItem {
+    id: number;
+    transactionId?: string;
+    value: number;
+    time?: string;
+    date?: string;
+    hour?: string;
+    dateTimeLabel?: string;
+    status?: "concluido";
+    method?: "saldo_manual";
+}
+
+interface Goal {
+    id: number;
+    name: string;
+    deposits?: DepositItem[];
+}
+
+interface Statement {
+    id: number;
+    transactionId: string;
+    tipo: "credito" | "debito";
+    descricao: string;
+    valor: number;
+    data: string;
+    hora: string;
+    dataHora: string;
+    createdAt: string;
+    status: "concluido";
+    metodo: "saldo_manual";
+    origem: "saque";
+    goalId?: number | null;
+    goalName?: string | null;
+}
+
+interface User {
+    id: number;
+    saldo_final: number;
+    goals: Goal[];
+    extratos: Statement[];
+}
+
 export default function WithdrawPage() {
-  const [user, setUser] = useState<any>(null);
-  const [withdrawValue, setWithdrawValue] = useState<string>("");
-  const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [withdrawValue, setWithdrawValue] = useState("");
+    const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+    useEffect(() => {
+        const storedUser = localStorage.getItem("loggedUser");
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
 
-  useEffect(() => {
-    const storedUser = localStorage.getItem("loggedUser");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    const recentWithdraws = useMemo(() => {
+        if (!user?.extratos?.length) return [];
 
-  async function handleWithdraw() {
-    if (!user) {
-      alert("Usuário não encontrado. Faça login novamente.");
-      return;
-    }
+        return [...user.extratos]
+            .filter((item) => item.tipo === "debito")
+            .reverse()
+            .slice(0, 5);
+    }, [user]);
 
-    const valor = Number(withdrawValue);
-    if (isNaN(valor) || valor <= 0) {
-      alert("Digite um valor de saque válido!");
-      return;
-    }
-
-    let metasAtualizadas = [...user.goals];
-    let extratosAtualizados = [...(user.extratos || [])];
-
-    if (!selectedGoal) {
-      if (valor > user.saldo_final) {
-        alert("Saldo geral insuficiente!");
-        return;
-      }
-
-      const novoSaldo = user.saldo_final - valor;
-
-      extratosAtualizados.push({
-        id: Date.now(),
-        tipo: "debito",
-        descricao: "Débito do saldo geral",
-        valor: valor,
-        data: new Date().toISOString().split("T")[0],
-      });
-
-      return await atualizarUsuario({
-        ...user,
-        saldo_final: novoSaldo,
-        extratos: extratosAtualizados,
-        goals: metasAtualizadas,
-      });
+    function formatCurrency(value: number) {
+        return value.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
     }
 
-    const goal = user.goals.find((g: any) => g.id === selectedGoal);
+    function buildWithdrawMetadata() {
+        const now = new Date();
+        const timestamp = now.getTime();
 
-    if (!goal) {
-      alert("Meta não encontrada.");
-      return;
+        const date = now.toLocaleDateString("pt-BR");
+        const hour = now.toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+        });
+
+        const dateTimeLabel = `${date} às ${hour}`;
+        const transactionId = `SAQ-${timestamp}-${Math.floor(
+            1000 + Math.random() * 9000
+        )}`;
+
+        return {
+            id: timestamp,
+            transactionId,
+            createdAt: now.toISOString(),
+            date,
+            hour,
+            dateTimeLabel,
+        };
     }
 
-    let totalDeposits =
-      goal.deposits?.reduce((acc: number, d: any) => acc + d.value, 0) || 0;
+    async function handleWithdraw() {
+        if (!user) {
+            alert("Usuário não encontrado. Faça login novamente.");
+            return;
+        }
 
-    if (valor > totalDeposits) {
-      alert("Valor maior que o saldo disponível na meta!");
-      return;
+        const valor = Number(withdrawValue.replace(",", "."));
+
+        if (isNaN(valor) || valor <= 0) {
+            alert("Digite um valor de débito válido!");
+            return;
+        }
+
+        const meta = buildWithdrawMetadata();
+
+        let metasAtualizadas = [...(user.goals || [])];
+        let extratosAtualizados = [...(user.extratos || [])];
+
+        if (!selectedGoal) {
+            if (valor > user.saldo_final) {
+                alert("Saldo geral insuficiente!");
+                return;
+            }
+
+            const novoSaldo = user.saldo_final - valor;
+
+            extratosAtualizados.push({
+                id: meta.id,
+                transactionId: meta.transactionId,
+                tipo: "debito",
+                descricao: "Débito do saldo geral",
+                valor,
+                data: meta.date,
+                hora: meta.hour,
+                dataHora: meta.dateTimeLabel,
+                createdAt: meta.createdAt,
+                status: "concluido",
+                metodo: "saldo_manual",
+                origem: "saque",
+                goalId: null,
+                goalName: null,
+            });
+
+            return await atualizarUsuario({
+                ...user,
+                saldo_final: novoSaldo,
+                extratos: extratosAtualizados,
+                goals: metasAtualizadas,
+            });
+        }
+
+        const goal = user.goals.find((g) => g.id === selectedGoal);
+
+        if (!goal) {
+            alert("Meta não encontrada.");
+            return;
+        }
+
+        const totalDeposits =
+            goal.deposits?.reduce((acc, d) => acc + Number(d.value || 0), 0) || 0;
+
+        if (valor > totalDeposits) {
+            alert("Valor maior que o saldo disponível na meta!");
+            return;
+        }
+
+        const novoValorMeta = totalDeposits - valor;
+
+        const novosDepositos =
+            novoValorMeta > 0
+                ? [
+                    {
+                        id: meta.id,
+                        transactionId: meta.transactionId,
+                        value: novoValorMeta,
+                        time: meta.createdAt,
+                        date: meta.date,
+                        hour: meta.hour,
+                        dateTimeLabel: meta.dateTimeLabel,
+                        status: "concluido" as const,
+                        method: "saldo_manual" as const,
+                    },
+                ]
+                : [];
+
+        if (novoValorMeta <= 0) {
+            metasAtualizadas = metasAtualizadas.filter((g) => g.id !== selectedGoal);
+        } else {
+            metasAtualizadas = metasAtualizadas.map((g) =>
+                g.id === selectedGoal ? { ...g, deposits: novosDepositos } : g
+            );
+        }
+
+        extratosAtualizados.push({
+            id: meta.id,
+            transactionId: meta.transactionId,
+            tipo: "debito",
+            descricao: `Débito da meta: ${goal.name}`,
+            valor,
+            data: meta.date,
+            hora: meta.hour,
+            dataHora: meta.dateTimeLabel,
+            createdAt: meta.createdAt,
+            status: "concluido",
+            metodo: "saldo_manual",
+            origem: "saque",
+            goalId: goal.id,
+            goalName: goal.name,
+        });
+
+        return await atualizarUsuario({
+            ...user,
+            goals: metasAtualizadas,
+            extratos: extratosAtualizados,
+        });
     }
 
-    const novoValorMeta = totalDeposits - valor;
+    async function atualizarUsuario(updatedUser: User) {
+        try {
+            setLoading(true);
 
-    let novosDepositos =
-      novoValorMeta > 0 ? [{ id: Date.now(), value: novoValorMeta }] : [];
+            const res = await fetch(
+                `https://database-save-app.onrender.com/users/${updatedUser.id}`,
+                {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedUser),
+                }
+            );
 
-    if (novoValorMeta <= 0) {
-      metasAtualizadas = metasAtualizadas.filter(
-        (g: any) => g.id !== selectedGoal
-      );
-    } else {
-      metasAtualizadas = metasAtualizadas.map((g: any) =>
-        g.id === selectedGoal ? { ...g, deposits: novosDepositos } : g
-      );
+            if (!res.ok) {
+                alert("Erro ao atualizar usuário!");
+                setLoading(false);
+                return;
+            }
+
+            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+            setUser(updatedUser);
+
+            setWithdrawValue("");
+            setSelectedGoal(null);
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 2000);
+        } catch (err) {
+            console.error(err);
+            alert("Erro ao conectar com o servidor.");
+        } finally {
+            setLoading(false);
+        }
     }
 
-    extratosAtualizados.push({
-      id: Date.now(),
-      tipo: "debito",
-      descricao: `Débito da meta: ${goal.name}`,
-      valor: valor,
-      data: new Date().toISOString().split("T")[0],
-    });
+    return (
+        <main className="home-apple-screen text-white min-vh-100 py-4 py-md-5">
+            <div className="home-bg-orb home-bg-orb-1"></div>
+            <div className="home-bg-orb home-bg-orb-2"></div>
+            <div className="home-bg-orb home-bg-orb-3"></div>
 
-    return await atualizarUsuario({
-      ...user,
-      goals: metasAtualizadas,
-      extratos: extratosAtualizados,
-    });
-  }
+            <Container className="home-shell">
+                <Row className="justify-content-center">
+                    <Col lg={7} md={9}>
+                        <motion.div
+                            initial={{ opacity: 0, y: 24 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                            className="home-main"
+                        >
+                            <TitleHeader title="Debitar" />
 
-  async function atualizarUsuario(updatedUser: any) {
-    try {
-      setLoading(true);
+                            {!user ? (
+                                <div className="home-empty-state mt-4 text-center">
+                                    Carregando informações...
+                                </div>
+                            ) : (
+                                <>
+                                    <section className="home-balance-wrap">
+                                        <p className="home-balance-label">Saldo atual</p>
 
-      const res = await fetch(`https://database-save-app.onrender.com/users/${updatedUser.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedUser),
-      });
+                                        <motion.h2
+                                            key={user.saldo_final}
+                                            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="home-balance-value"
+                                            style={{ fontSize: "clamp(2.5rem, 5vw, 3.8rem)" }}
+                                        >
+                                            R$ {formatCurrency(Number(user.saldo_final || 0))}
+                                        </motion.h2>
+                                    </section>
 
-      if (!res.ok) {
-        alert("Erro ao atualizar usuário!");
-        setLoading(false);
-        return;
-      }
+                                    <section className="home-section">
+                                        <div className="home-list-item" style={{ cursor: "default" }}>
+                                            <div className="w-100">
+                                                <Label className="fw-semibold mb-3 d-block">
+                                                    Meta (opcional)
+                                                </Label>
 
-      localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
-      setUser(updatedUser);
+                                                <Input
+                                                    type="select"
+                                                    className="custom-input-balance"
+                                                    value={selectedGoal ?? ""}
+                                                    onChange={(e) =>
+                                                        setSelectedGoal(
+                                                            e.target.value === "" ? null : Number(e.target.value)
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="">Nenhuma meta (usar saldo geral)</option>
 
-      setWithdrawValue("");
-      setSelectedGoal(null);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 2000);
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao conectar com o servidor.");
-    } finally {
-      setLoading(false);
-    }
-  }
+                                                    {user.goals?.length > 0 &&
+                                                        user.goals.map((g) => {
+                                                            const total =
+                                                                g.deposits?.reduce(
+                                                                    (acc, d) => acc + Number(d.value || 0),
+                                                                    0
+                                                                ) || 0;
 
-  return (
-    <div className="background-color text-white min-vh-100 d-flex align-items-center py-5">
-      <Container>
-        <Row className="justify-content-center">
-          <Col md={6}>
-            <motion.div
-              className="p-4 rounded shadow-lg"
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <TitleHeader title="Debitar" />
+                                                            return (
+                                                                <option key={g.id} value={g.id}>
+                                                                    {g.name} — R$ {formatCurrency(total)}
+                                                                </option>
+                                                            );
+                                                        })}
+                                                </Input>
+                                            </div>
+                                        </div>
+                                    </section>
 
-              {user ? (
-                <>
-                  <Label className="fw-bold mb-2">Meta (opcional)</Label>
-                  <Input
-                    type="select"
-                    className="mb-4 fw-bold"
-                    value={selectedGoal ?? ""}
-                    onChange={(e) =>
-                      setSelectedGoal(
-                        e.target.value === "" ? null : Number(e.target.value)
-                      )
-                    }
-                  >
-                    <option value="">Nenhuma meta (usar saldo geral)</option>
+                                    <section className="home-section">
+                                        <div className="home-list-item" style={{ cursor: "default" }}>
+                                            <div className="w-100">
+                                                <Label className="fw-semibold mb-3 d-block">
+                                                    Valor do débito
+                                                </Label>
 
-                    {user.goals?.length > 0 &&
-                      user.goals.map((g: any) => {
-                        const total = g.deposits?.reduce(
-                          (acc: number, d: any) => acc + d.value,
-                          0
-                        );
-                        return (
-                          <option key={g.id} value={g.id}>
-                            {g.name} — R$ {total.toFixed(2).replace(".", ",")}
-                          </option>
-                        );
-                      })}
-                  </Input>
+                                                <div className="d-flex align-items-center gap-3">
+                                                    <span
+                                                        className="fw-bold"
+                                                        style={{
+                                                            fontSize: "1.25rem",
+                                                            color: "#fff",
+                                                            minWidth: "30px",
+                                                        }}
+                                                    >
+                                                        R$
+                                                    </span>
 
-                  <Label className="fw-bold">Valor do débito</Label>
-                  <div className="d-flex align-items-center gap-3 mb-4">
-                    <span className="h4 mb-0">R$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={withdrawValue}
-                      onChange={(e) => setWithdrawValue(e.target.value)}
-                      placeholder="0,00"
-                      className="custom-input-balance text-center fw-bold"
-                      style={{ fontSize: "1.2rem" }}
-                    />
-                  </div>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        value={withdrawValue}
+                                                        onChange={(e) => setWithdrawValue(e.target.value)}
+                                                        placeholder="0,00"
+                                                        className="custom-input-balance text-center fw-bold"
+                                                        style={{ fontSize: "1.08rem" }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
 
-                  <Button
-                    color="danger"
-                    onClick={handleWithdraw}
-                    disabled={loading}
-                    className="w-100 fw-bold py-2 rounded-pill"
-                  >
-                    {loading ? "Processando..." : "Confirmar Débito"}
-                  </Button>
+                                    <section className="home-section">
+                                        <Button
+                                            color="danger"
+                                            onClick={handleWithdraw}
+                                            disabled={loading}
+                                            className="w-100 fw-semibold py-3"
+                                            style={{
+                                                borderRadius: "999px",
+                                                fontSize: "0.98rem",
+                                            }}
+                                        >
+                                            {loading ? "Processando..." : "Confirmar débito"}
+                                        </Button>
 
-                  {success && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="text-center mt-3 text-success fw-bold"
-                    >
-                      ✅ Débito realizado com sucesso!
-                    </motion.div>
-                  )}
+                                        {success && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.25 }}
+                                                className="text-center mt-3 fw-semibold"
+                                                style={{ color: "#67d9b2" }}
+                                            >
+                                                Débito realizado com sucesso.
+                                            </motion.div>
+                                        )}
+                                    </section>
 
-                  {user.extratos?.length > 0 && (
-                    <div className="mt-5">
-                      <h5 className="fw-bold mb-3">📉 Últimos débitos</h5>
-                      <ListGroup flush>
-                        {[...user.extratos]
-                          .filter((e) => e.tipo === "debito")
-                          .reverse()
-                          .slice(0, 5)
-                          .map((item) => (
-                            <ListGroupItem
-                              key={item.id}
-                              className="d-flex justify-content-between align-items-center text-white"
-                              style={{
-                                backgroundColor: "rgba(255,255,255,0.06)",
-                                border: "none",
-                              }}
-                            >
-                              <span>{item.descricao}</span>
-                              <span className="fw-bold text-danger">
-                                - R$ {item.valor
-                                  .toFixed(2)
-                                  .replace(".", ",")}
-                              </span>
-                            </ListGroupItem>
-                          ))}
-                      </ListGroup>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-center text-secondary">
-                  Carregando informações...
-                </p>
-              )}
-            </motion.div>
-          </Col>
-        </Row>
-      </Container>
-    </div>
-  );
+                                    {recentWithdraws.length > 0 && (
+                                        <section className="home-section mt-5">
+                                            <div className="home-section-header">
+                                                <h5 className="home-section-title">Últimos débitos</h5>
+                                            </div>
+
+                                            <ListGroup flush className="home-list">
+                                                {recentWithdraws.map((item) => (
+                                                    <ListGroupItem
+                                                        key={item.id}
+                                                        className="home-list-item"
+                                                        style={{ cursor: "default" }}
+                                                    >
+                                                        <div className="home-list-left">
+                                                            <div className="home-list-icon">
+                                                                <i className="bi bi-arrow-up-right"></i>
+                                                            </div>
+
+                                                            <div className="home-item-copy">
+                                                                <p className="home-item-title mb-1">
+                                                                    {item.descricao}
+                                                                </p>
+
+                                                                <small className="home-item-subtitle d-block">
+                                                                    {item.dataHora}
+                                                                </small>
+
+                                                                <small className="home-item-meta d-block">
+                                                                    ID: {item.transactionId}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="text-end">
+                                                            <span className="home-item-value home-item-value-debit d-block">
+                                                                - R$ {formatCurrency(Number(item.valor))}
+                                                            </span>
+
+                                                            <small className="home-item-meta text-capitalize">
+                                                                {item.status}
+                                                            </small>
+                                                        </div>
+                                                    </ListGroupItem>
+                                                ))}
+                                            </ListGroup>
+                                        </section>
+                                    )}
+                                </>
+                            )}
+                        </motion.div>
+                    </Col>
+                </Row>
+            </Container>
+        </main>
+    );
 }

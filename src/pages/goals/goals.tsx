@@ -1,268 +1,325 @@
-import { useEffect, useState } from "react";
-import { Button, Container, Input, InputGroup, InputGroupText } from "reactstrap";
+import { useEffect, useMemo, useState } from "react";
+import { Button, Container, Input } from "reactstrap";
 import { useNavigate } from "react-router-dom";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
+import ProgressBar from "../../components/graphic_components/progress_bar";
+
+type GoalDeposit = {
+    id: number;
+    value?: number;
+    amount?: number;
+    time: string;
+};
+
+type Goal = {
+    id: number;
+    name: string;
+    value: number | string;
+    image?: string;
+    checked?: boolean;
+    deposits?: GoalDeposit[];
+};
+
+type User = {
+    id: number;
+    nome: string;
+    goals?: Goal[];
+};
 
 export default function GoalsPage() {
-  const [user, setUser] = useState<any>(null);
-  const [goals, setGoals] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState<"pending" | "completed">("pending");
+    const [user, setUser] = useState<User | null>(null);
+    const [goals, setGoals] = useState<Goal[]>([]);
+    const [search, setSearch] = useState("");
+    const [activeTab, setActiveTab] = useState<"pending" | "completed">("pending");
 
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const storedUser = localStorage.getItem("loggedUser");
+    useEffect(() => {
+        async function loadUser() {
+            const storedUser = localStorage.getItem("loggedUser");
 
-      if (!storedUser) {
-        window.location.href = "/login";
-        return;
-      }
+            if (!storedUser) {
+                navigate("/login");
+                return;
+            }
 
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
+            const parsedUser: User = JSON.parse(storedUser);
+            setUser(parsedUser);
 
-      try {
-        const res = await fetch(`https://database-save-app.onrender.com/users/${parsedUser.id}`);
-        if (!res.ok) return;
-        const data = await res.json();
+            try {
+                const response = await fetch(
+                    `https://database-save-app.onrender.com/users/${parsedUser.id}`
+                );
 
-        setUser(data);
-        setGoals(data.goals || []);
-        localStorage.setItem("loggedUser", JSON.stringify(data));
-      } catch {
-        console.warn("Servidor indisponível.");
-      }
-    };
+                if (!response.ok) return;
 
-    loadUser();
-  }, []);
+                const data: User = await response.json();
 
-  if (!user) {
-    return (
-      <div className="d-flex justify-content-center align-items-center text-white background-color min-vh-100">
-        Carregando dados...
-      </div>
-    );
-  }
+                setUser(data);
+                setGoals(data.goals || []);
+                localStorage.setItem("loggedUser", JSON.stringify(data));
+            } catch {
+                console.warn("Servidor indisponível.");
+            }
+        }
 
-  const persistGoals = async (updatedGoals: any[]) => {
-    setGoals(updatedGoals);
+        loadUser();
+    }, [navigate]);
 
-    const updatedUser = { ...user, goals: updatedGoals };
-    setUser(updatedUser);
-    localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+    async function persistGoals(updatedGoals: Goal[]) {
+        if (!user) return;
 
-    try {
-      await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ goals: updatedGoals })
-      });
-    } catch {
-      console.warn("Não foi possível salvar no servidor.");
+        setGoals(updatedGoals);
+
+        const updatedUser = {
+            ...user,
+            goals: updatedGoals,
+        };
+
+        setUser(updatedUser);
+        localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+
+        try {
+            await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ goals: updatedGoals }),
+            });
+        } catch {
+            console.warn("Não foi possível salvar no servidor.");
+        }
     }
-  };
 
-  const handleDelete = (goalId: number) => {
-    const updatedGoals = goals.filter(g => g.id !== goalId);
-    persistGoals(updatedGoals);
-  };
+    function handleDelete(goalId: number) {
+        const updatedGoals = goals.filter((goal) => goal.id !== goalId);
+        persistGoals(updatedGoals);
+    }
 
-  const toggleGoalCheck = (goalId: number) => {
-    const updatedGoals = goals.map(g =>
-      g.id === goalId ? { ...g, checked: !g.checked } : g
-    );
-    persistGoals(updatedGoals);
-  };
+    function toggleGoalCheck(goalId: number) {
+        const updatedGoals = goals.map((goal) =>
+            goal.id === goalId
+                ? { ...goal, checked: !goal.checked }
+                : goal
+        );
 
-  const markAsCompleted = (goalId: number) => {
-    const updatedGoals = goals.map(g =>
-      g.id === goalId ? { ...g, checked: true } : g
-    );
-    persistGoals(updatedGoals);
-    setActiveTab("completed");
-  };
+        persistGoals(updatedGoals);
+    }
 
-  const filteredGoals = goals.filter(goal =>
-    goal.name.toLowerCase().includes(search.toLowerCase())
-  );
+    function markAsCompleted(goalId: number) {
+        const updatedGoals = goals.map((goal) =>
+            goal.id === goalId
+                ? { ...goal, checked: true }
+                : goal
+        );
 
-  const pendingGoals = filteredGoals.filter(g => !g.checked);
-  const completedGoals = filteredGoals.filter(g => g.checked);
+        persistGoals(updatedGoals);
+        setActiveTab("completed");
+    }
 
-  const IconRenderer = ({ iconClass }) => (
-    <div
-      style={{
-        width: "40px",
-        height: "40px",
-        borderRadius: "4px",
-        backgroundColor: "#3A5BFF",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center"
-      }}
-    >
-      <i className={`bi ${iconClass || "bi-bullseye"} fs-5 text-white`}></i>
-    </div>
-  );
+    const filteredGoals = useMemo(() => {
+        return goals.filter((goal) =>
+            goal.name.toLowerCase().includes(search.toLowerCase())
+        );
+    }, [goals, search]);
 
-  return (
-    <div className="min-vh-100 text-white background-color py-4">
-      <Container>
-        <AccountHeader name={user.nome} />
-        <TitleHeader title="Metas" showCreateButton />
+    const pendingGoals = useMemo(() => {
+        return filteredGoals.filter((goal) => !goal.checked);
+    }, [filteredGoals]);
 
+    const completedGoals = useMemo(() => {
+        return filteredGoals.filter((goal) => goal.checked);
+    }, [filteredGoals]);
 
-        <div className="d-flex gap-3 my-3">
-          <Button
-            color={activeTab === "pending" ? "success" : "secondary"}
-            className="fw-bold w-50 py-2"
-            onClick={() => setActiveTab("pending")}
-          >
-            Pendentes
-          </Button>
+    function IconRenderer({ iconClass }: { iconClass?: string }) {
+        return (
+            <div className="home-list-icon">
+                <i className={`bi ${iconClass || "bi-bullseye"}`}></i>
+            </div>
+        );
+    }
 
-          <Button
-            color={activeTab === "completed" ? "success" : "secondary"}
-            className="fw-bold w-50 py-2"
-            onClick={() => setActiveTab("completed")}
-          >
-            Concluídas
-          </Button>
+    function GoalCard({
+        goal,
+        completed = false,
+    }: {
+        goal: Goal;
+        completed?: boolean;
+    }) {
+        const totalDeposits = (goal.deposits || []).reduce(
+            (acc, dep) => acc + Number(dep.value ?? dep.amount ?? 0),
+            0
+        );
+
+        const numericValue = Number(goal.value) || 1;
+        const percentage = Math.min((totalDeposits / numericValue) * 100, 100);
+
+        return (
+            <div
+                className="home-list-item"
+                style={{
+                    opacity: completed ? 0.65 : 1,
+                    cursor: "default",
+                    alignItems: "stretch",
+                }}
+            >
+                <div className="w-100">
+                    <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div className="home-list-left">
+                            <Input
+                                type="checkbox"
+                                checked={!!goal.checked}
+                                disabled={completed}
+                                onChange={!completed ? () => toggleGoalCheck(goal.id) : undefined}
+                                style={{ cursor: completed ? "default" : "pointer" }}
+                            />
+
+                            <IconRenderer iconClass={goal.image} />
+
+                            <div>
+                                <p
+                                    className={`home-item-title mb-1 ${completed ? "text-decoration-line-through" : ""
+                                        }`}
+                                >
+                                    {goal.name}
+                                </p>
+
+                                <span className="home-item-value home-item-value-credit d-block">
+                                    R${" "}
+                                    {Number(goal.value).toLocaleString("pt-BR", {
+                                        minimumFractionDigits: 2,
+                                    })}
+                                </span>
+
+                                <small className="home-item-subtitle">
+                                    Guardado: R${" "}
+                                    {totalDeposits.toLocaleString("pt-BR", {
+                                        minimumFractionDigits: 2,
+                                    })}
+                                </small>
+                            </div>
+                        </div>
+
+                        {completed ? (
+                            <Button
+                                color="danger"
+                                size="sm"
+                                onClick={() => handleDelete(goal.id)}
+                            >
+                                <i className="bi bi-trash"></i>
+                            </Button>
+                        ) : (
+                            <div className="d-flex gap-2 flex-wrap justify-content-end">
+                                <Button
+                                    color="success"
+                                    size="sm"
+                                    onClick={() => navigate(`/edit-goal/${goal.id}`)}
+                                >
+                                    Editar
+                                </Button>
+
+                                <Button
+                                    color="info"
+                                    size="sm"
+                                    onClick={() => markAsCompleted(goal.id)}
+                                >
+                                    Concluir
+                                </Button>
+
+                                <Button
+                                    color="danger"
+                                    size="sm"
+                                    onClick={() => handleDelete(goal.id)}
+                                >
+                                    <i className="bi bi-trash"></i>
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mt-3">
+                        <ProgressBar percentage={Number(percentage.toFixed(0))} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="home-apple-screen d-flex justify-content-center align-items-center text-white min-vh-100">
+                <div className="home-empty-state">Carregando dados...</div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="background-color text-white min-vh-100 py-4 py-md-5">
+            <Container className="home-shell">
+                <AccountHeader name={user.nome} />
+
+                <div className="home-main">
+                    <TitleHeader title="Metas" showCreateButton />
+
+                    <section className="home-section">
+                        <div className="home-graph-card">
+                            <div className="d-flex gap-3">
+                                <Button
+                                    color={activeTab === "pending" ? "success" : "secondary"}
+                                    className="fw-bold w-50 py-2"
+                                    onClick={() => setActiveTab("pending")}
+                                >
+                                    Pendentes
+                                </Button>
+
+                                <Button
+                                    color={activeTab === "completed" ? "success" : "secondary"}
+                                    className="fw-bold w-50 py-2"
+                                    onClick={() => setActiveTab("completed")}
+                                >
+                                    Concluídas
+                                </Button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="home-section">
+                        <Input
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Pesquisar meta..."
+                            className="custom-input-balance"
+                        />
+                    </section>
+
+                    <main className="home-section">
+                        <div className="home-list">
+                            {activeTab === "pending" &&
+                                (pendingGoals.length === 0 ? (
+                                    <div className="home-empty-state">
+                                        Nenhuma meta pendente encontrada.
+                                    </div>
+                                ) : (
+                                    pendingGoals.map((goal) => (
+                                        <GoalCard key={goal.id} goal={goal} />
+                                    ))
+                                ))}
+
+                            {activeTab === "completed" &&
+                                (completedGoals.length === 0 ? (
+                                    <div className="home-empty-state">
+                                        Nenhuma meta concluída ainda.
+                                    </div>
+                                ) : (
+                                    completedGoals.map((goal) => (
+                                        <GoalCard key={goal.id} goal={goal} completed />
+                                    ))
+                                ))}
+                        </div>
+                    </main>
+                </div>
+            </Container>
         </div>
-
-
-        <InputGroup className="mb-4">
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="bg-dark text-white border-secondary"
-            placeholder="Pesquisar meta..."
-          />
-          <InputGroupText className="bg-secondary border-secondary">
-            <i className="bi bi-search text-white"></i>
-          </InputGroupText>
-        </InputGroup>
-
-
-        <main>
-          <ul className="list-unstyled">
-
-            {activeTab === "pending" &&
-              (pendingGoals.length === 0 ? (
-                <p className="text-secondary">Nenhuma meta pendente encontrada.</p>
-              ) : (
-                pendingGoals.map(goal => (
-                  <li
-                    key={goal.id}
-                    className="p-3 mb-3 rounded bg-dark border border-secondary goal-item"
-                  >
-                    <div className="d-flex align-items-center gap-3">
-                      <Input
-                        type="checkbox"
-                        checked={goal.checked}
-                        onChange={() => toggleGoalCheck(goal.id)}
-                        className="form-check-input m-0"
-                        style={{ cursor: "pointer" }}
-                      />
-
-                      <div className="d-flex justify-content-between align-items-center w-100">
-                        <div className="d-flex align-items-center gap-3">
-                          <IconRenderer iconClass={goal.image} />
-                          <strong>{goal.name}</strong>
-                        </div>
-
-                        <span className="text-success fw-bold">
-                          R${" "}
-                          {Number(goal.value).toLocaleString("pt-BR", {
-                            minimumFractionDigits: 2
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-
-                    <div className="mt-3 d-flex justify-content-end gap-2">
-                      <Button
-                        color="success"
-                        className="px-3 fw-bold py-1"
-                        onClick={() => navigate(`/edit-goal/${goal.id}`)}
-                      >
-                        Editar
-                      </Button>
-
-                      <Button
-                        color="info"
-                        className="px-3 fw-bold py-1"
-                        onClick={() => markAsCompleted(goal.id)}
-                      >
-                        Concluir
-                      </Button>
-
-                      <Button
-                        color="danger"
-                        className="px-3 fw-bold py-1 d-flex align-items-center gap-2"
-                        onClick={() => handleDelete(goal.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                        Remover
-                      </Button>
-                    </div>
-                  </li>
-                ))
-              ))}
-
-  
-            {activeTab === "completed" &&
-              (completedGoals.length === 0 ? (
-                <p className="text-secondary">Nenhuma meta concluída ainda.</p>
-              ) : (
-                completedGoals.map(goal => (
-                  <li
-                    key={goal.id}
-                    className="p-3 mb-3 rounded bg-dark border border-secondary"
-                    style={{ opacity: 0.6 }}
-                  >
-                    <div className="d-flex align-items-center gap-3">
-                      <Input type="checkbox" checked disabled className="m-0" />
-
-                      <div className="d-flex justify-content-between align-items-center w-100">
-                        <div className="d-flex align-items-center gap-3">
-                          <IconRenderer iconClass={goal.image} />
-                          <strong className="text-decoration-line-through">
-                            {goal.name}
-                          </strong>
-                        </div>
-
-                        <span className="text-success fw-bold">
-                          R${" "}
-                          {Number(goal.value).toLocaleString("pt-BR", {
-                            minimumFractionDigits: 2
-                          })}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 text-end">
-                      <Button
-                        color="danger"
-                        className="px-3 fw-bold py-1 d-flex align-items-center gap-2"
-                        onClick={() => handleDelete(goal.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                        Remover
-                      </Button>
-                    </div>
-                  </li>
-                ))
-              ))}
-          </ul>
-        </main>
-      </Container>
-    </div>
-  );
+    );
 }
