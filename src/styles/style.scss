@@ -463,10 +463,12 @@ button.btn-primary {
         radial-gradient(circle at 84% 8%, rgba(58, 124, 255, 0.11), transparent 24%),
         radial-gradient(circle at 50% 100%, rgba(57, 223, 255, 0.06), transparent 28%),
         linear-gradient(180deg, #050a1c 0%, #030718 42%, #020611 100%);
-    min-height: 100vh;
+    height: 100vh;
     width: 100%;
     position: relative;
     isolation: isolate;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .home-apple-screen::before {
@@ -1114,8 +1116,26 @@ button.btn-primary {
     }
 }
 
-/*  */
+/* =========================
+   SCROLLBAR
+========================= */
 
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #030718;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
 .wallet-pill-chart {
     display: flex;
     justify-content: center;

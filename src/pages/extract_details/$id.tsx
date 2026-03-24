@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 
 import { useEffect, useState } from "react";
+import { BASE_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
@@ -26,7 +27,7 @@ export default function ReceitasPage() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    fetch(`https://database-save-app.onrender.com/users/${parsedUser.id}`)
+    fetch(`${BASE_URL}/users/${parsedUser.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {

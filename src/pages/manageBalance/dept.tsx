@@ -10,6 +10,7 @@ import {
     ListGroupItem,
 } from "reactstrap";
 import { motion } from "framer-motion";
+import { BASE_URL } from "../../config";
 import TitleHeader from "../../components/generic_components/titleHeader";
 
 interface DepositItem {
@@ -232,7 +233,7 @@ export default function WithdrawPage() {
             setLoading(true);
 
             const res = await fetch(
-                `https://database-save-app.onrender.com/users/${updatedUser.id}`,
+                `${BASE_URL}/users/${updatedUser.id}`,
                 {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },

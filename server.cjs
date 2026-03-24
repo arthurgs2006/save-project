@@ -26,10 +26,10 @@ function writeUsers(users) {
 
 app.post("/users", (req, res) => {
 
-  const { name, email, password } = req.body
+  const { nome, email, password, saldo_final, preferencias, extratos, id } = req.body
 
   // validar campos obrigatórios
-  if (!name || !email || !password) {
+  if (!nome || !email || !password) {
     return res.status(400).json({
       error: "Todos os campos são obrigatórios"
     })
@@ -37,7 +37,7 @@ app.post("/users", (req, res) => {
 
   // validar campos vazios
   else if (
-    name.trim() === "" ||
+    nome.trim() === "" ||
     email.trim() === "" ||
     password.trim() === ""
   ) {
@@ -48,7 +48,7 @@ app.post("/users", (req, res) => {
 
   // validar tipos
   else if (
-    typeof name !== "string" ||
+    typeof nome !== "string" ||
     typeof email !== "string" ||
     typeof password !== "string"
   ) {
@@ -67,10 +67,13 @@ app.post("/users", (req, res) => {
   const users = readUsers()
 
   const newUser = {
-    id: Date.now(),
-    name,
+    id: id || Date.now().toString(),
+    nome,
     email,
-    password
+    password,
+    saldo_final: saldo_final || 0,
+    preferencias: preferencias || [],
+    extratos: extratos || []
   }
 
   users.push(newUser)
@@ -81,6 +84,28 @@ app.post("/users", (req, res) => {
     user: newUser
   })
 
+})
+
+app.get("/users", (req, res) => {
+  console.log("GET /users called")
+  const users = readUsers()
+  res.json(users)
+})
+
+app.get("/users/:id", (req, res) => {
+  const users = readUsers()
+  const user = users.find(u => u.id == req.params.id)
+  if (!user) return res.status(404).json({error: "User not found"})
+  res.json(user)
+})
+
+app.put("/users/:id", (req, res) => {
+  const users = readUsers()
+  const index = users.findIndex(u => u.id == req.params.id)
+  if (index === -1) return res.status(404).json({error: "User not found"})
+  users[index] = { ...users[index], ...req.body }
+  writeUsers(users)
+  res.json(users[index])
 })
 
 app.listen(3001, () => {

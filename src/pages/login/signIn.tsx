@@ -9,6 +9,7 @@ import CreditProfile from "./signIn/creditprofile";
 import BalanceInput from "./signIn/signbalance";
 
 import { hashPassword } from "../../utils/hashPassword";
+import { BASE_URL } from "../../config";
 
 export default function SignIn() {
     const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function SignIn() {
                 extratos: [],
             };
 
-            const res = await fetch("https://database-save-app.onrender.com/users", {
+            const res = await fetch(`${BASE_URL}/users`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newUser),

@@ -10,6 +10,7 @@ import {
     ListGroupItem,
 } from "reactstrap";
 import { motion } from "framer-motion";
+import { BASE_URL } from "../../config";
 import TitleHeader from "../../components/generic_components/titleHeader";
 
 interface DepositStatement {
@@ -80,7 +81,7 @@ export default function DepositPage() {
 
             try {
                 const response = await fetch(
-                    `https://database-save-app.onrender.com/users/${parsedUser.id}`
+                    `${BASE_URL}/users/${parsedUser.id}`
                 );
 
                 if (!response.ok) {
@@ -218,7 +219,7 @@ export default function DepositPage() {
             setLoading(true);
 
             const response = await fetch(
-                `https://database-save-app.onrender.com/users/${user.id}`,
+                `${BASE_URL}/users/${user.id}`,
                 {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },

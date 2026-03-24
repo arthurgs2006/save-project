@@ -4,5 +4,21 @@
     "name": "Arthur",
     "email": "arthur@email.com",
     "password": "123456"
+  },
+  {
+    "id": "0ff2c604-d09d-4901-8bb5-596d9a81b01f",
+    "nome": "Ana Laura da Silva",
+    "email": "analaura@email.com",
+    "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "saldo_final": 9000,
+    "preferencias": {
+      "categorias_favoritas": [
+        "Educação",
+        "Moradia"
+      ],
+      "tema_app": "dark",
+      "notificacoes": true
+    },
+    "extratos": []
   }
 ]

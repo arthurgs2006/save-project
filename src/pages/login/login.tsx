@@ -10,6 +10,7 @@ import {
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { hashPassword } from "../../utils/hashPassword";
+import { BASE_URL } from "../../config";
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function LoginPage() {
         const password = (form.elements.namedItem("password") as HTMLInputElement).value;
 
         try {
-            const res = await fetch("https://database-save-app.onrender.com/users");
+            const res = await fetch(`${BASE_URL}/users`);
 
             if (!res.ok) {
                 alert("Erro ao acessar servidor");

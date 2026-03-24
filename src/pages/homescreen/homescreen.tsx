@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Container, Button, ListGroup, ListGroupItem } from "reactstrap";
 import { motion } from "framer-motion";
 
+import { BASE_URL } from "../../config";
+
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
 
@@ -57,7 +59,7 @@ export default function HomeScreen() {
 
             try {
                 const response = await fetch(
-                    `https://database-save-app.onrender.com/users/${parsedUser.id}`
+                    `${BASE_URL}/users/${parsedUser.id}`
                 );
 
                 if (!response.ok) return;

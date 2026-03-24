@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BASE_URL } from "../../config";
 
 
 export type GetBankBalanceOptions = {
@@ -13,7 +14,7 @@ export async function getBankBalance(
 
   try {
 
-    const res = await fetch(`https://database-save-app.onrender.com/users/${userId}`);
+    const res = await fetch(`${BASE_URL}/users/${userId}`);
 
     if (!res.ok) {
       throw new Error("Usuário não encontrado no JSON Server.");

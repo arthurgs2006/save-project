@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, Container, Input } from "reactstrap";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
@@ -50,7 +51,7 @@ export default function GoalsPage() {
 
             try {
                 const response = await fetch(
-                    `https://database-save-app.onrender.com/users/${parsedUser.id}`
+                    `${BASE_URL}/users/${parsedUser.id}`
                 );
 
                 if (!response.ok) return;
