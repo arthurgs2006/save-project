@@ -6,6 +6,7 @@ import { BASE_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
+import AlertModal from "../../components/generic_components/AlertModal";
 
 type Frequency = "monthly" | "weekly" | "yearly";
 
@@ -28,6 +29,7 @@ interface User {
 export default function RecurringDebtsMenu() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(false);
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
 
     const navigate = useNavigate();
 
@@ -113,7 +115,7 @@ export default function RecurringDebtsMenu() {
             localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
             setUser(updatedUser);
         } catch {
-            alert("Erro ao excluir débito.");
+            setAlert({ isOpen: true, message: "Erro ao excluir débito.", type: "danger" });
         } finally {
             setLoading(false);
         }
@@ -233,6 +235,14 @@ export default function RecurringDebtsMenu() {
                     </section>
                 </motion.div>
             </Container>
+            {alert && (
+                <AlertModal
+                    isOpen={alert.isOpen}
+                    message={alert.message}
+                    type={alert.type}
+                    onClose={() => setAlert(null)}
+                />
+            )}
         </main>
     );
 }

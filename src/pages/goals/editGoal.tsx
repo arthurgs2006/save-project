@@ -7,12 +7,14 @@ import TitleHeader from "../../components/generic_components/titleHeader";
 import GoalSection from "../../components/graphic_components/goal_section";
 import ProgressBar from "../../components/graphic_components/progress_bar";
 import CardDeposit from "../../components/graphic_components/card.tsx";
+import AlertModal from "../../components/generic_components/AlertModal";
 
 export default function EditGoalPage() {
     const { id } = useParams();
     const navigate = useNavigate();
 
     const [user, setUser] = useState<any>(null);
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
     const [goal, setGoal] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -110,24 +112,24 @@ export default function EditGoalPage() {
             body: JSON.stringify(updatedUser),
         })
             .then(() => {
-                alert("Meta atualizada com sucesso!");
+                setAlert({ isOpen: true, message: "Meta atualizada com sucesso!", type: "success" });
                 navigate("/goals");
             })
-            .catch(() => alert("Erro ao salvar alterações."));
+            .catch(() => setAlert({ isOpen: true, message: "Erro ao salvar alterações.", type: "danger" }));
     }
 
     function handleRedirectFunds() {
         const amount = Number(depositValue);
 
         if (!amount || amount <= 0) {
-            alert("Informe um valor válido.");
+            setAlert({ isOpen: true, message: "Informe um valor válido.", type: "warning" });
             return;
         }
 
         const saldo = Number(user.saldo_final ?? user.balance ?? 0);
 
         if (amount > saldo) {
-            alert("Saldo insuficiente!");
+            setAlert({ isOpen: true, message: "Saldo insuficiente!", type: "danger" });
             return;
         }
 
@@ -156,13 +158,13 @@ export default function EditGoalPage() {
             body: JSON.stringify(updatedUser),
         })
             .then(() => {
-                alert("Valor direcionado com sucesso!");
+                setAlert({ isOpen: true, message: "Valor direcionado com sucesso!", type: "success" });
                 setUser(updatedUser);
                 setGoal(updatedGoal);
                 setDepositValue("");
                 localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
             })
-            .catch(() => alert("Erro ao direcionar valor."));
+            .catch(() => setAlert({ isOpen: true, message: "Erro ao direcionar valor.", type: "danger" }));
     }
 
     const saldoDisponivel = Number(user.saldo_final ?? user.balance ?? 0);
@@ -295,6 +297,14 @@ export default function EditGoalPage() {
                     </section>
                 </main>
             </Container>
+            {alert && (
+                <AlertModal
+                    isOpen={alert.isOpen}
+                    message={alert.message}
+                    type={alert.type}
+                    onClose={() => setAlert(null)}
+                />
+            )}
         </div>
     );
 }

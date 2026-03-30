@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
+import AlertModal from "../../components/generic_components/AlertModal";
 
 type Frequency = "monthly" | "weekly" | "yearly";
 
@@ -35,6 +36,7 @@ interface User {
 
 export default function RegisterRecurringDebt() {
     const [user, setUser] = useState<User | null>(null);
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
 
     const [name, setName] = useState("");
     const [value, setValue] = useState("");
@@ -67,12 +69,12 @@ export default function RegisterRecurringDebt() {
         e.preventDefault();
 
         if (!user) {
-            alert("Usuário não encontrado. Faça login novamente.");
+            setAlert({ isOpen: true, message: "Usuário não encontrado. Faça login novamente.", type: "danger" });
             return;
         }
 
         if (!name || !value || !category || !billingDate) {
-            alert("Preencha todos os campos obrigatórios.");
+            setAlert({ isOpen: true, message: "Preencha todos os campos obrigatórios.", type: "warning" });
             return;
         }
 
@@ -80,7 +82,7 @@ export default function RegisterRecurringDebt() {
         const numericBillingDate = Number(billingDate);
 
         if (isNaN(numericValue) || numericValue <= 0) {
-            alert("Digite um valor válido.");
+            setAlert({ isOpen: true, message: "Digite um valor válido.", type: "warning" });
             return;
         }
 
@@ -89,7 +91,7 @@ export default function RegisterRecurringDebt() {
             numericBillingDate < 1 ||
             numericBillingDate > 31
         ) {
-            alert("Informe um dia de cobrança válido.");
+            setAlert({ isOpen: true, message: "Informe um dia de cobrança válido.", type: "warning" });
             return;
         }
 
@@ -132,7 +134,7 @@ export default function RegisterRecurringDebt() {
             setTimeout(() => setSuccess(false), 2000);
         } catch (error) {
             console.error(error);
-            alert("Erro ao conectar ao servidor.");
+            setAlert({ isOpen: true, message: "Erro ao conectar ao servidor.", type: "danger" });
         } finally {
             setSaving(false);
         }
@@ -310,6 +312,14 @@ export default function RegisterRecurringDebt() {
                     </section>
                 </motion.div>
             </Container>
+            {alert && (
+                <AlertModal
+                    isOpen={alert.isOpen}
+                    message={alert.message}
+                    type={alert.type}
+                    onClose={() => setAlert(null)}
+                />
+            )}
         </main>
     );
 }

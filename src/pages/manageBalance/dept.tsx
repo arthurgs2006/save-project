@@ -12,6 +12,7 @@ import {
 import { motion } from "framer-motion";
 import { BASE_URL } from "../../config";
 import TitleHeader from "../../components/generic_components/titleHeader";
+import AlertModal from "../../components/generic_components/AlertModal";
 
 interface DepositItem {
     id: number;
@@ -61,6 +62,7 @@ export default function WithdrawPage() {
     const [selectedGoal, setSelectedGoal] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
 
     useEffect(() => {
         const storedUser = localStorage.getItem("loggedUser");
@@ -113,14 +115,14 @@ export default function WithdrawPage() {
 
     async function handleWithdraw() {
         if (!user) {
-            alert("Usuário não encontrado. Faça login novamente.");
+            setAlert({ isOpen: true, message: "Usuário não encontrado. Faça login novamente.", type: "danger" });
             return;
         }
 
         const valor = Number(withdrawValue.replace(",", "."));
 
         if (isNaN(valor) || valor <= 0) {
-            alert("Digite um valor de débito válido!");
+            setAlert({ isOpen: true, message: "Digite um valor de débito válido!", type: "warning" });
             return;
         }
 
@@ -452,6 +454,14 @@ export default function WithdrawPage() {
                     </Col>
                 </Row>
             </Container>
+            {alert && (
+                <AlertModal
+                    isOpen={alert.isOpen}
+                    message={alert.message}
+                    type={alert.type}
+                    onClose={() => setAlert(null)}
+                />
+            )}
         </main>
     );
 }

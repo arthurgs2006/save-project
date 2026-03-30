@@ -13,6 +13,7 @@ import {
 } from "reactstrap";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import AlertModal from "../../components/generic_components/AlertModal";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
@@ -32,6 +33,7 @@ export default function CreateGoalPage() {
 
     const [redirectedAmount, setRedirectedAmount] = useState<number>(0);
     const [icon, setIcon] = useState<string>("");
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
 
     const randomIcons = [
         "bi-piggy-bank-fill",
@@ -77,12 +79,12 @@ export default function CreateGoalPage() {
         const amount = Number(depositValue);
 
         if (isNaN(amount) || amount <= 0) {
-            alert("Digite um valor válido.");
+            setAlert({ isOpen: true, message: "Digite um valor válido.", type: "warning" });
             return;
         }
 
         if (amount > user.saldo_final) {
-            alert("Saldo insuficiente!");
+            setAlert({ isOpen: true, message: "Saldo insuficiente!", type: "danger" });
             return;
         }
 
@@ -96,7 +98,7 @@ export default function CreateGoalPage() {
         setUser(updatedUser);
         setDepositValue("");
 
-        alert(`R$ ${amount.toFixed(2)} direcionados para esta meta.`);
+        setAlert({ isOpen: true, message: `R$ ${amount.toFixed(2)} direcionados para esta meta.`, type: "success" });
     };
 
     const handleCreateGoal = async (e: React.FormEvent) => {
@@ -106,22 +108,22 @@ export default function CreateGoalPage() {
         const initDep = Number(initialDeposit);
 
         if (!name.trim()) {
-            alert("Digite o nome da meta.");
+            setAlert({ isOpen: true, message: "Digite o nome da meta.", type: "warning" });
             return;
         }
 
         if (isNaN(numericValue) || numericValue <= 0) {
-            alert("Digite um valor necessário válido.");
+            setAlert({ isOpen: true, message: "Digite um valor necessário válido.", type: "warning" });
             return;
         }
 
         if (isNaN(initDep) || initDep < 0) {
-            alert("Digite um depósito inicial válido.");
+            setAlert({ isOpen: true, message: "Digite um depósito inicial válido.", type: "warning" });
             return;
         }
 
         if (initDep > user.saldo_final) {
-            alert("Saldo insuficiente para depósito inicial.");
+            setAlert({ isOpen: true, message: "Saldo insuficiente para depósito inicial.", type: "danger" });
             return;
         }
 
@@ -388,6 +390,14 @@ export default function CreateGoalPage() {
                     </Row>
                 </motion.div>
             </Container>
+            {alert && (
+                <AlertModal
+                    isOpen={alert.isOpen}
+                    message={alert.message}
+                    type={alert.type}
+                    onClose={() => setAlert(null)}
+                />
+            )}
         </div>
     );
 }

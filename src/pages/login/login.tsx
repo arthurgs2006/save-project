@@ -11,10 +11,12 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { hashPassword } from "../../utils/hashPassword";
 import { BASE_URL } from "../../config";
+import AlertModal from "../../components/generic_components/AlertModal";
 
 export default function LoginPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
 
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -28,7 +30,7 @@ export default function LoginPage() {
             const res = await fetch(`${BASE_URL}/users`);
 
             if (!res.ok) {
-                alert("Erro ao acessar servidor");
+                setAlert({ isOpen: true, message: "Erro ao acessar servidor", type: "danger" });
                 setLoading(false);
                 return;
             }
@@ -41,7 +43,7 @@ export default function LoginPage() {
             );
 
             if (!user) {
-                alert("Credenciais inválidas");
+                setAlert({ isOpen: true, message: "Credenciais inválidas", type: "danger" });
                 setLoading(false);
                 return;
             }
@@ -49,7 +51,7 @@ export default function LoginPage() {
             localStorage.setItem("loggedUser", JSON.stringify(user));
             navigate("/homescreen");
         } catch (err) {
-            alert("Erro ao conectar ao servidor");
+            setAlert({ isOpen: true, message: "Erro ao conectar ao servidor", type: "danger" });
             console.error(err);
         } finally {
             setLoading(false);
@@ -162,6 +164,14 @@ export default function LoginPage() {
                     </div>
                 </motion.div>
             </Container>
+            {alert && (
+                <AlertModal
+                    isOpen={alert.isOpen}
+                    message={alert.message}
+                    type={alert.type}
+                    onClose={() => setAlert(null)}
+                />
+            )}
         </main>
     );
 }
