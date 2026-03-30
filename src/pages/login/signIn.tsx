@@ -10,6 +10,7 @@ import BalanceInput from "./signIn/signbalance";
 
 import { hashPassword } from "../../utils/hashPassword";
 import { BASE_URL } from "../../config";
+import AlertModal from "../../components/generic_components/AlertModal";
 
 export default function SignIn() {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function SignIn() {
     const [step, setStep] = useState(1);
     const [credentials, setCredentials] = useState<any>(null);
     const [profileData, setProfileData] = useState<any>(null);
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
 
     async function handleRegister(balanceValue: number) {
         try {
@@ -39,16 +41,16 @@ export default function SignIn() {
             });
 
             if (!res.ok) {
-                alert("Erro ao cadastrar usuário.");
+                setAlert({ isOpen: true, message: "Erro ao cadastrar usuário.", type: "danger" });
                 return;
             }
 
             localStorage.setItem("loggedUser", JSON.stringify(newUser));
-            alert("Usuário cadastrado com sucesso!");
+            setAlert({ isOpen: true, message: "Usuário cadastrado com sucesso!", type: "success" });
             window.location.href = "/homescreen";
         } catch (error) {
             console.error("Erro ao registrar usuário:", error);
-            alert("Falha ao conectar ao servidor.");
+            setAlert({ isOpen: true, message: "Falha ao conectar ao servidor.", type: "danger" });
         }
     }
 
@@ -180,6 +182,7 @@ export default function SignIn() {
                     </div>
                 </motion.div>
             </div>
+            {alert && <AlertModal isOpen={alert.isOpen} message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
         </main>
     );
 }

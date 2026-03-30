@@ -7,36 +7,91 @@ import {
     Input,
     Button
 } from "reactstrap";
+import AlertModal from "../../../components/generic_components/AlertModal";
 
 export default function Credentials({ onNext }: any) {
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
-        confirm: ""
+        confirm: "",
+        cpf: ""
     });
+    const [alert, setAlert] = useState<{ isOpen: boolean; message: string; type: 'success' | 'danger' | 'warning' | 'info' } | null>(null);
+
+    // 🔹 Formata CPF (máscara)
+    function formatCPF(value: string) {
+        return value
+            .replace(/\D/g, "")
+            .replace(/(\d{3})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d)/, "$1.$2")
+            .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    }
+
+    // 🔹 Valida CPF
+    function isValidCPF(cpf: string) {
+        cpf = cpf.replace(/[^\d]+/g, "");
+
+        if (cpf.length !== 11) return false;
+
+        // elimina sequências inválidas
+        if (/^(\d)\1+$/.test(cpf)) return false;
+
+        let sum = 0;
+        let rest;
+
+        for (let i = 1; i <= 9; i++) {
+            sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+        }
+
+        rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+        if (rest !== parseInt(cpf.substring(9, 10))) return false;
+
+        sum = 0;
+        for (let i = 1; i <= 10; i++) {
+            sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+        }
+
+        rest = (sum * 10) % 11;
+        if (rest === 10 || rest === 11) rest = 0;
+
+        return rest === parseInt(cpf.substring(10, 11));
+    }
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        if (name === "cpf") {
+            setFormData({ ...formData, cpf: formatCPF(value) });
+        } else {
+            setFormData({ ...formData, [name]: value });
+        }
     }
 
     function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         if (!formData.name.trim()) {
-            alert("Digite seu nome completo.");
+            setAlert({ isOpen: true, message: "Digite seu nome completo.", type: "danger" });
+            return;
+        }
+
+        if (!isValidCPF(formData.cpf)) {
+            setAlert({ isOpen: true, message: "CPF inválido.", type: "danger" });
             return;
         }
 
         if (formData.password !== formData.confirm) {
-            alert("As senhas não coincidem");
+            setAlert({ isOpen: true, message: "As senhas não coincidem", type: "danger" });
             return;
         }
 
         onNext({
             name: formData.name,
             email: formData.email,
-            password: formData.password
+            password: formData.password,
+            cpf: formData.cpf.replace(/\D/g, "") // envia limpo
         });
     }
 
@@ -88,6 +143,23 @@ export default function Credentials({ onNext }: any) {
                 </FormGroup>
 
                 <FormGroup className="text-start mb-4">
+                    <Label htmlFor="cpf" className="fw-semibold text-white mb-2">
+                        CPF (Cadastro de Pessoa Física)
+                    </Label>
+                    <Input
+                        id="cpf"
+                        name="cpf"
+                        type="text"
+                        placeholder="000.000.000-00"
+                        required
+                        maxLength={14}
+                        className="custom-input-balance"
+                        onChange={handleChange}
+                        value={formData.cpf}
+                    />
+                </FormGroup>
+
+                <FormGroup className="text-start mb-4">
                     <Label htmlFor="password" className="fw-semibold text-white mb-2">
                         Senha
                     </Label>
@@ -131,6 +203,7 @@ export default function Credentials({ onNext }: any) {
                     Continuar
                 </Button>
             </Form>
+            {alert && <AlertModal isOpen={alert.isOpen} message={alert.message} type={alert.type} onClose={() => setAlert(null)} />}
         </motion.div>
     );
 }
