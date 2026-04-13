@@ -1,16 +1,37 @@
 import { useEffect, useState } from "react";
-import { Container, Card, CardBody } from "reactstrap";
+import { Container } from "reactstrap";
 import { motion } from "framer-motion";
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
+
+import BenefitsIntro from "./steps/BenefitsIntro";
+import AcademicSituation from "./steps/AcademicSituation";
+import ProfessionalSituation from "./steps/ProfessionalSituation";
+import IncomeSituation from "./steps/IncomeSituation";
+import HousingSituation from "./steps/HousingSituation";
+import DistanceSituation from "./steps/DistanceSituation";
+import BenefitsResult from "./steps/BenefitsResult";
 
 interface User {
     id: number | string;
     nome: string;
 }
 
+type BenefitsFormData = {
+    isStudent?: "sim" | "nao";
+    institution?: string;
+    course?: string;
+    period?: string;
+    workStatus?: "nao_trabalho" | "informal" | "registrado";
+    householdSize?: string;
+    housing?: "pais" | "sozinho" | "republica" | "aluguel" | "propria";
+    farFromInstitution?: "sim" | "nao";
+};
+
 export default function StudentBenefitsPage() {
     const [user, setUser] = useState<User | null>(null);
+    const [step, setStep] = useState(1);
+    const [formData, setFormData] = useState<BenefitsFormData>({});
 
     useEffect(() => {
         const storedUser = localStorage.getItem("loggedUser");
@@ -24,6 +45,15 @@ export default function StudentBenefitsPage() {
         setUser(parsedUser);
     }, []);
 
+    function next(values: Partial<BenefitsFormData>) {
+        setFormData((prev) => ({ ...prev, ...values }));
+        setStep((prev) => prev + 1);
+    }
+
+    function goToStep(nextStep: number) {
+        setStep(nextStep);
+    }
+
     if (!user) {
         return (
             <div className="home-apple-screen d-flex justify-content-center align-items-center text-white min-vh-100">
@@ -32,10 +62,15 @@ export default function StudentBenefitsPage() {
         );
     }
 
-    const cardAnimation = {
-        hidden: { opacity: 0, y: 25 },
-        visible: { opacity: 1, y: 0 },
-    };
+    const stepTitles = [
+        "Introdução",
+        "Situação acadêmica",
+        "Situação profissional",
+        "Renda",
+        "Moradia",
+        "Deslocamento",
+        "Resultado"
+    ];
 
     return (
         <div className="home-apple-screen text-white min-vh-100 py-4 py-md-5">
@@ -48,289 +83,101 @@ export default function StudentBenefitsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
                 >
-                    <TitleHeader title="Benefícios para Estudantes de Baixa Renda" />
+                    <TitleHeader title="Benefícios" />
 
-                    <motion.div
-                        className="home-empty-state mt-3"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                        style={{
-                            background: "rgba(255,255,255,0.03)",
-                            color: "rgba(255,255,255,0.75)",
-                            lineHeight: 1.7,
-                        }}
-                    >
-                        Diversos programas públicos e privados podem auxiliar estudantes de
-                        baixa renda a permanecerem na escola, se manterem financeiramente e
-                        conquistarem oportunidades acadêmicas. Confira alguns exemplos:
-                    </motion.div>
+                    <div className="home-graph-card mt-3">
+                        <div className="mb-4">
+                            <div className="d-flex justify-content-between align-items-center mb-2 px-1">
+                                <span className="home-item-subtitle">
+                                    Etapa {step} de 7
+                                </span>
 
-                    <section className="home-section mt-4">
-                        <div className="home-section-header">
-                            <h5 className="home-section-title">
-                                <i className="bi bi-bank me-2"></i>
-                                Benefícios Governamentais
-                            </h5>
+                                <span className="home-item-subtitle">
+                                    {stepTitles[step - 1]}
+                                </span>
+                            </div>
+
+                            <div className="d-flex gap-2">
+                                {[1, 2, 3, 4, 5, 6, 7].map((item) => (
+                                    <div
+                                        key={item}
+                                        style={{
+                                            height: "8px",
+                                            flex: 1,
+                                            borderRadius: "999px",
+                                            background:
+                                                step >= item
+                                                    ? "linear-gradient(90deg, rgba(117, 225, 255, 0.98), rgba(58, 124, 255, 0.98))"
+                                                    : "rgba(255,255,255,0.10)",
+                                            boxShadow:
+                                                step >= item
+                                                    ? "0 0 14px rgba(80, 167, 255, 0.16)"
+                                                    : "none",
+                                            transition: "0.25s ease"
+                                        }}
+                                    />
+                                ))}
+                            </div>
                         </div>
 
                         <motion.div
-                            className="home-list"
-                            initial="hidden"
-                            animate="visible"
-                            transition={{ staggerChildren: 0.12 }}
+                            key={step}
+                            initial={{ opacity: 0, y: 16 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.35 }}
                         >
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div className="home-benefit-icon">
-                                                <i className="bi bi-mortarboard-fill"></i>
-                                            </div>
+                            {step === 1 && (
+                                <BenefitsIntro onNext={() => goToStep(2)} />
+                            )}
 
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    ProUni — Bolsas de Estudo
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    Oferece bolsas parciais ou integrais em instituições
-                                                    privadas de ensino superior para estudantes de baixa
-                                                    renda com bom desempenho no ENEM.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
+                            {step === 2 && (
+                                <AcademicSituation
+                                    onNext={next}
+                                    onBack={() => goToStep(1)}
+                                    data={formData}
+                                />
+                            )}
 
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div
-                                                className="home-benefit-icon"
-                                                style={{
-                                                    background: "rgba(255, 193, 7, 0.14)",
-                                                    color: "#ffc107",
-                                                }}
-                                            >
-                                                <i className="bi bi-cash-stack"></i>
-                                            </div>
+                            {step === 3 && (
+                                <ProfessionalSituation
+                                    onNext={next}
+                                    onBack={() => goToStep(2)}
+                                    data={formData}
+                                />
+                            )}
 
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    FIES — Financiamento Estudantil
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    Financiamento federal com juros reduzidos para
-                                                    estudantes de baixa renda, com pagamento facilitado
-                                                    após a conclusão do curso.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
+                            {step === 4 && (
+                                <IncomeSituation
+                                    onNext={next}
+                                    onBack={() => goToStep(3)}
+                                    data={formData}
+                                />
+                            )}
 
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div
-                                                className="home-benefit-icon"
-                                                style={{
-                                                    background: "rgba(13, 202, 240, 0.14)",
-                                                    color: "#0dcaf0",
-                                                }}
-                                            >
-                                                <i className="bi bi-bus-front-fill"></i>
-                                            </div>
+                            {step === 5 && (
+                                <HousingSituation
+                                    onNext={next}
+                                    onBack={() => goToStep(4)}
+                                    data={formData}
+                                />
+                            )}
 
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    Passe Livre Estudantil
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    Disponível em diversas cidades, garante gratuidade ou
-                                                    desconto no transporte público para estudantes
-                                                    cadastrados.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
+                            {step === 6 && (
+                                <DistanceSituation
+                                    onNext={next}
+                                    onBack={() => goToStep(5)}
+                                    data={formData}
+                                />
+                            )}
 
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div
-                                                className="home-benefit-icon"
-                                                style={{
-                                                    background: "rgba(220, 53, 69, 0.14)",
-                                                    color: "#dc3545",
-                                                }}
-                                            >
-                                                <i className="bi bi-heart-fill"></i>
-                                            </div>
-
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    Auxílio Permanência
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    Universidades e Institutos Federais podem conceder
-                                                    auxílio financeiro mensal para estudantes em
-                                                    vulnerabilidade social.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
-
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div
-                                                className="home-benefit-icon"
-                                                style={{
-                                                    background: "rgba(13, 110, 253, 0.14)",
-                                                    color: "#0d6efd",
-                                                }}
-                                            >
-                                                <i className="bi bi-house-fill"></i>
-                                            </div>
-
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    Benefícios do CadÚnico
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    O cadastro pode garantir acesso a programas sociais,
-                                                    tarifas reduzidas, prioridade habitacional,
-                                                    alimentação e direitos assistenciais.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
+                            {step === 7 && (
+                                <BenefitsResult
+                                    onBack={() => goToStep(6)}
+                                    data={formData}
+                                />
+                            )}
                         </motion.div>
-                    </section>
-
-                    <section className="home-section mt-5">
-                        <div className="home-section-header">
-                            <h5 className="home-section-title">
-                                <i className="bi bi-credit-card-2-front me-2"></i>
-                                Programas de Crédito e Bancos
-                            </h5>
-                        </div>
-
-                        <motion.div
-                            className="home-list"
-                            initial="hidden"
-                            animate="visible"
-                            transition={{ staggerChildren: 0.12 }}
-                        >
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div className="home-benefit-icon">
-                                                <i className="bi bi-piggy-bank-fill"></i>
-                                            </div>
-
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    Santander Universitário
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    Oferece crédito estudantil, bolsas e programas de
-                                                    apoio acadêmico para estudantes de baixa renda.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
-
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div
-                                                className="home-benefit-icon"
-                                                style={{
-                                                    background: "rgba(255, 193, 7, 0.14)",
-                                                    color: "#ffc107",
-                                                }}
-                                            >
-                                                <i className="bi bi-currency-dollar"></i>
-                                            </div>
-
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    Itaú Crédito Educacional
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    Linha de financiamento estudantil com pagamento
-                                                    facilitado durante ou após o curso, dependendo da
-                                                    instituição conveniada.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
-
-                            <motion.div variants={cardAnimation}>
-                                <Card className="home-list-item border-0">
-                                    <CardBody className="p-0">
-                                        <div className="home-list-left">
-                                            <div
-                                                className="home-benefit-icon"
-                                                style={{
-                                                    background: "rgba(13, 202, 240, 0.14)",
-                                                    color: "#0dcaf0",
-                                                }}
-                                            >
-                                                <i className="bi bi-safe2-fill"></i>
-                                            </div>
-
-                                            <div>
-                                                <p className="home-item-title mb-1">
-                                                    Caixa — Apoio ao Estudante
-                                                </p>
-                                                <small className="home-item-subtitle">
-                                                    Oferece opções de crédito, apoio social e integração
-                                                    com programas governamentais como o FIES.
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </CardBody>
-                                </Card>
-                            </motion.div>
-                        </motion.div>
-                    </section>
-
-                    <motion.div
-                        className="home-empty-state mt-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.6 }}
-                        style={{
-                            background: "rgba(255,255,255,0.03)",
-                            color: "rgba(255,255,255,0.72)",
-                            lineHeight: 1.7,
-                        }}
-                    >
-                        Dica: procure o setor de assistência estudantil da sua escola, IF ou
-                        universidade — eles podem orientar, inscrever e acompanhar você
-                        nesses programas.
-                    </motion.div>
+                    </div>
                 </motion.main>
             </Container>
         </div>
