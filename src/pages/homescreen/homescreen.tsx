@@ -418,6 +418,39 @@ export default function HomeScreen() {
                                 </div>
                                 <span className="home-action-label">Recorrentes</span>
                             </Button>
+
+                            <Button
+                                color="link"
+                                className="home-action-btn"
+                                onClick={() => navigate("/currency")}
+                            >
+                                <div className="home-action-icon">
+                                    <i className="bi bi-currency-exchange"></i>
+                                </div>
+                                <span className="home-action-label">Moedas</span>
+                            </Button>
+
+                            <Button
+                                color="link"
+                                className="home-action-btn"
+                                onClick={() => navigate("/investments")}
+                            >
+                                <div className="home-action-icon">
+                                    <i className="bi bi-graph-up-arrow"></i>
+                                </div>
+                                <span className="home-action-label">Investimentos</span>
+                            </Button>
+
+                            <Button
+                                color="link"
+                                className="home-action-btn"
+                                onClick={() => navigate("/cards-banks")}
+                            >
+                                <div className="home-action-icon">
+                                    <i className="bi bi-credit-card-2-front"></i>
+                                </div>
+                                <span className="home-action-label">Cartões e Bancos</span>
+                            </Button>
                         </nav>
                     </section>
 

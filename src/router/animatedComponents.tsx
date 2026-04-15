@@ -2,6 +2,9 @@ import { Route, Routes, useLocation, matchPath } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 
+import CardsBanks from "../pages/cards_banks/CardsBanks";
+import Investments from "../pages/investments/Investments";
+import Currency from "../pages/currency/Currency";
 import LoadingScreen from "../components/routerComponents/loadingScreen.tsx";
 import WelcomePage from "../pages/login/welcome_page.tsx";
 import LoginPage from "../pages/login/login.tsx";
@@ -66,8 +69,11 @@ export default function AnimatedRoutes() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signin" element={<SignInPage />} />
 
+                    <Route path="/investments" element={<Investments />} />
+                    <Route path="/currency" element={<Currency />} />
                     <Route path="/homescreen" element={<Homescreen />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/cards-banks" element={<CardsBanks />} />
 
                     <Route path="/goals" element={<Goals />} />
                     <Route path="/goals/create" element={<CreateGoal />} />
