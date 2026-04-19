@@ -133,7 +133,7 @@ export default function WithdrawPage() {
 
         if (!selectedGoal) {
             if (valor > user.saldo_final) {
-                alert("Saldo geral insuficiente!");
+                setAlert({ isOpen: true, message: "Saldo geral insuficiente!", type: "danger" });
                 return;
             }
 
@@ -167,7 +167,7 @@ export default function WithdrawPage() {
         const goal = user.goals.find((g) => g.id === selectedGoal);
 
         if (!goal) {
-            alert("Meta não encontrada.");
+            setAlert({ isOpen: true, message: "Meta não encontrada.", type: "danger" });
             return;
         }
 
@@ -175,7 +175,7 @@ export default function WithdrawPage() {
             goal.deposits?.reduce((acc, d) => acc + Number(d.value || 0), 0) || 0;
 
         if (valor > totalDeposits) {
-            alert("Valor maior que o saldo disponível na meta!");
+            setAlert({ isOpen: true, message: "Valor maior que o saldo disponível na meta!", type: "danger" });
             return;
         }
 
@@ -244,7 +244,7 @@ export default function WithdrawPage() {
             );
 
             if (!res.ok) {
-                alert("Erro ao atualizar usuário!");
+                setAlert({ isOpen: true, message: "Erro ao atualizar usuário!", type: "danger" });
                 setLoading(false);
                 return;
             }
@@ -258,7 +258,7 @@ export default function WithdrawPage() {
             setTimeout(() => setSuccess(false), 2000);
         } catch (err) {
             console.error(err);
-            alert("Erro ao conectar com o servidor.");
+            setAlert({ isOpen: true, message: "Erro ao conectar com o servidor.", type: "danger" });
         } finally {
             setLoading(false);
         }
