@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import "./investments.scss";
+import "./Investments.scss";
 
 type TabType = "renda-fixa" | "fundos" | "acoes" | "crypto";
 
