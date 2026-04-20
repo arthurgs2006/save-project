@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import "./cards_banks.scss";
+import TitleHeader from "../../components/generic_components/titleHeader";
 
 type TabType = "cards" | "banks";
 
@@ -149,9 +150,7 @@ export default function CardsBanks() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-        <button className="cards-banks-back-btn" onClick={() => navigate("/homescreen")}>
-          ← Voltar
-        </button>
+         <TitleHeader title="Cartões e Bancos"  />
 
         <div className="cards-banks-hero">
           <span className="cards-banks-badge">Cartões e Bancos</span>

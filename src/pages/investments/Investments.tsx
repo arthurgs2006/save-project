@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import "./Investments.scss";
+import TitleHeader from "../../components/generic_components/titleHeader";
 
 type TabType = "renda-fixa" | "fundos" | "acoes" | "crypto";
 
@@ -331,9 +332,7 @@ export default function Investments() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-        <button className="investments-back-btn" onClick={() => navigate("/homescreen")}>
-          ← Voltar
-        </button>
+         <TitleHeader title="Investimentos"  />
 
         <div className="investments-hero">
           <span className="investments-badge">Investimentos</span>

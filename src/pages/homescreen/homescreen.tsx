@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Container, Button, ListGroup, ListGroupItem } from "reactstrap";
 import { motion } from "framer-motion";
 
+import { exportStatementPdf } from "../../utils/pdf";
 import { BASE_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
@@ -85,6 +86,7 @@ export default function HomeScreen() {
     };
 
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+    const [showStatement, setShowStatement] = useState(false);
 
     function getMonthKey(dateStr: string) {
         const partes = dateStr.split("/");
@@ -113,6 +115,15 @@ export default function HomeScreen() {
     }, [selectedMonth]);
 
     const selectedMonthIsFuture = selectedMonth ? selectedMonth > currentMonthKey : false;
+    const statementMonthKey = selectedMonth || currentMonthKey;
+    const statementMonthLabel = selectedMonthLabel || new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" });
+    const statementMode = selectedMonth
+        ? selectedMonth < currentMonthKey
+            ? "past"
+            : selectedMonth === currentMonthKey
+                ? "current"
+                : "future"
+        : "current";
 
     const filterValidRecurring = (createdAt?: string) => {
         if (!createdAt) return selectedMonthIsFuture; // recorrentes antigos só aparecem no mês atual e futuros
@@ -157,6 +168,45 @@ export default function HomeScreen() {
 
         return [...recurringBase, ...actualExtratos];
     }, [user, selectedMonth, selectedMonthIsFuture]);
+
+    const statementItems = useMemo(() => {
+        if (!user) return [];
+
+        const allItems = [...user.extratos];
+        const actualItems = allItems.filter(
+            (item) => getMonthKey(item.data) === statementMonthKey
+        );
+
+        const showRecurringInMonth = statementMonthKey >= currentMonthKey;
+        const recurringPreview = showRecurringInMonth
+            ? [
+                ...(user.recurringDebts || [])
+                    .filter((debt) => filterValidRecurring(debt.createdAt))
+                    .map((debt) => ({
+                        id: `recurring-debit-${debt.id}-${statementMonthKey}`,
+                        data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                        descricao: `Débito recorrente: ${debt.name}`,
+                        valor: calculateTotalForMonth(debt, statementMonthKey),
+                        tipo: "debito" as const,
+                        status: statementMode === "future" ? "Previsto" : "Recorrente",
+                        isRecurringPreview: true,
+                    })),
+                ...(user.recurringCredits || [])
+                    .filter((credit) => filterValidRecurring(credit.createdAt))
+                    .map((credit) => ({
+                        id: `recurring-credit-${credit.id}-${statementMonthKey}`,
+                        data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                        descricao: `Crédito recorrente: ${credit.name}`,
+                        valor: calculateTotalForMonth(credit, statementMonthKey),
+                        tipo: "credito" as const,
+                        status: statementMode === "future" ? "Previsto" : "Recorrente",
+                        isRecurringPreview: true,
+                    }))
+            ]
+            : [];
+
+        return [...actualItems, ...recurringPreview];
+    }, [user, statementMonthKey, currentMonthKey, statementMode]);
 
     const selectedMonthOverview = useMemo(() => {
         if (!selectedMonth) return null;
@@ -228,6 +278,86 @@ export default function HomeScreen() {
         return item.data;
     }
 
+    function buildStatementLines(items: Extrato[], monthLabel: string) {
+        const header = [
+            "SAVE PROJECT",
+            "Extrato de Usuário",
+            `Mês: ${monthLabel}`,
+            "",
+            "Data       Hora     Descrição                            Tipo   Valor",
+            "------------------------------------------------------------",
+        ];
+
+        const detailLines = items.map((item) => {
+            const time = item.hora ? `${item.hora}` : "";
+            const description = item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito");
+            const type = item.tipo === "credito" ? "+" : "-";
+            return `${item.data} ${time} | ${description} | ${type} | R$ ${formatCurrency(Number(item.valor))}`;
+        });
+
+        const totalCredit = items
+            .filter((item) => item.tipo === "credito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const totalDebit = items
+            .filter((item) => item.tipo === "debito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const balance = totalCredit - totalDebit;
+
+        const footer = [
+            "",
+            `Total crédito: R$ ${formatCurrency(totalCredit)}`,
+            `Total débito: R$ ${formatCurrency(totalDebit)}`,
+            `Saldo do período: R$ ${formatCurrency(balance)}`,
+            `Panorama: ${balance < 0 ? "Insuficiente" : "Adequado"}`,
+        ];
+
+        return [...header, ...detailLines, ...footer];
+    }
+
+    function handleExportPdf() {
+        if (!user) return;
+        const exportMonthLabel = selectedMonthLabel || new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" });
+
+        const rows = statementItems.map((item) => {
+            const hora = "hora" in item && item.hora ? item.hora : "";
+            return {
+                data: item.data,
+                hora,
+                descricao: item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito"),
+                tipo: item.tipo === "credito" ? "Crédito" : "Débito",
+                valor: `R$ ${formatCurrency(Number(item.valor))}`,
+            };
+        });
+
+        const totalCredit = statementItems
+            .filter((item) => item.tipo === "credito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const totalDebit = statementItems
+            .filter((item) => item.tipo === "debito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const balance = totalCredit - totalDebit;
+
+        const footers = [
+            { label: "Total crédito", value: `R$ ${formatCurrency(totalCredit)}` },
+            { label: "Total débito", value: `R$ ${formatCurrency(totalDebit)}` },
+            { label: "Saldo do período", value: `R$ ${formatCurrency(balance)}` },
+            { label: "Panorama", value: balance < 0 ? "Insuficiente" : "Adequado" },
+        ];
+
+        const fileName = selectedMonth
+            ? `extrato_${selectedMonth}.pdf`
+            : `extrato_atual_${currentMonthKey}.pdf`;
+
+        exportStatementPdf({
+            title: `Extrato de ${exportMonthLabel}`,
+            subtitle: `Usuário: ${user.nome}`,
+            logoText: "SAVE PROJECT",
+            rows,
+            footers,
+            fileName,
+        });
+    }
+
     function getDaysInMonth(year: number, month: number) {
         return new Date(year, month + 1, 0).getDate();
     }
@@ -252,6 +382,40 @@ export default function HomeScreen() {
                 return recurring.value;
         }
     }
+
+    const statementOverview = useMemo(() => {
+        if (!user) return null;
+
+        const items = statementItems;
+        if (!items.length) return null;
+
+        const totalCredit = items
+            .filter((item) => item.tipo === "credito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const totalDebit = items
+            .filter((item) => item.tipo === "debito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const balance = totalCredit - totalDebit;
+        const biggestMovement = items.reduce((current, item) =>
+            Math.abs(Number(item.valor)) > Math.abs(Number(current.valor)) ? item : current,
+            items[0]
+        );
+
+        return {
+            totalCredit,
+            totalDebit,
+            balance,
+            count: items.length,
+            biggestMovement,
+            statusText: balance < 0 ? "Insuficiente" : "Adequado",
+            note:
+                statementMode === "future"
+                    ? "Projeção considerando despesas e receitas recorrentes para o mês selecionado."
+                    : statementMode === "past"
+                        ? "Extrato histórico do mês selecionado."
+                        : "Movimentações do mês atual e recorrências.",
+        };
+    }, [statementItems, statementMode, user]);
 
     function getSafeExtraInfo(item: Extrato) {
         const parts: string[] = [];
@@ -456,23 +620,109 @@ export default function HomeScreen() {
 
                     <section className="home-section">
                         <div className="home-section-header d-flex align-items-center justify-content-between gap-3">
-                            <h5 className="home-section-title">
-                                {selectedMonthLabel
-                                    ? `Movimentações de ${selectedMonthLabel}`
-                                    : "Últimas Movimentações"}
-                            </h5>
+                            <div>
+                                <h5 className="home-section-title">
+                                    {selectedMonthLabel
+                                        ? `Movimentações de ${selectedMonthLabel}`
+                                        : "Últimas Movimentações"}
+                                </h5>
+                                {selectedMonth && selectedMonth < currentMonthKey && (
+                                    <small className="text-muted-light">
+                                        Extrato anterior: exporta todas as movimentações feitas no mês selecionado.
+                                    </small>
+                                )}
+                            </div>
 
-                            {!selectedMonth && (
+                            <div className="d-flex align-items-center gap-2">
                                 <Button
                                     color="primary"
                                     size="sm"
-                                    className="fw-semibold"
-                                    onClick={() => navigate("/transaction-history")}
+                                    className="fw-semibold d-flex align-items-center gap-2"
+                                    onClick={handleExportPdf}
                                 >
-                                    Ver tudo
+                                    <i className="bi bi-file-earmark-text"></i>
+                                    Emitir extrato em PDF
                                 </Button>
-                            )}
+
+                                {!selectedMonth && (
+                                    <Button
+                                        color="primary"
+                                        size="sm"
+                                        className="fw-semibold"
+                                        onClick={() => navigate("/transaction-history")}
+                                    >
+                                        Ver tudo
+                                    </Button>
+                                )}
+                            </div>
                         </div>
+
+                        {showStatement && (
+                            <div className="home-section-summary mb-3 py-3 px-3">
+                                <p className="mb-1 text-uppercase text-muted-light">
+                                    Extrato de {statementMonthLabel}
+                                </p>
+                                {statementOverview ? (
+                                    <> 
+                                        <p className="mb-1">
+                                            {statementOverview.note}
+                                        </p>
+                                        <p className="mb-1 text-success">
+                                            Saldo atual: R$ {formatCurrency(Number(user.saldo_final))}
+                                        </p>
+                                        <p className="mb-1 text-info">
+                                            Saldo {statementMode === "future" ? "futuro" : "do mês"}: R$ {formatCurrency(statementOverview.balance)}
+                                        </p>
+                                        <p className="mb-1">
+                                            Maior movimentação: {statementOverview.biggestMovement.descricao || (statementOverview.biggestMovement.tipo === "credito" ? "Crédito" : "Débito")} de R$ {formatCurrency(Number(statementOverview.biggestMovement.valor))}
+                                        </p>
+                                        <p className={`mb-1 ${statementOverview.balance < 0 ? "text-danger" : "text-success"}`}>
+                                            Panorama: {statementOverview.statusText} {statementOverview.balance < 0 ? "- há saldo negativo no período." : "- despesas e receitas equilibradas."}
+                                        </p>
+                                        {selectedMonth && selectedMonth < currentMonthKey && (
+                                            <div className="mt-2">
+                                                <Button
+                                                    color="primary"
+                                                    size="sm"
+                                                    className="fw-semibold"
+                                                    onClick={() => navigate("/transaction-history")}
+                                                >
+                                                    Ir para histórico completo
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="home-empty-state text-center py-3">
+                                        Nenhuma movimentação encontrada para {statementMonthLabel}.
+                                    </div>
+                                )}
+                                <p className="mb-1 text-success">
+                                    Saldo atual: R$ {formatCurrency(Number(user.saldo_final))}
+                                </p>
+                                <p className="mb-1 text-info">
+                                    Saldo {statementMode === "future" ? "futuro" : "do mês"}: R$ {formatCurrency(statementOverview.balance)}
+                                </p>
+                                <p className="mb-1">
+                                    Maior movimentação: {statementOverview.biggestMovement.descricao || (statementOverview.biggestMovement.tipo === "credito" ? "Crédito" : "Débito")} de R$ {formatCurrency(Number(statementOverview.biggestMovement.valor))}
+                                </p>
+                                <p className={`mb-1 ${statementOverview.balance < 0 ? "text-danger" : "text-success"}`}>
+                                    Panorama: {statementOverview.statusText} {statementOverview.balance < 0 ? "- há saldo negativo no período." : "- despesas e receitas equilibradas."}
+                                </p>
+                                {selectedMonth && selectedMonth < currentMonthKey && (
+                                    <div className="mt-2">
+                                        <Button
+                                            color="primary"
+                                            size="sm"
+                                            className="fw-semibold"
+                                            onClick={() => navigate("/transaction-history")}
+                                        >
+                                            Ir para histórico completo
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {selectedMonthOverview && (
                             <div className="home-section-summary mb-3">

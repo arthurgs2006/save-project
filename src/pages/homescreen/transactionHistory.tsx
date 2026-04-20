@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Container, Button, ListGroup, ListGroupItem } from "reactstrap";
 import { motion } from "framer-motion";
 
+import { exportStatementPdf } from "../../utils/pdf";
 import { BASE_URL } from "../../config";
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
@@ -27,7 +28,105 @@ interface User {
 
 export default function TransactionHistory() {
     const [user, setUser] = useState<User | null>(null);
+    const [exportMode, setExportMode] = useState<"all" | "period">("all");
+    const [periodStart, setPeriodStart] = useState("");
+    const [periodEnd, setPeriodEnd] = useState("");
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const queryMonth = useMemo(() => {
+        const params = new URLSearchParams(location.search);
+        return params.get("month") || "";
+    }, [location.search]);
+
+    useEffect(() => {
+        if (!queryMonth) return;
+        setExportMode("period");
+        setPeriodStart(queryMonth);
+        setPeriodEnd(queryMonth);
+    }, [queryMonth]);
+
+    const exportItems = useMemo(() => {
+        if (!user) return [];
+        const items = [...user.extratos].reverse();
+
+        if (exportMode !== "period" || !periodStart || !periodEnd) {
+            return items;
+        }
+
+        const startDate = new Date(`${periodStart}-01`);
+        const endDate = new Date(`${periodEnd}-01`);
+        endDate.setMonth(endDate.getMonth() + 1);
+        endDate.setSeconds(endDate.getSeconds() - 1);
+
+        return items.filter((item) => {
+            const [day, month, year] = item.data.split("/");
+            const itemDate = new Date(Number(year), Number(month) - 1, Number(day));
+            return itemDate >= startDate && itemDate <= endDate;
+        });
+    }, [user, exportMode, periodStart, periodEnd]);
+
+    async function handleExport() {
+        const now = new Date();
+        const fileName = exportMode === "period"
+            ? `extrato_${periodStart}_a_${periodEnd}.pdf`
+            : `extrato_completo_${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}.pdf`;
+
+        const headerLines = [
+            "SAVE PROJECT",
+            `Extrato de ${user?.nome || "Usuário"}`,
+            exportMode === "period"
+                ? `Mês: ${periodStart}`
+                : "Extrato completo desde o início",
+            "",
+            "Data       Hora     Descrição                            Tipo   Valor",
+            "------------------------------------------------------------",
+        ];
+
+        const detailLines = exportItems.map((item) => {
+            const date = item.data;
+            const time = item.hora || "";
+            const description = item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito");
+            const type = item.tipo === "credito" ? "+" : "-";
+            return `${date} ${time} | ${description} | ${type} | R$ ${formatCurrency(Number(item.valor))}`;
+        });
+
+        const totalCredit = exportItems
+            .filter((item) => item.tipo === "credito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const totalDebit = exportItems
+            .filter((item) => item.tipo === "debito")
+            .reduce((sum, item) => sum + Number(item.valor), 0);
+        const balance = totalCredit - totalDebit;
+
+        const rows = exportItems.map((item) => ({
+            data: item.data,
+            hora: item.hora || "",
+            descricao: item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito"),
+            tipo: item.tipo === "credito" ? "Crédito" : "Débito",
+            valor: `R$ ${formatCurrency(Number(item.valor))}`,
+        }));
+
+        const footers = [
+            { label: "Total crédito", value: `R$ ${formatCurrency(totalCredit)}` },
+            { label: "Total débito", value: `R$ ${formatCurrency(totalDebit)}` },
+            { label: "Saldo do período", value: `R$ ${formatCurrency(balance)}` },
+            { label: "Panorama", value: balance < 0 ? "Insuficiente" : "Adequado" },
+        ];
+
+        await exportStatementPdf({
+            title: exportMode === "period"
+                ? `Extrato de ${periodStart}`
+                : "Extrato completo",
+            subtitle: exportMode === "period"
+                ? `Período: ${periodStart}`
+                : "Extrato completo desde o início",
+            logoText: "SAVE PROJECT",
+            rows,
+            footers,
+            fileName,
+        });
+    }
 
     useEffect(() => {
         async function loadUser() {
@@ -107,7 +206,7 @@ export default function TransactionHistory() {
                     />
 
                     <section className="home-section">
-                        <div className="home-section-header">
+                        <div className="home-section-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
                             <div>
                                 <h5 className="home-section-title">Movimentações desde o início</h5>
                                 <small className="home-section-description text-muted-light">
@@ -115,14 +214,62 @@ export default function TransactionHistory() {
                                 </small>
                             </div>
 
-                            <Button
-                                color="primary"
-                                size="sm"
-                                className="fw-semibold"
-                                onClick={() => navigate("/homescreen")}
-                            >
-                                Voltar
-                            </Button>
+                            <div className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2">
+                                <Button
+                                    color="primary"
+                                    size="sm"
+                                    className="home-action-btn home-action-btn-primary"
+                                    onClick={() => {
+                                        setExportMode("all");
+                                        handleExport();
+                                    }}
+                                >
+                                    <div className="home-action-icon">
+                                        <i className="bi bi-download"></i>
+                                    </div>
+                                    <span className="home-action-label">
+                                        Exportar extrato completo
+                                    </span>
+                                </Button>
+
+                                <div className="d-flex align-items-center gap-2">
+                                    <Button
+                                        color={exportMode === "period" ? "primary" : "secondary"}
+                                        size="sm"
+                                        className="fw-semibold"
+                                        onClick={() => setExportMode("period")}
+                                    >
+                                        Período específico
+                                    </Button>
+                                    {exportMode === "period" && (
+                                        <div className="d-flex flex-wrap align-items-center gap-2">
+                                            <input
+                                                type="month"
+                                                className="form-control form-control-sm"
+                                                value={periodStart}
+                                                onChange={(e) => setPeriodStart(e.target.value)}
+                                                placeholder="Início"
+                                            />
+                                            <input
+                                                type="month"
+                                                className="form-control form-control-sm"
+                                                value={periodEnd}
+                                                onChange={(e) => setPeriodEnd(e.target.value)}
+                                                placeholder="Fim"
+                                            />
+                                            <Button
+                                                color="primary"
+                                                size="sm"
+                                                className="fw-semibold"
+                                                onClick={handleExport}
+                                                disabled={!periodStart || !periodEnd}
+                                            >
+                                                Exportar
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </section>
 

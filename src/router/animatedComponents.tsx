@@ -37,7 +37,10 @@ export default function AnimatedRoutes() {
         "/settings",
         "/deposit",
         "/debts",
-        "/transaction/:id"
+        "/transaction/:id",
+        "/currency",
+        "/investments",
+        "/cards-banks"
     ];
 
     useEffect(() => {
@@ -51,10 +54,13 @@ export default function AnimatedRoutes() {
         }
 
         setLoading(true);
-
+        const isCurrencyRoute =
+            location.pathname === "/currency" ||
+            location.pathname.startsWith("/currency");
+        const delay = isCurrencyRoute ? 7000 : 500;
         const timer = setTimeout(() => {
             setLoading(false);
-        }, 300);
+        }, delay);
 
         return () => clearTimeout(timer);
     }, [location.pathname]);

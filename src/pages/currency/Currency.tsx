@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import "./currency.scss";
+import TitleHeader from "../../components/generic_components/titleHeader";
 
 type FiatSymbol = "BRL" | "USD" | "EUR" | "GBP" | "JPY";
 type CryptoSymbol = "BTC" | "ETH" | "SOL";
@@ -316,6 +317,7 @@ export default function Currency() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
+        <TitleHeader title="Moedas"  />
         <div className="currency-hero__text">
           <span className="currency-badge">Currency</span>
           <h1>Conversão e acompanhamento de moedas</h1>
