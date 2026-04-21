@@ -1,8 +1,10 @@
 using FluentValidation;
 using SaveApp.Api.Data.Repositories;
 using SaveApp.Api.DTOs.User;
+using SaveApp.Api.DTOs.Benefits;
 using SaveApp.Api.Services;
 using SaveApp.Api.Validators;
+using SaveApp.Api.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<BenefitsRepository>();
+builder.Services.AddScoped<BenefitsService>();
+builder.Services.AddScoped<IValidator<BenefitsRequestDto>, BenefitsValidator>();
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IValidator<CreateUserDto>, UserValidator>();
