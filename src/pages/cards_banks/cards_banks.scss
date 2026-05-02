@@ -12,7 +12,9 @@
 .summary-card,
 .cards-banks-filters,
 .cards-banks-content,
-.financial-item-card {
+.financial-item-card,
+.profile-insights,
+.cards-banks-state {
   background: rgba(11, 18, 32, 0.84);
   border: 1px solid rgba(148, 163, 184, 0.14);
   box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
@@ -80,6 +82,48 @@
 
   strong {
     font-size: 1rem;
+    text-transform: capitalize;
+  }
+}
+
+.profile-insights {
+  border-radius: 28px;
+  padding: 22px;
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 12px 0 18px;
+    max-width: 780px;
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.insight-card {
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+
+  span {
+    display: block;
+    margin-bottom: 8px;
+    color: #d8b4fe;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  p {
+    margin: 0;
+    color: #cbd5e1;
+    line-height: 1.5;
+    font-size: 0.92rem;
   }
 }
 
@@ -154,6 +198,18 @@
   gap: 14px;
 }
 
+.cards-banks-state {
+  border-radius: 22px;
+  padding: 22px;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+}
+
+.cards-banks-state--error {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
 .financial-item-card {
   border-radius: 22px;
   padding: 18px;
@@ -173,8 +229,11 @@
   }
 
   small {
+    display: block;
+    max-width: 760px;
     color: #94a3b8;
     font-size: 0.9rem;
+    line-height: 1.5;
   }
 }
 
@@ -221,6 +280,7 @@
   border-radius: 999px;
   font-size: 0.84rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .score-badge.low {
@@ -250,7 +310,8 @@
 
 @media (max-width: 1024px) {
   .cards-banks-summary,
-  .financial-item-info {
+  .financial-item-info,
+  .insights-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
@@ -262,7 +323,8 @@
 
   .cards-banks-header,
   .cards-banks-filters,
-  .cards-banks-content {
+  .cards-banks-content,
+  .profile-insights {
     border-radius: 22px;
   }
 
@@ -271,7 +333,8 @@
   }
 
   .cards-banks-summary,
-  .financial-item-info {
+  .financial-item-info,
+  .insights-grid {
     grid-template-columns: 1fr;
   }
 

@@ -2,6 +2,8 @@ using FluentValidation;
 using SaveApp.Api.Data.Repositories;
 using SaveApp.Api.DTOs.User;
 using SaveApp.Api.DTOs.Benefits;
+using SaveApp.Api.DTOs.Investments;
+using SaveApp.Api.DTOs.Recommendations;
 using SaveApp.Api.Services;
 using SaveApp.Api.Validators;
 using SaveApp.Api.Repositories;
@@ -15,6 +17,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<BenefitsRepository>();
 builder.Services.AddScoped<BenefitsService>();
 builder.Services.AddScoped<IValidator<BenefitsRequestDto>, BenefitsValidator>();
+
+builder.Services.AddScoped<InvestmentsService>();
+builder.Services.AddScoped<IValidator<InvestmentSimulationRequestDto>, InvestmentSimulationValidator>();
+
+builder.Services.AddScoped<RecommendationsService>();
+builder.Services.AddScoped<IValidator<RecommendationRequestDto>, RecommendationValidator>();
+
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IValidator<CreateUserDto>, UserValidator>();
@@ -39,7 +48,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Pode comentar essa linha se estiver usando só HTTP local e der warning de HTTPS
 // app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
