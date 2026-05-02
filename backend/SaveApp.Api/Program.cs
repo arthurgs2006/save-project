@@ -15,7 +15,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<BenefitsRepository>();
 builder.Services.AddScoped<BenefitsService>();
 builder.Services.AddScoped<IValidator<BenefitsRequestDto>, BenefitsValidator>();
-
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IValidator<CreateUserDto>, UserValidator>();

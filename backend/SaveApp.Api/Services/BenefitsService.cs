@@ -15,12 +15,60 @@ namespace SaveApp.Api.Services
 
         public BenefitsResponseDto Analyze(BenefitsRequestDto dto)
         {
-            var benefits = GenerateBenefits(dto);
+            var benefits = new List<string>();
+
+            if (!dto.IsStudent)
+            {
+                var noStudentResponse = new BenefitsResponseDto
+                {
+                    UserId = dto.UserId,
+                    Benefits = new List<string>(),
+                    Message = "Nenhum benefício estudantil identificado, pois o usuário não está matriculado."
+                };
+
+                SaveProfile(dto, noStudentResponse.Benefits);
+                return noStudentResponse;
+            }
+
+            // 1. Auxílio Estudantil
+            benefits.Add("Auxílio Estudantil");
+
+            // 2. Auxílio Transporte
+            if (dto.LivesFarFromInstitution)
+                benefits.Add("Auxílio Transporte");
+
+            // 3. Auxílio Moradia
+            if (
+                dto.HousingSituation.ToLower() == "sozinho" ||
+                dto.HousingSituation.ToLower() == "republica" ||
+                dto.HousingSituation.ToLower() == "aluguel"
+            )
+            {
+                benefits.Add("Auxílio Moradia");
+            }
+
+            // 4. Auxílio Permanência
+            if (
+                dto.WorkStatus.ToLower() == "nao_trabalho" ||
+                dto.PeopleAtHome >= 4
+            )
+            {
+                benefits.Add("Auxílio Permanência");
+            }
+
+            // 5. Bolsa de Apoio Acadêmico
+            if (
+                dto.WorkStatus.ToLower() == "nao_trabalho" ||
+                dto.WorkStatus.ToLower() == "informal"
+            )
+            {
+                benefits.Add("Bolsa de Apoio Acadêmico");
+            }
 
             var response = new BenefitsResponseDto
             {
                 UserId = dto.UserId,
-                Benefits = benefits,
+                Benefits = benefits.Distinct().ToList(),
                 Message = benefits.Any()
                     ? "Benefícios identificados com base nas respostas informadas."
                     : "Nenhum benefício foi identificado para o perfil informado."
@@ -36,59 +84,13 @@ namespace SaveApp.Api.Services
             return _repository.GetAll();
         }
 
-        public BenefitsProfile? GetLatestByUserId(int userId)
-        {
-            return _repository.GetLatestByUserId(userId);
-        }
-
-        private List<string> GenerateBenefits(BenefitsRequestDto dto)
-        {
-            var benefits = new List<string>();
-
-            if (!dto.IsStudent)
-                return benefits;
-
-            benefits.Add("Auxílio Estudantil");
-
-            if (dto.LivesFarFromInstitution)
-                benefits.Add("Auxílio Transporte");
-
-            var housingSituation = dto.HousingSituation.ToLower();
-
-            if (
-                housingSituation == "sozinho" ||
-                housingSituation == "republica" ||
-                housingSituation == "aluguel"
-            )
-            {
-                benefits.Add("Auxílio Moradia");
-            }
-
-            var workStatus = dto.WorkStatus.ToLower();
-
-            if (
-                workStatus == "nao_trabalho" ||
-                dto.PeopleAtHome >= 4
-            )
-            {
-                benefits.Add("Auxílio Permanência");
-            }
-
-            if (
-                workStatus == "nao_trabalho" ||
-                workStatus == "informal"
-            )
-            {
-                benefits.Add("Bolsa de Apoio Acadêmico");
-            }
-
-            return benefits.Distinct().ToList();
-        }
-
         private void SaveProfile(BenefitsRequestDto dto, List<string> benefits)
         {
-            var profile = new BenefitsProfile
+            var profiles = _repository.GetAll();
+
+            var newProfile = new BenefitsProfile
             {
+                Id = profiles.Count > 0 ? profiles.Max(x => x.Id) + 1 : 1,
                 UserId = dto.UserId,
                 IsStudent = dto.IsStudent,
                 InstitutionName = dto.InstitutionName,
@@ -102,7 +104,8 @@ namespace SaveApp.Api.Services
                 CreatedAt = DateTime.Now
             };
 
-            _repository.SaveOrUpdate(profile);
+            profiles.Add(newProfile);
+            _repository.SaveAll(profiles);
         }
     }
 }
