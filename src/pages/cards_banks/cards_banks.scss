@@ -1,0 +1,291 @@
+.cards-banks-page {
+  min-height: 100vh;
+  padding: 28px 20px 110px;
+  background:
+    radial-gradient(circle at top left, rgba(168, 85, 247, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 28%),
+    #070b14;
+  color: #f8fafc;
+}
+
+.cards-banks-header,
+.summary-card,
+.cards-banks-filters,
+.cards-banks-content,
+.financial-item-card {
+  background: rgba(11, 18, 32, 0.84);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
+  backdrop-filter: blur(12px);
+}
+
+.cards-banks-header {
+  border-radius: 28px;
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+.cards-banks-back-btn {
+  border: none;
+  background: transparent;
+  color: #f8fafc;
+  font-size: 0.98rem;
+  cursor: pointer;
+  margin-bottom: 18px;
+}
+
+.cards-banks-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.16);
+  color: #d8b4fe;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cards-banks-hero h1 {
+  margin: 12px 0 10px;
+  font-size: 2rem;
+  line-height: 1.05;
+}
+
+.cards-banks-hero p {
+  margin: 0;
+  color: #cbd5e1;
+  line-height: 1.6;
+  max-width: 700px;
+}
+
+.cards-banks-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.summary-card {
+  border-radius: 22px;
+  padding: 18px;
+
+  span {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
+
+  strong {
+    font-size: 1rem;
+  }
+}
+
+.cards-banks-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+
+  button {
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(15, 23, 42, 0.9);
+    color: #cbd5e1;
+    padding: 12px 18px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: 0.2s ease;
+  }
+
+  button.active {
+    background: linear-gradient(135deg, #9333ea, #2563eb);
+    color: #fff;
+    border-color: transparent;
+  }
+}
+
+.cards-banks-filters {
+  border-radius: 24px;
+  padding: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.filter-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e2e8f0;
+  font-size: 0.95rem;
+
+  input {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.filter-select {
+  display: grid;
+  gap: 8px;
+  color: #cbd5e1;
+  font-size: 0.94rem;
+
+  select {
+    min-width: 180px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.9);
+    color: #f8fafc;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 0.96rem;
+    outline: none;
+  }
+}
+
+.cards-banks-content {
+  border-radius: 28px;
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.financial-item-card {
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.96);
+}
+
+.financial-item-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+
+  h3 {
+    margin: 6px 0 4px;
+    font-size: 1.08rem;
+  }
+
+  small {
+    color: #94a3b8;
+    font-size: 0.9rem;
+  }
+}
+
+.financial-item-type {
+  color: #94a3b8;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.financial-item-description {
+  color: #cbd5e1;
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.financial-item-info {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+
+  div {
+    background: rgba(8, 15, 30, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.08);
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  span {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.84rem;
+    margin-bottom: 6px;
+  }
+
+  strong {
+    font-size: 0.95rem;
+  }
+}
+
+.score-badge,
+.digital-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.score-badge.low {
+  background: rgba(34, 197, 94, 0.16);
+  color: #86efac;
+}
+
+.score-badge.medium {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+}
+
+.score-badge.high {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+}
+
+.digital-badge.yes {
+  background: rgba(14, 165, 233, 0.16);
+  color: #7dd3fc;
+}
+
+.digital-badge.no {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+}
+
+@media (max-width: 1024px) {
+  .cards-banks-summary,
+  .financial-item-info {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .cards-banks-page {
+    padding: 20px 14px 100px;
+  }
+
+  .cards-banks-header,
+  .cards-banks-filters,
+  .cards-banks-content {
+    border-radius: 22px;
+  }
+
+  .cards-banks-hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .cards-banks-summary,
+  .financial-item-info {
+    grid-template-columns: 1fr;
+  }
+
+  .cards-banks-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cards-banks-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-select select {
+    width: 100%;
+  }
+}

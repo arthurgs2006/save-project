@@ -1,0 +1,41 @@
+[
+  {
+    "Id": 1,
+    "UserId": 1,
+    "IsStudent": true,
+    "InstitutionName": "IFSP",
+    "Course": "ADS",
+    "Period": "3",
+    "WorkStatus": "nao_trabalho",
+    "PeopleAtHome": 5,
+    "HousingSituation": "aluguel",
+    "LivesFarFromInstitution": true,
+    "GeneratedBenefits": [
+      "Aux\u00EDlio Estudantil",
+      "Aux\u00EDlio Transporte",
+      "Aux\u00EDlio Moradia",
+      "Aux\u00EDlio Perman\u00EAncia",
+      "Bolsa de Apoio Acad\u00EAmico"
+    ],
+    "CreatedAt": "2026-04-21T16:50:17.4396631-03:00"
+  },
+  {
+    "Id": 2,
+    "UserId": 1,
+    "IsStudent": true,
+    "InstitutionName": "UCLA",
+    "Course": "ADM",
+    "Period": "3",
+    "WorkStatus": "nao_trabalho",
+    "PeopleAtHome": 4,
+    "HousingSituation": "pais",
+    "LivesFarFromInstitution": true,
+    "GeneratedBenefits": [
+      "Aux\u00EDlio Estudantil",
+      "Aux\u00EDlio Transporte",
+      "Aux\u00EDlio Perman\u00EAncia",
+      "Bolsa de Apoio Acad\u00EAmico"
+    ],
+    "CreatedAt": "2026-05-02T16:59:21.5282102-03:00"
+  }
+]
