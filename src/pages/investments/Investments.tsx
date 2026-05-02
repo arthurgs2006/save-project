@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
 import "./Investments.scss";
 import TitleHeader from "../../components/generic_components/titleHeader";
+import { INVESTMENTS_API_URL } from "../../config";
 
 type TabType = "renda-fixa" | "fundos" | "acoes" | "crypto";
 
@@ -24,6 +24,29 @@ type CryptoItem = {
   preco: number;
   variacao: number;
   descricao: string;
+};
+
+type SimulationProfile = "conservador" | "moderado" | "agressivo";
+
+type ProjectionPoint = {
+  month: number;
+  invested: number;
+  balance: number;
+  profit: number;
+};
+
+type SimulationResponse = {
+  initialValue: number;
+  monthlyContribution: number;
+  months: number;
+  profile: string;
+  annualRate: number;
+  monthlyRate: number;
+  totalInvested: number;
+  finalAmount: number;
+  estimatedProfit: number;
+  projection: ProjectionPoint[];
+  message: string;
 };
 
 const rendaFixaData: InvestmentItem[] = [
@@ -166,44 +189,70 @@ const riskClass = (risco: string) => {
 };
 
 export default function Investments() {
-  const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState<TabType>("renda-fixa");
   const [initialValue, setInitialValue] = useState<number>(1000);
   const [monthlyValue, setMonthlyValue] = useState<number>(200);
   const [months, setMonths] = useState<number>(12);
-  const [selectedSimulation, setSelectedSimulation] = useState<"conservador" | "moderado" | "agressivo">("conservador");
+  const [selectedSimulation, setSelectedSimulation] = useState<SimulationProfile>("conservador");
 
-  const simulationRates = {
-    conservador: 0.009,
-    moderado: 0.013,
-    agressivo: 0.017,
-  };
+  const [simulation, setSimulation] = useState<SimulationResponse | null>(null);
+  const [loadingSimulation, setLoadingSimulation] = useState(false);
+  const [simulationError, setSimulationError] = useState("");
 
-  const simulationResult = useMemo(() => {
-    const rate = simulationRates[selectedSimulation];
-    let total = initialValue;
+  async function handleSimulation() {
+    try {
+      setLoadingSimulation(true);
+      setSimulationError("");
 
-    for (let i = 0; i < months; i++) {
-      total = total * (1 + rate) + monthlyValue;
+      const response = await fetch(`${INVESTMENTS_API_URL}/investments/simulate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          initialValue: Number(initialValue || 0),
+          monthlyContribution: Number(monthlyValue || 0),
+          months: Number(months || 1),
+          profile: selectedSimulation
+        })
+      });
+
+      const raw = await response.text();
+
+      if (!response.ok) {
+        throw new Error(raw || "Não foi possível simular agora.");
+      }
+
+      setSimulation(JSON.parse(raw));
+    } catch {
+      setSimulationError("Não foi possível carregar a simulação agora.");
+    } finally {
+      setLoadingSimulation(false);
     }
-
-    return total;
-  }, [initialValue, monthlyValue, months, selectedSimulation]);
-
-  const totalInvested = initialValue + monthlyValue * months;
-  const estimatedProfit = simulationResult - totalInvested;
+  }
 
   const renderContent = () => {
-    if (activeTab === "renda-fixa") {
-      return rendaFixaData.map((item) => (
+    const data =
+      activeTab === "renda-fixa"
+        ? rendaFixaData
+        : activeTab === "fundos"
+          ? fundosData
+          : activeTab === "acoes"
+            ? acoesData
+            : [];
+
+    if (activeTab !== "crypto") {
+      return data.map((item) => (
         <div className="investment-item-card" key={item.id}>
           <div className="investment-item-top">
             <div>
               <span className="investment-item-type">{item.tipo}</span>
               <h3>{item.nome}</h3>
             </div>
-            <span className={`risk-badge ${riskClass(item.risco)}`}>{item.risco}</span>
+
+            <span className={`risk-badge ${riskClass(item.risco)}`}>
+              {item.risco}
+            </span>
           </div>
 
           <p className="investment-item-description">{item.descricao}</p>
@@ -213,72 +262,12 @@ export default function Investments() {
               <span>Liquidez</span>
               <strong>{item.liquidez}</strong>
             </div>
+
             <div>
               <span>Rentabilidade</span>
               <strong>{item.rentabilidade}</strong>
             </div>
-            <div>
-              <span>Perfil</span>
-              <strong>{item.perfil}</strong>
-            </div>
-          </div>
-        </div>
-      ));
-    }
 
-    if (activeTab === "fundos") {
-      return fundosData.map((item) => (
-        <div className="investment-item-card" key={item.id}>
-          <div className="investment-item-top">
-            <div>
-              <span className="investment-item-type">{item.tipo}</span>
-              <h3>{item.nome}</h3>
-            </div>
-            <span className={`risk-badge ${riskClass(item.risco)}`}>{item.risco}</span>
-          </div>
-
-          <p className="investment-item-description">{item.descricao}</p>
-
-          <div className="investment-item-info">
-            <div>
-              <span>Liquidez</span>
-              <strong>{item.liquidez}</strong>
-            </div>
-            <div>
-              <span>Rentabilidade</span>
-              <strong>{item.rentabilidade}</strong>
-            </div>
-            <div>
-              <span>Perfil</span>
-              <strong>{item.perfil}</strong>
-            </div>
-          </div>
-        </div>
-      ));
-    }
-
-    if (activeTab === "acoes") {
-      return acoesData.map((item) => (
-        <div className="investment-item-card" key={item.id}>
-          <div className="investment-item-top">
-            <div>
-              <span className="investment-item-type">{item.tipo}</span>
-              <h3>{item.nome}</h3>
-            </div>
-            <span className={`risk-badge ${riskClass(item.risco)}`}>{item.risco}</span>
-          </div>
-
-          <p className="investment-item-description">{item.descricao}</p>
-
-          <div className="investment-item-info">
-            <div>
-              <span>Liquidez</span>
-              <strong>{item.liquidez}</strong>
-            </div>
-            <div>
-              <span>Rentabilidade</span>
-              <strong>{item.rentabilidade}</strong>
-            </div>
             <div>
               <span>Perfil</span>
               <strong>{item.perfil}</strong>
@@ -311,10 +300,12 @@ export default function Investments() {
             <span>Preço</span>
             <strong>{formatMoney(item.preco)}</strong>
           </div>
+
           <div>
             <span>Volatilidade</span>
             <strong>Alta</strong>
           </div>
+
           <div>
             <span>Perfil</span>
             <strong>Agressivo</strong>
@@ -332,22 +323,22 @@ export default function Investments() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35 }}
       >
-         <TitleHeader title="Investimentos"  />
+        <TitleHeader title="Investimentos" />
 
         <div className="investments-hero">
           <span className="investments-badge">Investimentos</span>
           <h1>Consulta, comparação e simulação</h1>
           <p>
             Explore opções de investimento por perfil, compare características e
-            simule cenários sem realizar aplicações.
+            simule cenários calculados pelo backend.
           </p>
         </div>
       </motion.div>
 
       <section className="investments-summary">
         <div className="summary-card">
-          <span>Foco da tela</span>
-          <strong>Consulta e educação</strong>
+          <span>Simulação</span>
+          <strong>Juros compostos</strong>
         </div>
 
         <div className="summary-card">
@@ -356,37 +347,25 @@ export default function Investments() {
         </div>
 
         <div className="summary-card">
-          <span>Crypto</span>
-          <strong>Somente consulta</strong>
+          <span>Projeção</span>
+          <strong>Mês a mês</strong>
         </div>
       </section>
 
       <section className="investments-tabs">
-        <button
-          className={activeTab === "renda-fixa" ? "active" : ""}
-          onClick={() => setActiveTab("renda-fixa")}
-        >
+        <button className={activeTab === "renda-fixa" ? "active" : ""} onClick={() => setActiveTab("renda-fixa")}>
           Renda fixa
         </button>
 
-        <button
-          className={activeTab === "fundos" ? "active" : ""}
-          onClick={() => setActiveTab("fundos")}
-        >
+        <button className={activeTab === "fundos" ? "active" : ""} onClick={() => setActiveTab("fundos")}>
           Fundos
         </button>
 
-        <button
-          className={activeTab === "acoes" ? "active" : ""}
-          onClick={() => setActiveTab("acoes")}
-        >
+        <button className={activeTab === "acoes" ? "active" : ""} onClick={() => setActiveTab("acoes")}>
           Ações
         </button>
 
-        <button
-          className={activeTab === "crypto" ? "active" : ""}
-          onClick={() => setActiveTab("crypto")}
-        >
+        <button className={activeTab === "crypto" ? "active" : ""} onClick={() => setActiveTab("crypto")}>
           Crypto
         </button>
       </section>
@@ -412,6 +391,15 @@ export default function Investments() {
               <span className="investments-badge secondary">Simulador</span>
               <h2>Projete um cenário</h2>
             </div>
+
+            <button
+              type="button"
+              className="simulator-action"
+              onClick={handleSimulation}
+              disabled={loadingSimulation}
+            >
+              {loadingSimulation ? "Calculando..." : "Simular"}
+            </button>
           </div>
 
           <div className="simulator-grid">
@@ -449,11 +437,7 @@ export default function Investments() {
               Perfil estimado
               <select
                 value={selectedSimulation}
-                onChange={(e) =>
-                  setSelectedSimulation(
-                    e.target.value as "conservador" | "moderado" | "agressivo"
-                  )
-                }
+                onChange={(e) => setSelectedSimulation(e.target.value as SimulationProfile)}
               >
                 <option value="conservador">Conservador</option>
                 <option value="moderado">Moderado</option>
@@ -462,24 +446,68 @@ export default function Investments() {
             </label>
           </div>
 
-          <div className="simulator-result">
-            <div>
-              <span>Total investido</span>
-              <strong>{formatMoney(totalInvested)}</strong>
+          {simulationError && (
+            <div className="simulator-error">
+              {simulationError}
             </div>
+          )}
 
-            <div>
-              <span>Valor estimado</span>
-              <strong>{formatMoney(simulationResult)}</strong>
-            </div>
+          {simulation && (
+            <>
+              <div className="simulator-result">
+                <div>
+                  <span>Total investido</span>
+                  <strong>{formatMoney(simulation.totalInvested)}</strong>
+                </div>
 
-            <div>
-              <span>Rendimento estimado</span>
-              <strong className={estimatedProfit >= 0 ? "profit" : "loss"}>
-                {formatMoney(estimatedProfit)}
-              </strong>
-            </div>
-          </div>
+                <div>
+                  <span>Valor estimado</span>
+                  <strong>{formatMoney(simulation.finalAmount)}</strong>
+                </div>
+
+                <div>
+                  <span>Rendimento estimado</span>
+                  <strong className={simulation.estimatedProfit >= 0 ? "profit" : "loss"}>
+                    {formatMoney(simulation.estimatedProfit)}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="simulator-result">
+                <div>
+                  <span>Taxa anual</span>
+                  <strong>{simulation.annualRate.toFixed(2)}%</strong>
+                </div>
+
+                <div>
+                  <span>Taxa mensal</span>
+                  <strong>{simulation.monthlyRate.toFixed(4)}%</strong>
+                </div>
+
+                <div>
+                  <span>Perfil</span>
+                  <strong>{simulation.profile}</strong>
+                </div>
+              </div>
+
+              <div className="projection-box">
+                <div className="projection-header">
+                  <h3>Projeção por período</h3>
+                  <span>Últimos meses da simulação</span>
+                </div>
+
+                <div className="projection-list">
+                  {simulation.projection.slice(-6).map((item) => (
+                    <div className="projection-row" key={item.month}>
+                      <span>Mês {item.month}</span>
+                      <strong>{formatMoney(item.balance)}</strong>
+                      <small>{formatMoney(item.profit)} de rendimento</small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <p className="simulator-note">
             Esta simulação possui caráter informativo e educacional, sem representar
