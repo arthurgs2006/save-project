@@ -3,6 +3,7 @@ import { Container } from "reactstrap";
 import { motion } from "framer-motion";
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
+import { BENEFITS_API_URL } from "../../config";
 
 import BenefitsIntro from "./steps/BenefitsIntro";
 import AcademicSituation from "./steps/AcademicSituation";
@@ -13,8 +14,10 @@ import DistanceSituation from "./steps/DistanceSituation";
 import BenefitsResult from "./steps/BenefitsResult";
 
 interface User {
-    id: number | string;
-    nome: string;
+    id?: number | string;
+    Id?: number | string;
+    nome?: string;
+    Nome?: string;
 }
 
 type BenefitsFormData = {
@@ -32,17 +35,59 @@ export default function StudentBenefitsPage() {
     const [user, setUser] = useState<User | null>(null);
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<BenefitsFormData>({});
+    const [loadingSavedProfile, setLoadingSavedProfile] = useState(true);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem("loggedUser");
+        const loadUserAndBenefits = async () => {
+            const storedUser = localStorage.getItem("loggedUser");
 
-        if (!storedUser) {
-            window.location.href = "/login";
-            return;
-        }
+            if (!storedUser) {
+                window.location.href = "/login";
+                return;
+            }
 
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+            const parsedUser = JSON.parse(storedUser);
+            const userId = parsedUser.id || parsedUser.Id || 1;
+
+            setUser(parsedUser);
+
+            try {
+                const response = await fetch(
+                    `${BENEFITS_API_URL}/benefits/user/${userId}/latest`
+                );
+
+                if (!response.ok) {
+                    setLoadingSavedProfile(false);
+                    return;
+                }
+
+                const savedProfile = await response.json();
+
+                const housingValue =
+                    savedProfile.housingSituation ??
+                    savedProfile.HousingSituation ??
+                    "";
+
+                setFormData({
+                    isStudent: (savedProfile.isStudent ?? savedProfile.IsStudent) ? "sim" : "nao",
+                    institution: savedProfile.institutionName ?? savedProfile.InstitutionName ?? "",
+                    course: savedProfile.course ?? savedProfile.Course ?? "",
+                    period: savedProfile.period ?? savedProfile.Period ?? "",
+                    workStatus: savedProfile.workStatus ?? savedProfile.WorkStatus ?? "",
+                    householdSize: String(savedProfile.peopleAtHome ?? savedProfile.PeopleAtHome ?? ""),
+                    housing: housingValue === "casa_propria" ? "propria" : housingValue,
+                    farFromInstitution: (savedProfile.livesFarFromInstitution ?? savedProfile.LivesFarFromInstitution) ? "sim" : "nao"
+                });
+
+                setStep(7);
+            } catch {
+                setStep(1);
+            } finally {
+                setLoadingSavedProfile(false);
+            }
+        };
+
+        loadUserAndBenefits();
     }, []);
 
     function next(values: Partial<BenefitsFormData>) {
@@ -54,7 +99,11 @@ export default function StudentBenefitsPage() {
         setStep(nextStep);
     }
 
-    if (!user) {
+    function editBenefitsInfo() {
+        setStep(2);
+    }
+
+    if (!user || loadingSavedProfile) {
         return (
             <div className="home-apple-screen d-flex justify-content-center align-items-center text-white min-vh-100">
                 <div className="home-empty-state">Carregando dados...</div>
@@ -75,7 +124,7 @@ export default function StudentBenefitsPage() {
     return (
         <div className="home-apple-screen text-white min-vh-100 py-4 py-md-5">
             <Container className="home-shell">
-                <AccountHeader name={user.nome} />
+                <AccountHeader name={user.nome || user.Nome || "Usuário"} />
 
                 <motion.main
                     className="home-main"
@@ -171,10 +220,20 @@ export default function StudentBenefitsPage() {
                             )}
 
                             {step === 7 && (
-                                <BenefitsResult
-                                    onBack={() => goToStep(6)}
-                                    data={formData}
-                                />
+                                <>
+                                    <BenefitsResult
+                                        onBack={() => goToStep(6)}
+                                        data={formData}
+                                    />
+
+                                    <button
+                                        type="button"
+                                        className="benefits-result__back mt-3"
+                                        onClick={editBenefitsInfo}
+                                    >
+                                        Editar informações
+                                    </button>
+                                </>
                             )}
                         </motion.div>
                     </div>

@@ -26,7 +26,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -38,9 +39,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Pode comentar essa linha se estiver usando só HTTP local e der warning de HTTPS
+// app.UseHttpsRedirection();
+
 app.UseCors("AllowFrontend");
+
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
