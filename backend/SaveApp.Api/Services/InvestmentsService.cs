@@ -1,13 +1,13 @@
 using SaveApp.Api.DTOs.Investments;
-using SaveApp.Api.Models;
-    
+
 namespace SaveApp.Api.Services
 {
     public class InvestmentsService
     {
         public InvestmentSimulationResponseDto Simulate(InvestmentSimulationRequestDto dto)
         {
-            var annualRate = GetAnnualRate(dto.Profile);
+            var profile = NormalizeProfile(dto.Profile);
+            var annualRate = GetAnnualRate(profile);
             var monthlyRate = (decimal)Math.Pow((double)(1 + annualRate / 100), 1.0 / 12.0) - 1;
 
             decimal balance = dto.InitialValue;
@@ -19,7 +19,6 @@ namespace SaveApp.Api.Services
             {
                 balance += dto.MonthlyContribution;
                 totalInvested += dto.MonthlyContribution;
-
                 balance *= 1 + monthlyRate;
 
                 var profit = balance - totalInvested;
@@ -41,14 +40,14 @@ namespace SaveApp.Api.Services
                 InitialValue = dto.InitialValue,
                 MonthlyContribution = dto.MonthlyContribution,
                 Months = dto.Months,
-                Profile = NormalizeProfile(dto.Profile),
+                Profile = profile,
                 AnnualRate = annualRate,
                 MonthlyRate = Math.Round(monthlyRate * 100, 4),
                 TotalInvested = Math.Round(totalInvested, 2),
                 FinalAmount = finalAmount,
                 EstimatedProfit = estimatedProfit,
                 Projection = projection,
-                Message = "Simulação calculada com juros compostos mensais."
+                Message = GetSimulationMessage(profile, estimatedProfit, dto.Months)
             };
         }
 
@@ -63,21 +62,24 @@ namespace SaveApp.Api.Services
                         Id = "conservador",
                         Name = "Conservador",
                         AnnualRate = 10.5,
-                        Description = "Perfil com menor risco e crescimento mais estável."
+                        Risk = "Baixo",
+                        Description = "Foco em segurança, reserva de emergência e baixa oscilação."
                     },
                     new
                     {
                         Id = "moderado",
                         Name = "Moderado",
                         AnnualRate = 13.5,
-                        Description = "Perfil equilibrado entre segurança e rentabilidade."
+                        Risk = "Médio",
+                        Description = "Equilíbrio entre segurança e crescimento gradual do patrimônio."
                     },
                     new
                     {
                         Id = "agressivo",
                         Name = "Agressivo",
                         AnnualRate = 18.0,
-                        Description = "Perfil com maior risco e maior potencial de retorno."
+                        Risk = "Alto",
+                        Description = "Maior potencial de retorno, aceitando mais oscilações."
                     }
                 }
             };
@@ -85,7 +87,7 @@ namespace SaveApp.Api.Services
 
         private decimal GetAnnualRate(string profile)
         {
-            return NormalizeProfile(profile) switch
+            return profile switch
             {
                 "conservador" => 10.5m,
                 "moderado" => 13.5m,
@@ -94,8 +96,24 @@ namespace SaveApp.Api.Services
             };
         }
 
+        private string GetSimulationMessage(string profile, decimal profit, int months)
+        {
+            var profileText = profile switch
+            {
+                "conservador" => "com foco em segurança",
+                "moderado" => "com equilíbrio entre risco e retorno",
+                "agressivo" => "com maior potencial de crescimento",
+                _ => "com base no perfil informado"
+            };
+
+            return $"Simulação calculada {profileText}, considerando juros compostos por {months} meses e rendimento estimado de R$ {profit:N2}.";
+        }
+
         private string NormalizeProfile(string profile)
         {
+            if (string.IsNullOrWhiteSpace(profile))
+                return "moderado";
+
             return profile.Trim().ToLower();
         }
     }
