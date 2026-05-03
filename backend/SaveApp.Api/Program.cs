@@ -14,6 +14,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddHttpClient<CurrencyService>();
+
 builder.Services.AddScoped<BenefitsRepository>();
 builder.Services.AddScoped<BenefitsService>();
 builder.Services.AddScoped<IValidator<BenefitsRequestDto>, BenefitsValidator>();

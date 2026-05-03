@@ -17,5 +17,24 @@
       "Bolsa de Apoio Acad\u00EAmico"
     ],
     "CreatedAt": "2026-05-02T17:38:45.34421-03:00"
+  },
+  {
+    "Id": 2,
+    "UserId": 1,
+    "IsStudent": true,
+    "InstitutionName": "UNICSUL",
+    "Course": "ADS",
+    "Period": "3",
+    "WorkStatus": "nao_trabalho",
+    "PeopleAtHome": 6,
+    "HousingSituation": "pais",
+    "LivesFarFromInstitution": true,
+    "GeneratedBenefits": [
+      "Aux\u00EDlio Estudantil",
+      "Aux\u00EDlio Transporte",
+      "Aux\u00EDlio Perman\u00EAncia",
+      "Bolsa de Apoio Acad\u00EAmico"
+    ],
+    "CreatedAt": "2026-05-03T12:32:31.9912224-03:00"
   }
 ]

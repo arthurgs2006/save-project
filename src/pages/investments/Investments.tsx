@@ -1,10 +1,25 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import {
+  AreaChart,
+  Area,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  BarChart,
+  Bar
+} from "recharts";
 import "./Investments.scss";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import { INVESTMENTS_API_URL } from "../../config";
 
 type TabType = "renda-fixa" | "fundos" | "acoes" | "crypto";
+type SimulationProfile = "conservador" | "moderado" | "agressivo";
+type GoalType = "reserva" | "crescimento" | "longo-prazo";
 
 type InvestmentItem = {
   id: number;
@@ -25,8 +40,6 @@ type CryptoItem = {
   variacao: number;
   descricao: string;
 };
-
-type SimulationProfile = "conservador" | "moderado" | "agressivo";
 
 type ProjectionPoint = {
   month: number;
@@ -58,28 +71,28 @@ const rendaFixaData: InvestmentItem[] = [
     liquidez: "Alta",
     rentabilidade: "Próxima da Selic",
     perfil: "Conservador",
-    descricao: "Opção estável e bastante usada para reserva e objetivos de curto prazo.",
+    descricao: "Opção estável para reserva de emergência e objetivos de curto prazo."
   },
   {
     id: 2,
-    nome: "CDB 110% CDI",
+    nome: "CDB liquidez diária",
     tipo: "Renda fixa",
     risco: "Baixo",
-    liquidez: "Média",
-    rentabilidade: "110% do CDI",
+    liquidez: "Alta",
+    rentabilidade: "Percentual do CDI",
     perfil: "Conservador / Moderado",
-    descricao: "Alternativa para quem busca previsibilidade com potencial acima do CDI.",
+    descricao: "Alternativa simples para manter o dinheiro rendendo com acesso rápido."
   },
   {
     id: 3,
     nome: "LCI / LCA",
     tipo: "Renda fixa",
     risco: "Baixo",
-    liquidez: "Baixa a média",
+    liquidez: "Média",
     rentabilidade: "Prefixada ou % do CDI",
     perfil: "Conservador",
-    descricao: "Produto de renda fixa com foco em previsibilidade e benefício tributário.",
-  },
+    descricao: "Produto com previsibilidade e foco em objetivos de médio prazo."
+  }
 ];
 
 const fundosData: InvestmentItem[] = [
@@ -91,7 +104,7 @@ const fundosData: InvestmentItem[] = [
     liquidez: "Alta",
     rentabilidade: "Próxima ao CDI",
     perfil: "Conservador",
-    descricao: "Fundo com foco em ativos de baixo risco e alta previsibilidade.",
+    descricao: "Fundo com foco em ativos de baixo risco e gestão profissional."
   },
   {
     id: 5,
@@ -101,7 +114,7 @@ const fundosData: InvestmentItem[] = [
     liquidez: "Média",
     rentabilidade: "Variável",
     perfil: "Moderado",
-    descricao: "Combina diferentes classes de ativos em busca de retorno mais flexível.",
+    descricao: "Combina diferentes classes de ativos para buscar retorno mais flexível."
   },
   {
     id: 6,
@@ -111,8 +124,8 @@ const fundosData: InvestmentItem[] = [
     liquidez: "Média",
     rentabilidade: "Variável",
     perfil: "Agressivo",
-    descricao: "Voltado para maior exposição à bolsa, com oscilações mais intensas.",
-  },
+    descricao: "Voltado para exposição à bolsa, aceitando maior oscilação."
+  }
 ];
 
 const acoesData: InvestmentItem[] = [
@@ -124,7 +137,7 @@ const acoesData: InvestmentItem[] = [
     liquidez: "Alta",
     rentabilidade: "Variável",
     perfil: "Moderado",
-    descricao: "Empresas conhecidas por distribuir parte do lucro aos acionistas.",
+    descricao: "Empresas conhecidas por distribuir parte dos lucros aos acionistas."
   },
   {
     id: 8,
@@ -134,7 +147,7 @@ const acoesData: InvestmentItem[] = [
     liquidez: "Alta",
     rentabilidade: "Variável",
     perfil: "Moderado / Agressivo",
-    descricao: "Empresas maiores e mais consolidadas dentro da bolsa.",
+    descricao: "Empresas maiores e mais consolidadas dentro da bolsa."
   },
   {
     id: 9,
@@ -144,8 +157,8 @@ const acoesData: InvestmentItem[] = [
     liquidez: "Média",
     rentabilidade: "Variável",
     perfil: "Agressivo",
-    descricao: "Papéis com maior potencial de oscilação e risco mais elevado.",
-  },
+    descricao: "Ações com maior potencial de crescimento e maior risco."
+  }
 ];
 
 const cryptoData: CryptoItem[] = [
@@ -155,7 +168,7 @@ const cryptoData: CryptoItem[] = [
     nome: "Bitcoin",
     preco: 352000,
     variacao: 2.4,
-    descricao: "Cripto mais conhecida do mercado, com alta volatilidade e forte exposição.",
+    descricao: "Cripto mais conhecida do mercado, com alta volatilidade."
   },
   {
     id: 2,
@@ -163,7 +176,7 @@ const cryptoData: CryptoItem[] = [
     nome: "Ethereum",
     preco: 17800,
     variacao: -1.2,
-    descricao: "Ativo bastante associado a aplicações descentralizadas e contratos inteligentes.",
+    descricao: "Ativo associado a aplicações descentralizadas e contratos inteligentes."
   },
   {
     id: 3,
@@ -171,16 +184,16 @@ const cryptoData: CryptoItem[] = [
     nome: "Solana",
     preco: 690,
     variacao: 3.8,
-    descricao: "Criptomoeda com maior oscilação e foco em velocidade e escala.",
-  },
+    descricao: "Criptomoeda com alta oscilação e foco em velocidade."
+  }
 ];
 
 const formatMoney = (value: number) =>
   new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: value > 9999 ? 0 : 2,
-  }).format(value);
+    maximumFractionDigits: value > 9999 ? 0 : 2
+  }).format(value || 0);
 
 const riskClass = (risco: string) => {
   if (risco === "Baixo") return "low";
@@ -188,42 +201,108 @@ const riskClass = (risco: string) => {
   return "high";
 };
 
+const profileLabel = {
+  conservador: "Conservador",
+  moderado: "Moderado",
+  agressivo: "Agressivo"
+};
+
 export default function Investments() {
   const [activeTab, setActiveTab] = useState<TabType>("renda-fixa");
   const [initialValue, setInitialValue] = useState<number>(1000);
   const [monthlyValue, setMonthlyValue] = useState<number>(200);
-  const [months, setMonths] = useState<number>(12);
-  const [selectedSimulation, setSelectedSimulation] = useState<SimulationProfile>("conservador");
+  const [months, setMonths] = useState<number>(24);
+  const [selectedSimulation, setSelectedSimulation] =
+    useState<SimulationProfile>("moderado");
+  const [goal, setGoal] = useState<GoalType>("crescimento");
 
   const [simulation, setSimulation] = useState<SimulationResponse | null>(null);
+  const [scenarioComparison, setScenarioComparison] = useState<any[]>([]);
   const [loadingSimulation, setLoadingSimulation] = useState(false);
   const [simulationError, setSimulationError] = useState("");
+
+  const userProfile = useMemo(() => {
+    const storedUser = localStorage.getItem("loggedUser");
+    const user = storedUser ? JSON.parse(storedUser) : null;
+
+    const balance = Number(user?.saldo_final || 0);
+    const income = Number(user?.receita || 0);
+
+    if (balance < 700 || income < 1800) return "conservador";
+    if (balance >= 3000 && income >= 3500) return "agressivo";
+    return "moderado";
+  }, []);
+
+  const recommendation = useMemo(() => {
+    if (goal === "reserva") {
+      return {
+        title: "Reserva de emergência",
+        profile: "conservador",
+        text: "Para reserva, o ideal é priorizar liquidez e baixo risco antes de buscar maior retorno."
+      };
+    }
+
+    if (goal === "longo-prazo") {
+      return {
+        title: "Longo prazo",
+        profile: userProfile === "conservador" ? "moderado" : userProfile,
+        text: "Para longo prazo, pode fazer sentido aceitar um pouco mais de oscilação de forma gradual."
+      };
+    }
+
+    return {
+      title: "Crescimento gradual",
+      profile: userProfile,
+      text: "Seu perfil sugere equilíbrio entre segurança, crescimento e previsibilidade."
+    };
+  }, [goal, userProfile]);
+
+  async function simulateProfile(profile: SimulationProfile) {
+    const response = await fetch(`${INVESTMENTS_API_URL}/investments/simulate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        initialValue: Number(initialValue || 0),
+        monthlyContribution: Number(monthlyValue || 0),
+        months: Number(months || 1),
+        profile
+      })
+    });
+
+    const raw = await response.text();
+
+    if (!response.ok) {
+      throw new Error(raw || "Não foi possível simular agora.");
+    }
+
+    return JSON.parse(raw) as SimulationResponse;
+  }
 
   async function handleSimulation() {
     try {
       setLoadingSimulation(true);
       setSimulationError("");
 
-      const response = await fetch(`${INVESTMENTS_API_URL}/investments/simulate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          initialValue: Number(initialValue || 0),
-          monthlyContribution: Number(monthlyValue || 0),
-          months: Number(months || 1),
-          profile: selectedSimulation
+      const mainSimulation = await simulateProfile(selectedSimulation);
+
+      const profiles: SimulationProfile[] = ["conservador", "moderado", "agressivo"];
+      const comparisons = await Promise.all(
+        profiles.map(async (profile) => {
+          const result = await simulateProfile(profile);
+
+          return {
+            profile: profileLabel[profile],
+            finalAmount: result.finalAmount,
+            profit: result.estimatedProfit,
+            annualRate: result.annualRate
+          };
         })
-      });
+      );
 
-      const raw = await response.text();
-
-      if (!response.ok) {
-        throw new Error(raw || "Não foi possível simular agora.");
-      }
-
-      setSimulation(JSON.parse(raw));
+      setSimulation(mainSimulation);
+      setScenarioComparison(comparisons);
     } catch {
       setSimulationError("Não foi possível carregar a simulação agora.");
     } finally {
@@ -329,27 +408,44 @@ export default function Investments() {
           <span className="investments-badge">Investimentos</span>
           <h1>Consulta, comparação e simulação</h1>
           <p>
-            Explore opções de investimento por perfil, compare características e
-            simule cenários calculados pelo backend.
+            Explore opções por perfil, compare cenários e visualize a evolução
+            do seu dinheiro ao longo do tempo.
           </p>
         </div>
       </motion.div>
 
       <section className="investments-summary">
         <div className="summary-card">
-          <span>Simulação</span>
-          <strong>Juros compostos</strong>
+          <span>Perfil detectado</span>
+          <strong>{profileLabel[userProfile as SimulationProfile]}</strong>
         </div>
 
         <div className="summary-card">
-          <span>Perfis</span>
-          <strong>Conservador ao agressivo</strong>
+          <span>Objetivo</span>
+          <strong>{recommendation.title}</strong>
         </div>
 
         <div className="summary-card">
-          <span>Projeção</span>
-          <strong>Mês a mês</strong>
+          <span>Perfil recomendado</span>
+          <strong>{profileLabel[recommendation.profile as SimulationProfile]}</strong>
         </div>
+      </section>
+
+      <section className="personalized-box">
+        <div>
+          <span className="investments-badge secondary">Recomendado para você</span>
+          <h2>{recommendation.title}</h2>
+          <p>{recommendation.text}</p>
+        </div>
+
+        <label>
+          Objetivo
+          <select value={goal} onChange={(e) => setGoal(e.target.value as GoalType)}>
+            <option value="reserva">Reserva</option>
+            <option value="crescimento">Crescimento</option>
+            <option value="longo-prazo">Longo prazo</option>
+          </select>
+        </label>
       </section>
 
       <section className="investments-tabs">
@@ -466,38 +562,90 @@ export default function Investments() {
                 </div>
 
                 <div>
-                  <span>Rendimento estimado</span>
+                  <span>Rendimento</span>
                   <strong className={simulation.estimatedProfit >= 0 ? "profit" : "loss"}>
                     {formatMoney(simulation.estimatedProfit)}
                   </strong>
                 </div>
               </div>
 
-              <div className="simulator-result">
-                <div>
-                  <span>Taxa anual</span>
-                  <strong>{simulation.annualRate.toFixed(2)}%</strong>
+              <section className="investment-charts">
+                <div className="chart-card">
+                  <div className="chart-header">
+                    <h3>Evolução do patrimônio</h3>
+                    <span>{simulation.months} meses</span>
+                  </div>
+
+                  <ResponsiveContainer width="100%" height={280}>
+                    <AreaChart data={simulation.projection}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.12)" />
+                      <XAxis dataKey="month" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" />
+                      <Tooltip
+                        formatter={(value: any) => formatMoney(Number(value))}
+                        contentStyle={{
+                          background: "#0f172a",
+                          border: "1px solid rgba(148, 163, 184, 0.2)",
+                          borderRadius: "12px",
+                          color: "#fff"
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="balance"
+                        stroke="#38bdf8"
+                        fill="rgba(56, 189, 248, 0.18)"
+                        strokeWidth={3}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="invested"
+                        stroke="#22c55e"
+                        fill="rgba(34, 197, 94, 0.08)"
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
 
-                <div>
-                  <span>Taxa mensal</span>
-                  <strong>{simulation.monthlyRate.toFixed(4)}%</strong>
-                </div>
+                <div className="chart-card">
+                  <div className="chart-header">
+                    <h3>Comparação de cenários</h3>
+                    <span>Valor final</span>
+                  </div>
 
-                <div>
-                  <span>Perfil</span>
-                  <strong>{simulation.profile}</strong>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={scenarioComparison}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.12)" />
+                      <XAxis dataKey="profile" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" />
+                      <Tooltip
+                        formatter={(value: any) => formatMoney(Number(value))}
+                        contentStyle={{
+                          background: "#0f172a",
+                          border: "1px solid rgba(148, 163, 184, 0.2)",
+                          borderRadius: "12px",
+                          color: "#fff"
+                        }}
+                      />
+                      <Bar dataKey="finalAmount" fill="#0ea5e9" radius={[10, 10, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
+              </section>
 
               <div className="projection-box">
                 <div className="projection-header">
-                  <h3>Projeção por período</h3>
-                  <span>Últimos meses da simulação</span>
+                  <h3>Resumo inteligente</h3>
+                  <span>{simulation.profile}</span>
                 </div>
 
+                <p className="projection-text">
+                  {simulation.message}
+                </p>
+
                 <div className="projection-list">
-                  {simulation.projection.slice(-6).map((item) => (
+                  {simulation.projection.slice(-4).map((item) => (
                     <div className="projection-row" key={item.month}>
                       <span>Mês {item.month}</span>
                       <strong>{formatMoney(item.balance)}</strong>
