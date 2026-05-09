@@ -23,8 +23,10 @@
 .recurring-hero,
 .recurring-toolbar,
 .recurring-card,
+.recurring-item-card,
 .recurring-form-card,
-.recurring-empty {
+.recurring-empty,
+.recurring-empty-state {
     background: rgba(11, 18, 32, 0.84);
     border: 1px solid rgba(148, 163, 184, 0.14);
     box-shadow: 0 18px 40px rgba(2, 6, 23, 0.34);
@@ -73,6 +75,7 @@
     color: #86efac;
 }
 
+.recurring-badge.danger-badge,
 .recurring-badge.negative-badge {
     background: rgba(239, 68, 68, 0.16);
     color: #fca5a5;
@@ -111,9 +114,68 @@
     color: #f87171;
 }
 
+.recurring-menu-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.recurring-main-btn,
+.recurring-secondary-btn,
+.recurring-danger-btn,
+.recurring-card-actions button,
+.recurring-item-actions button {
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 18px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.recurring-main-btn {
+    background: linear-gradient(135deg, #22c55e, #0ea5e9);
+    color: #fff;
+    box-shadow: 0 14px 28px rgba(14, 165, 233, 0.22);
+}
+
+.recurring-danger-btn {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    box-shadow: 0 14px 28px rgba(239, 68, 68, 0.2);
+}
+
+.recurring-secondary-btn {
+    background: rgba(148, 163, 184, 0.14);
+    color: #e2e8f0;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.recurring-main-btn:hover,
+.recurring-secondary-btn:hover,
+.recurring-danger-btn:hover,
+.recurring-card-actions button:hover,
+.recurring-item-actions button:hover {
+    transform: translateY(-2px);
+}
+
+.recurring-main-btn:disabled,
+.recurring-danger-btn:disabled,
+.recurring-secondary-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .recurring-toolbar {
     display: grid;
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
     gap: 16px;
     align-items: center;
     border-radius: 26px;
@@ -121,12 +183,43 @@
     margin-bottom: 18px;
 }
 
-.recurring-tabs {
+.recurring-search {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: center;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.92);
+    color: #f8fafc;
+    border-radius: 16px;
+    padding: 0 16px;
+
+    i {
+        color: #94a3b8;
+    }
+
+    input {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: #f8fafc;
+        padding: 14px 0;
+        outline: none;
+        font-size: 0.98rem;
+    }
+
+    input::placeholder {
+        color: #64748b;
+    }
+}
+
+.recurring-tabs {
+    display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 
     button {
+        min-width: 120px;
         border: 1px solid rgba(148, 163, 184, 0.14);
         background: rgba(15, 23, 42, 0.9);
         color: #cbd5e1;
@@ -149,69 +242,134 @@
     }
 }
 
-.recurring-actions-top {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-
-    input {
-        width: 100%;
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        background: rgba(15, 23, 42, 0.92);
-        color: #f8fafc;
-        border-radius: 16px;
-        padding: 13px 16px;
-        outline: none;
-        transition: 0.2s ease;
-    }
-
-    input:focus {
-        border-color: rgba(56, 189, 248, 0.58);
-        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.08);
-    }
-}
-
-.recurring-main-btn,
-.recurring-secondary-btn,
-.recurring-card-actions button {
-    border: 0;
-    border-radius: 999px;
-    padding: 12px 18px;
-    font-weight: 900;
-    cursor: pointer;
-    transition: 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.recurring-main-btn {
-    background: linear-gradient(135deg, #22c55e, #0ea5e9);
-    color: #fff;
-    box-shadow: 0 14px 28px rgba(14, 165, 233, 0.22);
-}
-
-.recurring-main-btn:hover,
-.recurring-secondary-btn:hover,
-.recurring-card-actions button:hover {
-    transform: translateY(-2px);
-}
-
-.recurring-main-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.recurring-secondary-btn {
-    background: rgba(148, 163, 184, 0.14);
-    color: #e2e8f0;
-}
-
 .recurring-list {
     display: grid;
     gap: 14px;
+}
+
+.recurring-item-card {
+    border-radius: 28px;
+    padding: 20px;
+}
+
+.recurring-item-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+
+    h3 {
+        margin: 8px 0 6px;
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+    }
+
+    p {
+        margin: 0;
+        color: #cbd5e1;
+        line-height: 1.5;
+    }
+
+    > strong {
+        white-space: nowrap;
+        font-size: 1.25rem;
+    }
+}
+
+.recurring-type {
+    display: inline-flex;
+    width: fit-content;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.positive-type {
+    background: rgba(34, 197, 94, 0.14);
+    color: #86efac;
+}
+
+.negative-type {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
+}
+
+.recurring-item-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+
+    div {
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(8, 15, 30, 0.72);
+        border: 1px solid rgba(148, 163, 184, 0.08);
+    }
+
+    span {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.82rem;
+        margin-bottom: 5px;
+    }
+
+    strong {
+        color: #f8fafc;
+        font-size: 0.96rem;
+    }
+}
+
+.recurring-period-info {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(8, 15, 30, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.08);
+    margin-bottom: 14px;
+
+    span {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.82rem;
+        margin-bottom: 6px;
+    }
+
+    strong {
+        display: block;
+        color: #f8fafc;
+        margin-bottom: 4px;
+    }
+
+    small {
+        color: #cbd5e1;
+    }
+}
+
+.recurring-item-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(148, 163, 184, 0.1);
+
+    button {
+        background: rgba(15, 23, 42, 0.92);
+        color: #e2e8f0;
+        border: 1px solid rgba(148, 163, 184, 0.12);
+        font-size: 0.86rem;
+        padding: 10px 14px;
+    }
+
+    button.danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.18);
+    }
 }
 
 .recurring-card {
@@ -309,23 +467,28 @@
     }
 }
 
-.recurring-empty {
+.recurring-empty,
+.recurring-empty-state {
     border-radius: 28px;
     padding: 42px 20px;
     text-align: center;
 
     i {
+        display: block;
         font-size: 2.2rem;
         color: #93c5fd;
+        margin-bottom: 12px;
     }
 
     h3 {
-        margin: 14px 0 8px;
+        margin: 0 0 8px;
+        font-size: 1.3rem;
     }
 
     p {
         margin: 0;
         color: #cbd5e1;
+        line-height: 1.5;
     }
 }
 
@@ -365,6 +528,32 @@
     select:focus {
         border-color: rgba(56, 189, 248, 0.58);
         box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.08);
+    }
+
+    input:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+}
+
+.recurring-period-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 16px;
+    color: #cbd5e1;
+    font-weight: 800;
+    cursor: pointer;
+
+    input {
+        width: 18px;
+        height: 18px;
+        accent-color: #22c55e;
+        cursor: pointer;
+    }
+
+    span {
+        line-height: 1.4;
     }
 }
 
@@ -409,16 +598,21 @@
         grid-template-columns: 1fr;
     }
 
-    .recurring-actions-top {
-        grid-template-columns: 1fr;
+    .recurring-tabs {
+        justify-content: flex-start;
     }
 
     .recurring-card-right {
         text-align: left;
     }
 
-    .recurring-card-actions {
+    .recurring-card-actions,
+    .recurring-item-actions {
         justify-content: flex-start;
+    }
+
+    .recurring-item-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -430,16 +624,50 @@
     .recurring-hero,
     .recurring-toolbar,
     .recurring-card,
+    .recurring-item-card,
     .recurring-form-card {
         border-radius: 24px;
         padding: 18px;
     }
 
-    .recurring-form-grid {
-        grid-template-columns: 1fr;
+    .recurring-hero h1 {
+        font-size: 2.2rem;
+    }
+
+    .recurring-menu-actions {
+        display: grid;
+    }
+
+    .recurring-menu-actions button,
+    .recurring-main-btn,
+    .recurring-danger-btn,
+    .recurring-secondary-btn {
+        width: 100%;
+    }
+
+    .recurring-toolbar {
+        gap: 12px;
     }
 
     .recurring-tabs {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .recurring-tabs button {
+        width: 100%;
+    }
+
+    .recurring-item-top {
+        display: grid;
+    }
+
+    .recurring-item-top > strong {
+        white-space: normal;
+    }
+
+    .recurring-item-grid,
+    .recurring-form-grid {
         grid-template-columns: 1fr;
     }
 
@@ -447,7 +675,8 @@
         display: grid;
     }
 
-    .recurring-card-actions {
+    .recurring-card-actions,
+    .recurring-item-actions {
         display: grid;
 
         button {
@@ -462,56 +691,4 @@
             width: 100%;
         }
     }
-
-    .recurring-period-check {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 4px 0 16px;
-    color: #cbd5e1;
-    font-weight: 800;
-    cursor: pointer;
-
-    input {
-        width: 18px;
-        height: 18px;
-        accent-color: #22c55e;
-        cursor: pointer;
-    }
-
-    span {
-        line-height: 1.4;
-    }
-}
-
-.recurring-form-grid input:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-.recurring-period-check {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 4px 0 16px;
-    color: #cbd5e1;
-    font-weight: 800;
-    cursor: pointer;
-
-    input {
-        width: 18px;
-        height: 18px;
-        accent-color: #ef4444;
-        cursor: pointer;
-    }
-
-    span {
-        line-height: 1.4;
-    }
-}
-
-.recurring-form-grid input:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
 }

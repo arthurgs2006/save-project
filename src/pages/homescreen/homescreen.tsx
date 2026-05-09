@@ -4,7 +4,7 @@ import { Container, Button, ListGroup, ListGroupItem } from "reactstrap";
 import { motion } from "framer-motion";
 
 import { exportStatementPdf } from "../../utils/pdf";
-import { BASE_URL } from "../../config";
+import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
@@ -29,12 +29,22 @@ interface Extrato {
 
 interface RecurringItem {
     id: number | string;
+    userId?: string;
     name: string;
     value: number;
-    billingDate: string;
+    type?: "credit" | "debit";
+    tipo?: "credito" | "debito";
+    billingDate?: string | number;
+    billingDay?: string | number;
     frequency: string;
     category?: string;
     description?: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    isActive?: boolean;
+    monthlyEquivalent?: number;
+    periodLabel?: string;
+    statusLabel?: string;
     createdAt?: string;
 }
 
@@ -132,6 +142,105 @@ const secondaryActions: ToolAction[] = [
     },
 ];
 
+function getBenefitsApiRoot() {
+    return BENEFITS_API_URL;
+}
+
+function normalizeRecurringItem(item: any): RecurringItem {
+    const rawType = String(item.type ?? item.Type ?? "").toLowerCase();
+
+    return {
+        id: item.id ?? item.Id ?? Date.now(),
+        userId: String(item.userId ?? item.UserId ?? ""),
+        name: item.name ?? item.Name ?? "",
+        value: Number(item.value ?? item.Value ?? 0),
+        type: rawType === "credit" ? "credit" : "debit",
+        billingDate:
+            item.billingDate ??
+            item.BillingDate ??
+            item.billingDay ??
+            item.BillingDay ??
+            1,
+        billingDay:
+            item.billingDay ??
+            item.BillingDay ??
+            item.billingDate ??
+            item.BillingDate ??
+            1,
+        frequency: item.frequency ?? item.Frequency ?? "monthly",
+        category: item.category ?? item.Category ?? "",
+        description: item.description ?? item.Description ?? "",
+        startDate: item.startDate ?? item.StartDate ?? null,
+        endDate: item.endDate ?? item.EndDate ?? null,
+        isActive: item.isActive ?? item.IsActive ?? true,
+        monthlyEquivalent: Number(item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0),
+        periodLabel: item.periodLabel ?? item.PeriodLabel ?? "",
+        statusLabel: item.statusLabel ?? item.StatusLabel ?? "",
+        createdAt: item.createdAt ?? item.CreatedAt ?? "",
+    };
+}
+
+function getDateFromValue(value?: string | null) {
+    if (!value) return null;
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    return date;
+}
+
+function getMonthKeyFromDate(date: Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getMonthStart(monthKey: string) {
+    const [year, month] = monthKey.split("-");
+
+    return new Date(Number(year), Number(month) - 1, 1);
+}
+
+function getMonthEnd(monthKey: string) {
+    const [year, month] = monthKey.split("-");
+
+    return new Date(Number(year), Number(month), 0);
+}
+
+function getRecurringType(item: RecurringItem) {
+    if (item.type === "credit" || item.tipo === "credito") return "credit";
+
+    return "debit";
+}
+
+function isRecurringValidForMonth(item: RecurringItem, monthKey: string) {
+    if (item.isActive === false) return false;
+
+    const monthStart = getMonthStart(monthKey);
+    const monthEnd = getMonthEnd(monthKey);
+
+    const startDate = getDateFromValue(item.startDate || item.createdAt || null);
+    const endDate = getDateFromValue(item.endDate || null);
+
+    if (startDate && startDate > monthEnd) return false;
+    if (endDate && endDate < monthStart) return false;
+
+    return true;
+}
+
+function getRecurringMonthlyEquivalent(item: RecurringItem) {
+    if (item.monthlyEquivalent && item.monthlyEquivalent > 0) {
+        return item.monthlyEquivalent;
+    }
+
+    const value = Number(item.value || 0);
+
+    if (item.frequency === "daily") return value * 30;
+    if (item.frequency === "weekly") return value * 4.33;
+    if (item.frequency === "yearly") return value / 12;
+
+    return value;
+}
+
 export default function HomeScreen() {
     const [user, setUser] = useState<User | null>(null);
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
@@ -156,19 +265,56 @@ export default function HomeScreen() {
             }
 
             const parsedUser: User = JSON.parse(storedUser);
+            let baseUser: User = parsedUser;
+
             setUser(parsedUser);
 
             try {
                 const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
 
-                if (!response.ok) return;
-
-                const data: User = await response.json();
-                setUser(data);
-                localStorage.setItem("loggedUser", JSON.stringify(data));
+                if (response.ok) {
+                    baseUser = await response.json();
+                }
             } catch {
-                console.warn("Servidor indisponível.");
+                console.warn("Servidor principal indisponível. Usando usuário local.");
             }
+
+            try {
+                const recurringUrl = `${getBenefitsApiRoot()}/recurring-transactions/user/${parsedUser.id}`;
+
+                console.log("URL RECORRENTES HOME:", recurringUrl);
+
+                const recurringResponse = await fetch(recurringUrl);
+                const raw = await recurringResponse.text();
+
+                if (recurringResponse.ok) {
+                    const recurringData = JSON.parse(raw);
+
+                    const normalizedRecurrings = Array.isArray(recurringData)
+                        ? recurringData.map(normalizeRecurringItem)
+                        : [];
+
+                    baseUser = {
+                        ...baseUser,
+                        recurringDebts: normalizedRecurrings.filter(
+                            (item) => getRecurringType(item) === "debit"
+                        ),
+                        recurringCredits: normalizedRecurrings.filter(
+                            (item) => getRecurringType(item) === "credit"
+                        ),
+                    };
+                } else {
+                    console.error("Erro ao buscar recorrentes na Home:", {
+                        status: recurringResponse.status,
+                        body: raw,
+                    });
+                }
+            } catch (error) {
+                console.warn("Não foi possível carregar recorrentes da API .NET na Home.", error);
+            }
+
+            setUser(baseUser);
+            localStorage.setItem("loggedUser", JSON.stringify(baseUser));
         }
 
         loadUser();
@@ -182,9 +328,7 @@ export default function HomeScreen() {
     }
 
     function getCurrentMonthKey() {
-        const today = new Date();
-
-        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+        return getMonthKeyFromDate(new Date());
     }
 
     function getMonthKey(dateStr?: string) {
@@ -201,7 +345,7 @@ export default function HomeScreen() {
 
         if (Number.isNaN(parsed.getTime())) return "";
 
-        return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}`;
+        return getMonthKeyFromDate(parsed);
     }
 
     function getDaysInMonth(year: number, month: number) {
@@ -209,6 +353,12 @@ export default function HomeScreen() {
     }
 
     function calculateTotalForMonth(recurring: RecurringItem, monthKey: string) {
+        if (!isRecurringValidForMonth(recurring, monthKey)) return 0;
+
+        if (recurring.monthlyEquivalent && recurring.monthlyEquivalent > 0) {
+            return recurring.monthlyEquivalent;
+        }
+
         const [year, monthStr] = monthKey.split("-");
         const yearNumber = Number(year);
         const monthNumber = Number(monthStr) - 1;
@@ -216,23 +366,15 @@ export default function HomeScreen() {
 
         switch (recurring.frequency) {
             case "daily":
-                return recurring.value * daysInMonth;
+                return Number(recurring.value || 0) * daysInMonth;
             case "weekly":
-                return recurring.value * Math.ceil(daysInMonth / 7);
+                return Number(recurring.value || 0) * Math.ceil(daysInMonth / 7);
             case "yearly":
-                return recurring.value / 12;
+                return Number(recurring.value || 0) / 12;
             case "monthly":
             default:
-                return recurring.value;
+                return Number(recurring.value || 0);
         }
-    }
-
-    function getMonthlyEquivalent(value: number, frequency?: string) {
-        if (frequency === "daily") return value * 30;
-        if (frequency === "weekly") return value * 4.33;
-        if (frequency === "yearly") return value / 12;
-
-        return value;
     }
 
     function getUserFirstName() {
@@ -298,40 +440,30 @@ export default function HomeScreen() {
 
     const selectedMonthIsFuture = selectedMonth ? selectedMonth > currentMonthKey : false;
 
-    function filterValidRecurring(createdAt?: string) {
-        if (!selectedMonth) return true;
-
-        if (!createdAt) {
-            return selectedMonth >= currentMonthKey;
-        }
-
-        return getMonthKey(createdAt) <= selectedMonth;
-    }
-
     const recurringDebts = user?.recurringDebts || [];
     const recurringCredits = user?.recurringCredits || [];
 
     const recurringSummary = useMemo(() => {
-        const totalCredits = recurringCredits.reduce((sum, item) => {
-            return sum + getMonthlyEquivalent(Number(item.value || 0), item.frequency);
-        }, 0);
+        const totalCredits = recurringCredits
+            .filter((item) => isRecurringValidForMonth(item, currentMonthKey))
+            .reduce((sum, item) => sum + getRecurringMonthlyEquivalent(item), 0);
 
-        const totalDebts = recurringDebts.reduce((sum, item) => {
-            return sum + getMonthlyEquivalent(Number(item.value || 0), item.frequency);
-        }, 0);
+        const totalDebts = recurringDebts
+            .filter((item) => isRecurringValidForMonth(item, currentMonthKey))
+            .reduce((sum, item) => sum + getRecurringMonthlyEquivalent(item), 0);
 
         return {
             totalCredits,
             totalDebts,
             balance: totalCredits - totalDebts,
         };
-    }, [recurringCredits, recurringDebts]);
+    }, [recurringCredits, recurringDebts, currentMonthKey]);
 
     const projectedBalance = useMemo(() => {
         if (!user) return 0;
 
         if (!selectedMonth) {
-            return Number(user.saldo_final || 0);
+            return Number(user.saldo_final || 0) + recurringSummary.balance;
         }
 
         if (selectedMonth < currentMonthKey) {
@@ -343,15 +475,11 @@ export default function HomeScreen() {
 
         while (monthCursor <= selectedMonth) {
             for (const debt of user.recurringDebts || []) {
-                if (getMonthKey(debt.createdAt) <= monthCursor || !debt.createdAt) {
-                    sum -= calculateTotalForMonth(debt, monthCursor);
-                }
+                sum -= calculateTotalForMonth(debt, monthCursor);
             }
 
             for (const credit of user.recurringCredits || []) {
-                if (getMonthKey(credit.createdAt) <= monthCursor || !credit.createdAt) {
-                    sum += calculateTotalForMonth(credit, monthCursor);
-                }
+                sum += calculateTotalForMonth(credit, monthCursor);
             }
 
             const [year, month] = monthCursor.split("-");
@@ -361,7 +489,7 @@ export default function HomeScreen() {
         }
 
         return Number(user.saldo_final || 0) + sum;
-    }, [user, selectedMonth, currentMonthKey]);
+    }, [user, selectedMonth, currentMonthKey, recurringSummary.balance]);
 
     const statementItems = useMemo(() => {
         if (!user) return [];
@@ -375,7 +503,7 @@ export default function HomeScreen() {
         const recurringPreview: Extrato[] = showRecurringInMonth
             ? [
                   ...(user.recurringDebts || [])
-                      .filter((debt) => filterValidRecurring(debt.createdAt))
+                      .filter((debt) => isRecurringValidForMonth(debt, statementMonthKey))
                       .map((debt) => ({
                           id: `recurring-debit-${debt.id}-${statementMonthKey}`,
                           data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
@@ -385,7 +513,7 @@ export default function HomeScreen() {
                           status: statementMode === "future" ? "Previsto" : "Recorrente",
                       })),
                   ...(user.recurringCredits || [])
-                      .filter((credit) => filterValidRecurring(credit.createdAt))
+                      .filter((credit) => isRecurringValidForMonth(credit, statementMonthKey))
                       .map((credit) => ({
                           id: `recurring-credit-${credit.id}-${statementMonthKey}`,
                           data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
@@ -398,7 +526,7 @@ export default function HomeScreen() {
             : [];
 
         return [...actualItems, ...recurringPreview];
-    }, [user, statementMonthKey, currentMonthKey, statementMode, selectedMonth]);
+    }, [user, statementMonthKey, currentMonthKey, statementMode]);
 
     const displayExtratos = useMemo(() => {
         if (!user) return [];
@@ -501,6 +629,10 @@ export default function HomeScreen() {
     const homeInsight = useMemo(() => {
         if (recurringSummary.balance < 0) {
             return "Seus custos recorrentes estão pesando no saldo projetado.";
+        }
+
+        if (recurringSummary.balance > 0) {
+            return "Suas entradas recorrentes estão ajudando o saldo projetado.";
         }
 
         if (currentMonthOverview.balance > 0) {
@@ -918,7 +1050,7 @@ export default function HomeScreen() {
                                                 </p>
 
                                                 <small className="home-item-subtitle d-block">
-                                                    Todo dia {item.billingDate} —{" "}
+                                                    Todo dia {item.billingDate || item.billingDay} —{" "}
                                                     {freqMap[item.frequency] || item.frequency}
                                                 </small>
 

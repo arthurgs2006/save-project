@@ -21,7 +21,7 @@ namespace SaveApp.Api.Controllers
         }
 
         [HttpGet("user/{userId}")]
-        public IActionResult GetByUser(int userId)
+        public IActionResult GetByUser(string userId)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace SaveApp.Api.Controllers
 
         [HttpGet("period")]
         public IActionResult GetByPeriod(
-            [FromQuery] int userId,
+            [FromQuery] string userId,
             [FromQuery] DateTime periodStart,
             [FromQuery] DateTime periodEnd,
             [FromQuery] string type = "")

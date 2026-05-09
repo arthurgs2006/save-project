@@ -8,7 +8,7 @@ namespace SaveApp.Api.Validators
         public RecurringTransactionValidator()
         {
             RuleFor(x => x.UserId)
-                .GreaterThan(0)
+                .NotEmpty()
                 .WithMessage("O usuário é obrigatório.");
 
             RuleFor(x => x.Name)
@@ -61,7 +61,9 @@ namespace SaveApp.Api.Validators
 
         private string Normalize(string value)
         {
-            return value.Trim().ToLower();
+            return string.IsNullOrWhiteSpace(value)
+                ? ""
+                : value.Trim().ToLower();
         }
     }
 }
