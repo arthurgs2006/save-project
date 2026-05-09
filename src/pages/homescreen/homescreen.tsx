@@ -129,16 +129,16 @@ const secondaryActions: ToolAction[] = [
         route: "/investments",
     },
     {
-        title: "Cartões",
-        description: "Gerencie cartões cadastrados.",
+        title: "Cartões e Bancos",
+        description: "Compare contas, cartões e benefícios para escolher melhor.",
         icon: "bi-credit-card-2-front",
         route: "/cards-banks",
-    },
+},
     {
-        title: "Bancos",
-        description: "Contas e instituições.",
-        icon: "bi-bank",
-        route: "/cards-banks",
+        title: "Educação Financeira",
+        description: "Aprenda a gerir seu dinheiro de forma eficiente.",
+        icon: "bi-mortarboard-fill",
+        route: "/financial-education",
     },
 ];
 
