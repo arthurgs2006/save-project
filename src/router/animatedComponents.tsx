@@ -26,6 +26,7 @@ import RegisterRecurringCredit from "../pages/recurring_expenses/registerRecurri
 import RecurringDebtsMenu from "../pages/recurring_expenses/menuRecurringDebts.tsx";
 import TransactionHistory from "../pages/homescreen/transactionHistory.tsx";
 import Benefits from "../pages/benefits/Benefits.tsx";
+import Help from "../pages/help/help.tsx";
 
 export default function AnimatedRoutes() {
     const location = useLocation();
@@ -92,6 +93,7 @@ export default function AnimatedRoutes() {
                     <Route path="/deposit" element={<Deposit />} />
                     <Route path="/withdraw" element={<Withdraw />} />
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/help" element={<Help />} />
                     <Route
                         path="/registerDebt/newRecurringDebt"
                         element={<RegisterRecurringDebt />}
