@@ -33,6 +33,26 @@ namespace SaveApp.Api.Validators
                            value == "agressivo";
                 })
                 .WithMessage("O perfil deve ser conservador, moderado ou agressivo.");
+
+            RuleFor(x => x.GoalType)
+                .NotEmpty()
+                .WithMessage("O objetivo do investimento é obrigatório.")
+                .Must(goal =>
+                {
+                    var value = goal.Trim().ToLower();
+
+                    return value == "reserva" ||
+                           value == "viagem" ||
+                           value == "compra" ||
+                           value == "aposentadoria" ||
+                           value == "crescimento";
+                })
+                .WithMessage("O objetivo deve ser reserva, viagem, compra, aposentadoria ou crescimento.");
+
+            RuleFor(x => x.TargetAmount)
+                .GreaterThan(0)
+                .When(x => x.TargetAmount.HasValue)
+                .WithMessage("A meta financeira deve ser maior que zero.");
         }
     }
 }
