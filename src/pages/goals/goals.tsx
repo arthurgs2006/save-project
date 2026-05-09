@@ -6,6 +6,13 @@ import { motion } from "framer-motion";
 import { BENEFITS_API_URL } from "../../config";
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
+
+import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
+import {
+    getEducationRecommendation,
+    type EducationRecommendation,
+} from "../../services/educationApi";
+
 import "./Goals.scss";
 
 type GoalStatus = "active" | "completed";
@@ -258,6 +265,24 @@ function buildGoalPayload(form: GoalForm, userId: number | string) {
     };
 }
 
+function getMainGoalForEducation(goals: Goal[]) {
+    const activeGoals = goals.filter((goal) => goal.status === "active");
+
+    if (activeGoals.length === 0) return goals[0] || null;
+
+    const withoutContribution = activeGoals.find(
+        (goal) => Number(goal.monthlyContribution || 0) <= 0
+    );
+
+    if (withoutContribution) return withoutContribution;
+
+    const mostIncomplete = [...activeGoals].sort(
+        (a, b) => Number(b.missingAmount || 0) - Number(a.missingAmount || 0)
+    )[0];
+
+    return mostIncomplete || activeGoals[0] || null;
+}
+
 export default function GoalsPage() {
     const [user, setUser] = useState<User | null>(null);
     const [goals, setGoals] = useState<Goal[]>([]);
@@ -268,6 +293,9 @@ export default function GoalsPage() {
     const [movementType, setMovementType] = useState<GoalMovementType>("add");
     const [movementAmount, setMovementAmount] = useState("");
     const [movementDescription, setMovementDescription] = useState("");
+
+    const [educationRecommendation, setEducationRecommendation] =
+        useState<EducationRecommendation | null>(null);
 
     const [filter, setFilter] = useState<"active" | "completed" | "all">(
         "active"
@@ -304,6 +332,25 @@ export default function GoalsPage() {
 
         loadGoals(user.id, filter);
     }, [filter]);
+
+    useEffect(() => {
+        async function loadEducationRecommendation() {
+            if (!user?.id) return;
+
+            const mainGoal = getMainGoalForEducation(goals);
+
+            const recommendation = await getEducationRecommendation(user.id, "goals", {
+                hasGoals: goals.length > 0,
+                goalTargetAmount: mainGoal?.targetAmount || 0,
+                goalCurrentAmount: mainGoal?.currentAmount || 0,
+                monthlyContribution: mainGoal?.monthlyContribution || 0,
+            });
+
+            setEducationRecommendation(recommendation);
+        }
+
+        loadEducationRecommendation();
+    }, [user?.id, goals]);
 
     async function loadGoals(userId: number | string, status = filter) {
         try {
@@ -735,6 +782,10 @@ export default function GoalsPage() {
                             <strong>{summary.completed}</strong>
                         </div>
                     </section>
+
+                    <EducationRecommendationCard
+                        recommendation={educationRecommendation}
+                    />
 
                     <section className="goals-form-card">
                         <div className="goals-section-header">

@@ -8,6 +8,13 @@ import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
+
+import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
+import {
+    getEducationRecommendation,
+    type EducationRecommendation,
+} from "../../services/educationApi";
+
 import "./Home.scss";
 
 interface Extrato {
@@ -130,13 +137,13 @@ const secondaryActions: ToolAction[] = [
     },
     {
         title: "Cartões e Bancos",
-        description: "Compare contas, cartões e benefícios para escolher melhor.",
+        description: "Compare contas, cartões, taxas e benefícios.",
         icon: "bi-credit-card-2-front",
         route: "/cards-banks",
-},
+    },
     {
         title: "Educação Financeira",
-        description: "Aprenda a gerir seu dinheiro de forma eficiente.",
+        description: "Aprenda a tomar decisões melhores com seu dinheiro.",
         icon: "bi-mortarboard-fill",
         route: "/financial-education",
     },
@@ -276,6 +283,9 @@ export default function HomeScreen() {
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
     const [activityTab, setActivityTab] = useState<"movements" | "recurring">("movements");
 
+    const [educationRecommendation, setEducationRecommendation] =
+        useState<EducationRecommendation | null>(null);
+
     const navigate = useNavigate();
 
     const freqMap: Record<string, string> = {
@@ -315,18 +325,11 @@ export default function HomeScreen() {
 
                     baseUser = {
                         ...serverUser,
-
-                        // Importante:
-                        // depósito e saque agora atualizam o localStorage pela API .NET.
-                        // Então a Home não pode sobrescrever o saldo local com o saldo antigo do Render.
                         saldo_final: Number(parsedUser.saldo_final ?? serverUser.saldo_final ?? 0),
-
-                        // Junta os extratos antigos do Render com os novos locais.
                         extratos: mergeStatements(
                             serverUser.extratos || [],
                             parsedUser.extratos || []
                         ),
-
                         goals: parsedUser.goals || serverUser.goals || [],
                         recurringDebts: parsedUser.recurringDebts || serverUser.recurringDebts || [],
                         recurringCredits:
@@ -543,6 +546,27 @@ export default function HomeScreen() {
             balance: totalCredits - totalDebts,
         };
     }, [recurringCredits, recurringDebts, currentMonthKey]);
+
+    useEffect(() => {
+        async function loadEducationRecommendation() {
+            if (!user?.id) return;
+
+            const recommendation = await getEducationRecommendation(user.id, "home", {
+                balance: Number(user.saldo_final || 0),
+                recurringCredits: recurringSummary.totalCredits,
+                recurringDebits: recurringSummary.totalDebts,
+            });
+
+            setEducationRecommendation(recommendation);
+        }
+
+        loadEducationRecommendation();
+    }, [
+        user?.id,
+        user?.saldo_final,
+        recurringSummary.totalCredits,
+        recurringSummary.totalDebts,
+    ]);
 
     const projectedBalance = useMemo(() => {
         if (!user) return 0;
@@ -913,6 +937,23 @@ export default function HomeScreen() {
                                     current === monthKey ? null : monthKey
                                 );
                             }}
+                        />
+                    </section>
+
+                    <section className="home-education-section">
+                        <div className="home-section-header">
+                            <div>
+                                <span className="home-kicker home-kicker-muted">
+                                    Aprenda com seus dados
+                                </span>
+                                <h5 className="home-section-title">
+                                    Interpretação financeira do mês
+                                </h5>
+                            </div>
+                        </div>
+
+                        <EducationRecommendationCard
+                            recommendation={educationRecommendation}
                         />
                     </section>
 

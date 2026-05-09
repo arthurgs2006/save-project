@@ -40,6 +40,8 @@ builder.Services.AddScoped<BalanceService>();
 builder.Services.AddScoped<IValidator<DepositRequestDto>, DepositRequestValidator>();
 builder.Services.AddScoped<IValidator<WithdrawRequestDto>, WithdrawRequestValidator>();
 
+builder.Services.AddScoped<EducationService>();
+
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IValidator<CreateUserDto>, UserValidator>();
