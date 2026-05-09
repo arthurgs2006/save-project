@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Container } from "reactstrap";
 import { motion } from "framer-motion";
-import { BASE_URL } from "../../config";
+import { BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
@@ -14,7 +14,7 @@ type Frequency = "monthly" | "weekly" | "daily" | "yearly";
 
 interface RecurringCredit {
     id: number;
-    userId?: number;
+    userId?: string;
     name: string;
     value: number;
     type?: "credit";
@@ -34,10 +34,12 @@ interface RecurringCredit {
 }
 
 interface User {
-    id: number;
+    id: string | number;
     nome?: string;
+    name?: string;
     saldo_final?: number;
     recurringCredits?: RecurringCredit[];
+    recurringDebts?: any[];
     extratos?: Array<{
         id: number | string;
         data: string;
@@ -51,7 +53,7 @@ interface User {
 }
 
 function getApiRoot() {
-    return BASE_URL.endsWith("/api") ? BASE_URL : `${BASE_URL}/api`;
+    return BENEFITS_API_URL;
 }
 
 function toInputDate(value?: string | null) {
@@ -77,17 +79,32 @@ function getBillingDay(item: RecurringCredit) {
 function normalizeRecurringCreditFromApi(item: any): RecurringCredit {
     return {
         id: Number(item.id ?? item.Id ?? Date.now()),
-        userId: Number(item.userId ?? item.UserId ?? 0),
+        userId: String(item.userId ?? item.UserId ?? ""),
         name: item.name ?? item.Name ?? "",
         value: Number(item.value ?? item.Value ?? 0),
         type: "credit",
         category: item.category ?? item.Category ?? "",
         frequency: (item.frequency ?? item.Frequency ?? "monthly") as Frequency,
-        billingDay: Number(item.billingDay ?? item.BillingDay ?? item.billingDate ?? 1),
-        billingDate: Number(item.billingDay ?? item.BillingDay ?? item.billingDate ?? 1),
+        billingDay: Number(
+            item.billingDay ??
+                item.BillingDay ??
+                item.billingDate ??
+                item.BillingDate ??
+                1
+        ),
+        billingDate: Number(
+            item.billingDay ??
+                item.BillingDay ??
+                item.billingDate ??
+                item.BillingDate ??
+                1
+        ),
         description: item.description ?? item.Description ?? "",
         startDate: toInputDate(item.startDate ?? item.StartDate),
-        endDate: item.endDate || item.EndDate ? toInputDate(item.endDate ?? item.EndDate) : null,
+        endDate:
+            item.endDate || item.EndDate
+                ? toInputDate(item.endDate ?? item.EndDate)
+                : null,
         isActive: item.isActive ?? item.IsActive ?? true,
         createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
         updatedAt: item.updatedAt ?? item.UpdatedAt ?? undefined,
@@ -132,7 +149,7 @@ export default function RegisterRecurringCredit() {
     };
 
     useEffect(() => {
-        async function loadUser() {
+        async function loadUserAndRecurrings() {
             const storedUser = localStorage.getItem("loggedUser");
 
             if (!storedUser) {
@@ -144,20 +161,47 @@ export default function RegisterRecurringCredit() {
             setUser(parsedUser);
 
             try {
-                const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
+                const url = `${getApiRoot()}/recurring-transactions/user/${parsedUser.id}`;
 
-                if (!response.ok) return;
+                console.log("URL BUSCA CRÉDITOS RECORRENTES:", url);
 
-                const data: User = await response.json();
+                const response = await fetch(url);
+                const raw = await response.text();
 
-                setUser(data);
-                localStorage.setItem("loggedUser", JSON.stringify(data));
-            } catch {
-                console.warn("Servidor indisponível. Usando dados locais.");
+                if (!response.ok) {
+                    console.error("Erro ao buscar créditos recorrentes:", {
+                        url,
+                        status: response.status,
+                        body: raw,
+                    });
+
+                    return;
+                }
+
+                const data = JSON.parse(raw);
+
+                const credits = Array.isArray(data)
+                    ? data
+                          .filter((item: any) => {
+                              const type = String(item.type ?? item.Type ?? "").toLowerCase();
+                              return type === "credit";
+                          })
+                          .map(normalizeRecurringCreditFromApi)
+                    : [];
+
+                const updatedUser: User = {
+                    ...parsedUser,
+                    recurringCredits: credits,
+                };
+
+                setUser(updatedUser);
+                localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+            } catch (error) {
+                console.warn("Não foi possível carregar créditos recorrentes do back-end.", error);
             }
         }
 
-        loadUser();
+        loadUserAndRecurrings();
     }, [navigate]);
 
     useEffect(() => {
@@ -222,6 +266,7 @@ export default function RegisterRecurringCredit() {
         if (freq === "daily") return amount * 30;
         if (freq === "weekly") return amount * 4.33;
         if (freq === "yearly") return amount / 12;
+
         return amount;
     }
 
@@ -321,7 +366,7 @@ export default function RegisterRecurringCredit() {
         if (!user) throw new Error("Usuário não encontrado.");
 
         const payload = {
-            userId: user.id,
+            userId: String(user.id),
             name: name.trim(),
             value: Number(value),
             type: "credit",
@@ -338,6 +383,9 @@ export default function RegisterRecurringCredit() {
             ? `${getApiRoot()}/recurring-transactions/${editId}`
             : `${getApiRoot()}/recurring-transactions`;
 
+        console.log("URL SALVAR CRÉDITO RECORRENTE:", url);
+        console.log("PAYLOAD CRÉDITO RECORRENTE:", payload);
+
         const response = await fetch(url, {
             method: isEditing ? "PUT" : "POST",
             headers: {
@@ -349,20 +397,27 @@ export default function RegisterRecurringCredit() {
         const raw = await response.text();
 
         if (!response.ok) {
+            console.error("Erro da API ao salvar crédito recorrente:", {
+                url,
+                status: response.status,
+                body: raw,
+                payload,
+            });
+
             throw new Error(raw || "Erro ao salvar no back-end.");
         }
 
         return normalizeRecurringCreditFromApi(JSON.parse(raw));
     }
 
-    async function updateUserCacheAndJsonServer(savedCredit: RecurringCredit) {
+    function updateLocalUser(savedCredit: RecurringCredit) {
         if (!user) return;
 
         const now = new Date();
 
         const normalizedCredit: RecurringCredit = {
             ...savedCredit,
-            userId: user.id,
+            userId: String(user.id),
             type: "credit",
             billingDate: getBillingDay(savedCredit),
             billingDay: getBillingDay(savedCredit),
@@ -378,14 +433,6 @@ export default function RegisterRecurringCredit() {
               )
             : [...(user.recurringCredits || []), normalizedCredit];
 
-        const statementExists = isEditing
-            ? false
-            : (user.extratos || []).some(
-                  (item) =>
-                      item.status === "Recorrente" &&
-                      item.descricao?.includes(normalizedCredit.name)
-              );
-
         const newStatement = {
             id: Date.now(),
             data: now.toLocaleDateString("pt-BR"),
@@ -393,10 +440,13 @@ export default function RegisterRecurringCredit() {
                 hour: "2-digit",
                 minute: "2-digit",
             }),
-            dataHora: `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-            })}`,
+            dataHora: `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString(
+                "pt-BR",
+                {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                }
+            )}`,
             descricao: isEditing
                 ? `Crédito recorrente editado: ${normalizedCredit.name}`
                 : `Crédito recorrente cadastrado: ${normalizedCredit.name}`,
@@ -408,23 +458,11 @@ export default function RegisterRecurringCredit() {
         const updatedUser: User = {
             ...user,
             recurringCredits: updatedCredits,
-            extratos: statementExists
-                ? user.extratos || []
-                : [...(user.extratos || []), newStatement],
+            extratos: [...(user.extratos || []), newStatement],
         };
 
         setUser(updatedUser);
         localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
-
-        try {
-            await fetch(`${BASE_URL}/users/${user.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedUser),
-            });
-        } catch {
-            console.warn("Não foi possível sincronizar o usuário local.");
-        }
     }
 
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -437,7 +475,7 @@ export default function RegisterRecurringCredit() {
 
             const savedCredit = await saveRecurringInBackend();
 
-            await updateUserCacheAndJsonServer(savedCredit);
+            updateLocalUser(savedCredit);
 
             setAlert({
                 isOpen: true,
@@ -469,7 +507,7 @@ export default function RegisterRecurringCredit() {
     return (
         <main className="recurring-page">
             <Container className="recurring-container">
-                <AccountHeader name={user?.nome} />
+                <AccountHeader name={user?.nome || user?.name} />
 
                 <motion.div
                     initial={{ opacity: 0, y: 18 }}
@@ -561,7 +599,9 @@ export default function RegisterRecurringCredit() {
                                     Frequência
                                     <select
                                         value={frequency}
-                                        onChange={(event) => setFrequency(event.target.value as Frequency)}
+                                        onChange={(event) =>
+                                            setFrequency(event.target.value as Frequency)
+                                        }
                                     >
                                         <option value="daily">Diária</option>
                                         <option value="weekly">Semanal</option>
@@ -622,21 +662,29 @@ export default function RegisterRecurringCredit() {
                                 <textarea
                                     value={description}
                                     onChange={(event) => setDescription(event.target.value)}
-                                    placeholder="Ex: pagamento fixo de cliente, salário principal, renda extra..."
+                                    placeholder="Ex: salário principal, cliente fixo, renda extra..."
                                 />
                             </label>
 
                             <div className="recurring-form-actions">
-                                <button type="button" className="recurring-secondary-btn" onClick={resetForm}>
+                                <button
+                                    type="button"
+                                    className="recurring-secondary-btn"
+                                    onClick={resetForm}
+                                >
                                     Limpar
                                 </button>
 
-                                <button type="submit" className="recurring-main-btn" disabled={saving}>
+                                <button
+                                    type="submit"
+                                    className="recurring-main-btn"
+                                    disabled={saving}
+                                >
                                     {saving
                                         ? "Salvando..."
                                         : isEditing
-                                        ? "Salvar alterações"
-                                        : "Salvar crédito recorrente"}
+                                          ? "Salvar alterações"
+                                          : "Salvar crédito recorrente"}
                                 </button>
                             </div>
                         </form>

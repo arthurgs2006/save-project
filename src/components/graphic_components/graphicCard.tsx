@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { BENEFITS_API_URL } from "../../config";
 
 interface Extrato {
     data: string;
@@ -8,10 +9,18 @@ interface Extrato {
 
 interface RecurringItem {
     id: number | string;
+    userId?: string;
     name: string;
     value: number;
-    billingDate: string;
+    type?: "credit" | "debit";
+    tipo?: "credito" | "debito";
+    billingDate?: string | number;
+    billingDay?: string | number;
     frequency: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    isActive?: boolean;
+    monthlyEquivalent?: number;
 }
 
 interface User {
@@ -29,17 +38,74 @@ interface MesHistorico {
     futuro: boolean;
 }
 
+function getApiRoot() {
+    return BENEFITS_API_URL;
+}
+
+function normalizeRecurringItem(item: any): RecurringItem {
+    return {
+        id: item.id ?? item.Id ?? Date.now(),
+        userId: String(item.userId ?? item.UserId ?? ""),
+        name: item.name ?? item.Name ?? "",
+        value: Number(item.value ?? item.Value ?? 0),
+        type: String(item.type ?? item.Type ?? "").toLowerCase() === "credit" ? "credit" : "debit",
+        billingDate: item.billingDate ?? item.BillingDate ?? item.billingDay ?? item.BillingDay ?? 1,
+        billingDay: item.billingDay ?? item.BillingDay ?? item.billingDate ?? item.BillingDate ?? 1,
+        frequency: item.frequency ?? item.Frequency ?? "monthly",
+        startDate: item.startDate ?? item.StartDate ?? null,
+        endDate: item.endDate ?? item.EndDate ?? null,
+        isActive: item.isActive ?? item.IsActive ?? true,
+        monthlyEquivalent: Number(item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0),
+    };
+}
+
 function monthlyRecurringValue(item: RecurringItem) {
+    if (item.monthlyEquivalent && item.monthlyEquivalent > 0) {
+        return item.monthlyEquivalent;
+    }
+
     switch (item.frequency) {
         case "daily":
             return item.value * 30;
         case "weekly":
-            return item.value * 4;
+            return item.value * 4.33;
         case "yearly":
             return item.value / 12;
         default:
             return item.value;
     }
+}
+
+function getDateFromValue(value?: string | null) {
+    if (!value) return null;
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    return date;
+}
+
+function isRecurringValidForMonth(item: RecurringItem, monthKey: string) {
+    if (item.isActive === false) return false;
+
+    const [year, month] = monthKey.split("-");
+    const monthStart = new Date(Number(year), Number(month) - 1, 1);
+    const monthEnd = new Date(Number(year), Number(month), 0);
+
+    const startDate = getDateFromValue(item.startDate);
+    const endDate = getDateFromValue(item.endDate);
+
+    if (startDate && startDate > monthEnd) return false;
+    if (endDate && endDate < monthStart) return false;
+
+    return true;
+}
+
+function getRecurringSign(item: RecurringItem) {
+    const type = item.type || (item.tipo === "credito" ? "credit" : "debit");
+
+    return type === "credit" ? 1 : -1;
 }
 
 export default function GraphicCard({
@@ -51,13 +117,53 @@ export default function GraphicCard({
     selectedMonth?: string | null;
     onSelectMonth?: (monthKey: string) => void;
 }) {
+    const [apiRecurrings, setApiRecurrings] = useState<RecurringItem[]>([]);
+
+    useEffect(() => {
+        async function loadRecurrings() {
+            if (!user?.id) return;
+
+            try {
+                const url = `${getApiRoot()}/recurring-transactions/user/${user.id}`;
+
+                console.log("URL RECORRENTES GRAPHIC:", url);
+
+                const response = await fetch(url);
+                const raw = await response.text();
+
+                if (!response.ok) {
+                    console.error("Erro ao carregar recorrentes no gráfico:", {
+                        status: response.status,
+                        body: raw,
+                    });
+
+                    return;
+                }
+
+                const data = JSON.parse(raw);
+
+                const normalized = Array.isArray(data)
+                    ? data.map(normalizeRecurringItem)
+                    : [];
+
+                setApiRecurrings(normalized);
+            } catch (error) {
+                console.warn("Não foi possível carregar recorrentes no gráfico.", error);
+            }
+        }
+
+        loadRecurrings();
+    }, [user?.id]);
+
     const history = useMemo(() => {
-        if (!user || !user.extratos) return [];
+        if (!user) return [];
 
         const map: Record<string, number> = {};
         const gastosMensais: number[] = [];
 
-        user.extratos.forEach((item) => {
+        const extratos = Array.isArray(user.extratos) ? user.extratos : [];
+
+        extratos.forEach((item) => {
             const partes = item.data.split("/");
             let d: Date;
 
@@ -68,7 +174,7 @@ export default function GraphicCard({
                 d = new Date(item.data);
             }
 
-            if (isNaN(d.getTime())) return;
+            if (Number.isNaN(d.getTime())) return;
 
             const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
             const valor = Number(item.valor);
@@ -90,24 +196,32 @@ export default function GraphicCard({
             periodKeys.push(key);
         }
 
-        const recurringItems = [
-            ...(user.recurringDebts || []).map((item) => ({ ...item, tipo: "debito" as const })),
-            ...(user.recurringCredits || []).map((item) => ({ ...item, tipo: "credito" as const })),
+        const localRecurrings = [
+            ...(user.recurringDebts || []).map((item) => ({
+                ...item,
+                type: "debit" as const,
+            })),
+            ...(user.recurringCredits || []).map((item) => ({
+                ...item,
+                type: "credit" as const,
+            })),
         ];
+
+        const recurringItems = apiRecurrings.length > 0 ? apiRecurrings : localRecurrings;
 
         const recurringMap: Record<string, number> = {};
 
         recurringItems.forEach((item) => {
             const monthlyValue = monthlyRecurringValue(item);
+            const sign = getRecurringSign(item);
+
             periodKeys.forEach((key) => {
                 const [year, month] = key.split("-");
                 const monthDate = new Date(Number(year), Number(month) - 1, 1);
                 const firstOfCurrentMonth = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
 
-                if (monthDate >= firstOfCurrentMonth) {
-                    recurringMap[key] =
-                        (recurringMap[key] || 0) +
-                        (item.tipo === "credito" ? monthlyValue : -monthlyValue);
+                if (monthDate >= firstOfCurrentMonth && isRecurringValidForMonth(item, key)) {
+                    recurringMap[key] = (recurringMap[key] || 0) + monthlyValue * sign;
                 }
             });
         });
@@ -147,7 +261,7 @@ export default function GraphicCard({
         }
 
         return meses;
-    }, [user]);
+    }, [user, apiRecurrings]);
 
     if (history.length === 0) return null;
 
@@ -171,13 +285,18 @@ export default function GraphicCard({
                     className={`wallet-pill-chart-col ${item.key === selectedMonth ? "selected-month" : ""}`}
                     style={{
                         cursor: onSelectMonth ? "pointer" : "default",
-                        outline: item.key === selectedMonth ? "2px solid rgba(255, 255, 255, 0.6)" : undefined,
+                        outline:
+                            item.key === selectedMonth
+                                ? "2px solid rgba(255, 255, 255, 0.6)"
+                                : undefined,
                         borderRadius: item.key === selectedMonth ? "18px" : undefined,
                     }}
                     onClick={() => onSelectMonth?.(item.key)}
                 >
                     <div
-                        className={`wallet-pill-bar ${item.atual ? "active" : item.futuro ? "future" : "past"}`}
+                        className={`wallet-pill-bar ${
+                            item.atual ? "active" : item.futuro ? "future" : "past"
+                        }`}
                         style={{ height: `${getBarHeight(item.valor, item.atual)}px` }}
                     />
                     <span className={`wallet-pill-label ${item.atual ? "active" : ""}`}>

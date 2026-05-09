@@ -37,11 +37,16 @@ export default function AnimatedRoutes() {
         "/goals",
         "/settings",
         "/deposit",
+        "/withdraw",
         "/debts",
         "/transaction/:id",
+        "/transaction-history",
         "/currency",
         "/investments",
-        "/cards-banks"
+        "/cards-banks",
+        "/registerDebt",
+        "/registerRecurringDebt",
+        "/registerRecurringCredit",
     ];
 
     useEffect(() => {
@@ -55,10 +60,13 @@ export default function AnimatedRoutes() {
         }
 
         setLoading(true);
+
         const isCurrencyRoute =
             location.pathname === "/currency" ||
             location.pathname.startsWith("/currency");
+
         const delay = isCurrencyRoute ? 7000 : 500;
+
         const timer = setTimeout(() => {
             setLoading(false);
         }, delay);
@@ -76,24 +84,47 @@ export default function AnimatedRoutes() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/signin" element={<SignInPage />} />
 
-                    <Route path="/investments" element={<Investments />} />
-                    <Route path="/currency" element={<Currency />} />
                     <Route path="/homescreen" element={<Homescreen />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/help" element={<Help />} />
+
+                    <Route path="/investments" element={<Investments />} />
+                    <Route path="/currency" element={<Currency />} />
                     <Route path="/cards-banks" element={<CardsBanks />} />
+                    <Route path="/benefits" element={<Benefits />} />
 
                     <Route path="/goals" element={<Goals />} />
                     <Route path="/goals/create" element={<CreateGoal />} />
                     <Route path="/edit-goal/:id" element={<EditGoals />} />
-                    <Route path="/benefits" element={<Benefits />} />
 
                     <Route path="/incomes" element={<Incomes />} />
                     <Route path="/expenses" element={<Expenses />} />
 
                     <Route path="/deposit" element={<Deposit />} />
                     <Route path="/withdraw" element={<Withdraw />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/help" element={<Help />} />
+
+                    <Route path="/registerDebt" element={<RecurringDebtsMenu />} />
+                    <Route path="/registerDebt/" element={<RecurringDebtsMenu />} />
+
+                    <Route
+                        path="/registerRecurringDebt"
+                        element={<RegisterRecurringDebt />}
+                    />
+                    <Route
+                        path="/registerRecurringDebt/"
+                        element={<RegisterRecurringDebt />}
+                    />
+
+                    <Route
+                        path="/registerRecurringCredit"
+                        element={<RegisterRecurringCredit />}
+                    />
+                    <Route
+                        path="/registerRecurringCredit/"
+                        element={<RegisterRecurringCredit />}
+                    />
+
                     <Route
                         path="/registerDebt/newRecurringDebt"
                         element={<RegisterRecurringDebt />}
@@ -102,7 +133,7 @@ export default function AnimatedRoutes() {
                         path="/registerCredit/newRecurringCredit"
                         element={<RegisterRecurringCredit />}
                     />
-                    <Route path="/registerDebt" element={<RecurringDebtsMenu />} />
+
                     <Route path="/transaction/:id" element={<DetailsID />} />
                     <Route
                         path="/transaction-history"

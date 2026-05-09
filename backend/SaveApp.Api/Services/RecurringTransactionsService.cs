@@ -8,7 +8,7 @@ namespace SaveApp.Api.Services
         private static readonly List<RecurringTransaction> Recurrings = new();
         private static int _nextId = 1;
 
-        public List<RecurringTransactionResponseDto> GetByUser(int userId)
+        public List<RecurringTransactionResponseDto> GetByUser(string userId)
         {
             return Recurrings
                 .Where(x => x.UserId == userId)
@@ -62,6 +62,7 @@ namespace SaveApp.Api.Services
             if (recurring == null)
                 throw new Exception("Recorrência não encontrada.");
 
+            recurring.UserId = dto.UserId;
             recurring.Name = dto.Name.Trim();
             recurring.Value = dto.Value;
             recurring.Type = Normalize(dto.Type);
@@ -116,7 +117,7 @@ namespace SaveApp.Api.Services
             var currentMonthStart = new DateTime(today.Year, today.Month, 1);
             var currentMonthEnd = currentMonthStart.AddMonths(1).AddDays(-1);
 
-            var isValidForCurrentMonth = IsValidForPeriod(
+            var isValidForCurrentMonth = recurring.IsActive && IsValidForPeriod(
                 currentMonthStart,
                 currentMonthEnd,
                 recurring.StartDate,

@@ -3,7 +3,7 @@ namespace SaveApp.Api.DTOs.Recurring
     public class RecurringTransactionResponseDto
     {
         public int Id { get; set; }
-        public int UserId { get; set; }
+        public string UserId { get; set; } = "";
 
         public string Name { get; set; } = "";
         public decimal Value { get; set; }
