@@ -15,6 +15,12 @@ import {
     type EducationRecommendation,
 } from "../../services/educationApi";
 
+import SaveScoreCard from "../../components/financial_health/SaveScoreCard";
+import {
+    analyzeFinancialHealth,
+    type FinancialScoreResponse,
+} from "../../services/financialHealthApi";
+
 import "./Home.scss";
 
 interface Extrato {
@@ -180,7 +186,9 @@ function normalizeRecurringItem(item: any): RecurringItem {
         startDate: item.startDate ?? item.StartDate ?? null,
         endDate: item.endDate ?? item.EndDate ?? null,
         isActive: item.isActive ?? item.IsActive ?? true,
-        monthlyEquivalent: Number(item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0),
+        monthlyEquivalent: Number(
+            item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0
+        ),
         periodLabel: item.periodLabel ?? item.PeriodLabel ?? "",
         statusLabel: item.statusLabel ?? item.StatusLabel ?? "",
         createdAt: item.createdAt ?? item.CreatedAt ?? "",
@@ -206,7 +214,10 @@ function normalizeBalanceStatement(item: any): Extrato {
     };
 }
 
-function mergeStatements(localStatements: Extrato[] = [], apiStatements: Extrato[] = []) {
+function mergeStatements(
+    localStatements: Extrato[] = [],
+    apiStatements: Extrato[] = []
+) {
     const map = new Map<string, Extrato>();
 
     [...localStatements, ...apiStatements].forEach((item) => {
@@ -281,10 +292,15 @@ function getRecurringMonthlyEquivalent(item: RecurringItem) {
 export default function HomeScreen() {
     const [user, setUser] = useState<User | null>(null);
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-    const [activityTab, setActivityTab] = useState<"movements" | "recurring">("movements");
+    const [activityTab, setActivityTab] = useState<"movements" | "recurring">(
+        "movements"
+    );
 
     const [educationRecommendation, setEducationRecommendation] =
         useState<EducationRecommendation | null>(null);
+
+    const [financialScore, setFinancialScore] =
+        useState<FinancialScoreResponse | null>(null);
 
     const navigate = useNavigate();
 
@@ -325,15 +341,22 @@ export default function HomeScreen() {
 
                     baseUser = {
                         ...serverUser,
-                        saldo_final: Number(parsedUser.saldo_final ?? serverUser.saldo_final ?? 0),
+                        saldo_final: Number(
+                            parsedUser.saldo_final ?? serverUser.saldo_final ?? 0
+                        ),
                         extratos: mergeStatements(
                             serverUser.extratos || [],
                             parsedUser.extratos || []
                         ),
                         goals: parsedUser.goals || serverUser.goals || [],
-                        recurringDebts: parsedUser.recurringDebts || serverUser.recurringDebts || [],
+                        recurringDebts:
+                            parsedUser.recurringDebts ||
+                            serverUser.recurringDebts ||
+                            [],
                         recurringCredits:
-                            parsedUser.recurringCredits || serverUser.recurringCredits || [],
+                            parsedUser.recurringCredits ||
+                            serverUser.recurringCredits ||
+                            [],
                     };
                 }
             } catch {
@@ -341,7 +364,9 @@ export default function HomeScreen() {
             }
 
             try {
-                const balanceUrl = `${getBenefitsApiRoot()}/balance/user/${parsedUser.id}/statements`;
+                const balanceUrl = `${getBenefitsApiRoot()}/balance/user/${
+                    parsedUser.id
+                }/statements`;
 
                 console.log("URL EXTRATOS BALANCE HOME:", balanceUrl);
 
@@ -357,7 +382,10 @@ export default function HomeScreen() {
 
                     baseUser = {
                         ...baseUser,
-                        extratos: mergeStatements(baseUser.extratos || [], apiStatements),
+                        extratos: mergeStatements(
+                            baseUser.extratos || [],
+                            apiStatements
+                        ),
                     };
                 } else {
                     console.warn("Não foi possível buscar extratos do BalanceService:", {
@@ -370,7 +398,9 @@ export default function HomeScreen() {
             }
 
             try {
-                const recurringUrl = `${getBenefitsApiRoot()}/recurring-transactions/user/${parsedUser.id}`;
+                const recurringUrl = `${getBenefitsApiRoot()}/recurring-transactions/user/${
+                    parsedUser.id
+                }`;
 
                 console.log("URL RECORRENTES HOME:", recurringUrl);
 
@@ -594,7 +624,9 @@ export default function HomeScreen() {
             const [year, month] = monthCursor.split("-");
             const next = new Date(Number(year), Number(month), 1);
 
-            monthCursor = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+            monthCursor = `${next.getFullYear()}-${String(
+                next.getMonth() + 1
+            ).padStart(2, "0")}`;
         }
 
         return Number(user.saldo_final || 0) + sum;
@@ -612,24 +644,34 @@ export default function HomeScreen() {
         const recurringPreview: Extrato[] = showRecurringInMonth
             ? [
                   ...(user.recurringDebts || [])
-                      .filter((debt) => isRecurringValidForMonth(debt, statementMonthKey))
+                      .filter((debt) =>
+                          isRecurringValidForMonth(debt, statementMonthKey)
+                      )
                       .map((debt) => ({
                           id: `recurring-debit-${debt.id}-${statementMonthKey}`,
-                          data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                          data: `${statementMonthKey.split("-")[1]}/${
+                              statementMonthKey.split("-")[0]
+                          }`,
                           descricao: `Débito recorrente: ${debt.name}`,
                           valor: calculateTotalForMonth(debt, statementMonthKey),
                           tipo: "debito" as const,
-                          status: statementMode === "future" ? "Previsto" : "Recorrente",
+                          status:
+                              statementMode === "future" ? "Previsto" : "Recorrente",
                       })),
                   ...(user.recurringCredits || [])
-                      .filter((credit) => isRecurringValidForMonth(credit, statementMonthKey))
+                      .filter((credit) =>
+                          isRecurringValidForMonth(credit, statementMonthKey)
+                      )
                       .map((credit) => ({
                           id: `recurring-credit-${credit.id}-${statementMonthKey}`,
-                          data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                          data: `${statementMonthKey.split("-")[1]}/${
+                              statementMonthKey.split("-")[0]
+                          }`,
                           descricao: `Crédito recorrente: ${credit.name}`,
                           valor: calculateTotalForMonth(credit, statementMonthKey),
                           tipo: "credito" as const,
-                          status: statementMode === "future" ? "Previsto" : "Recorrente",
+                          status:
+                              statementMode === "future" ? "Previsto" : "Recorrente",
                       })),
               ]
             : [];
@@ -713,8 +755,13 @@ export default function HomeScreen() {
     const goalsOverview = useMemo(() => {
         const goals = user?.goals || [];
 
-        const activeGoals = goals.filter((goal) => goal.status !== "completed").length;
-        const completedGoals = goals.filter((goal) => goal.status === "completed").length;
+        const activeGoals = goals.filter(
+            (goal) => goal.status !== "completed"
+        ).length;
+
+        const completedGoals = goals.filter(
+            (goal) => goal.status === "completed"
+        ).length;
 
         const totalTarget = goals.reduce(
             (sum, goal) => sum + Number(goal.targetAmount || 0),
@@ -726,14 +773,103 @@ export default function HomeScreen() {
             0
         );
 
-        const progress = totalTarget > 0 ? Math.min((totalCurrent / totalTarget) * 100, 100) : 0;
+        const progress =
+            totalTarget > 0 ? Math.min((totalCurrent / totalTarget) * 100, 100) : 0;
 
         return {
             activeGoals,
             completedGoals,
+            totalTarget,
+            totalCurrent,
             progress,
         };
     }, [user]);
+
+    useEffect(() => {
+        async function loadFinancialHealth() {
+            if (!user?.id) return;
+
+            const goals = user.goals || [];
+            const extratos = user.extratos || [];
+
+            const currentItems = extratos.filter((item) => {
+                return getMonthKey(item.data || item.createdAt) === currentMonthKey;
+            });
+
+            const monthlyCredits = currentItems
+                .filter((item) => item.tipo === "credito")
+                .reduce((sum, item) => sum + Number(item.valor || 0), 0);
+
+            const monthlyDebits = currentItems
+                .filter((item) => item.tipo === "debito")
+                .reduce((sum, item) => sum + Number(item.valor || 0), 0);
+
+            const goalsTargetTotal = goals.reduce(
+                (sum, goal) => sum + Number(goal.targetAmount || 0),
+                0
+            );
+
+            const goalsCurrentTotal = goals.reduce(
+                (sum, goal) => sum + Number(goal.currentAmount || 0),
+                0
+            );
+
+            const hasEmergencyReserve = goals.some((goal) => {
+                const text = `${goal.title || ""} ${goal.name || ""}`.toLowerCase();
+
+                return (
+                    text.includes("reserva") ||
+                    text.includes("emergência") ||
+                    text.includes("emergencia")
+                );
+            });
+
+            const response = await analyzeFinancialHealth({
+                userId: user.id,
+
+                balance: Number(user.saldo_final || 0),
+                monthlyIncome: recurringSummary.totalCredits || monthlyCredits,
+
+                monthlyRecurringCredits: recurringSummary.totalCredits,
+                monthlyRecurringDebits: recurringSummary.totalDebts,
+
+                monthlyCredits,
+                monthlyDebits,
+
+                transactionsCount: extratos.length,
+
+                goalsCount: goals.length,
+                activeGoalsCount: goals.filter(
+                    (goal) => goal.status !== "completed"
+                ).length,
+                completedGoalsCount: goals.filter(
+                    (goal) => goal.status === "completed"
+                ).length,
+
+                goalsTargetTotal,
+                goalsCurrentTotal,
+
+                hasEmergencyReserve,
+
+                lessonsOpened: Number(localStorage.getItem("lessonsOpened") || 0),
+                lessonsCompleted: Number(
+                    localStorage.getItem("lessonsCompleted") || 0
+                ),
+            });
+
+            setFinancialScore(response);
+        }
+
+        loadFinancialHealth();
+    }, [
+        user?.id,
+        user?.saldo_final,
+        user?.extratos,
+        user?.goals,
+        recurringSummary.totalCredits,
+        recurringSummary.totalDebts,
+        currentMonthKey,
+    ]);
 
     const homeInsight = useMemo(() => {
         if (recurringSummary.balance < 0) {
@@ -775,7 +911,8 @@ export default function HomeScreen() {
         const rows = statementItems.map((item) => ({
             data: item.data,
             hora: item.hora || "",
-            descricao: item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito"),
+            descricao:
+                item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito"),
             tipo: item.tipo === "credito" ? "Crédito" : "Débito",
             valor: `R$ ${formatCurrency(Number(item.valor))}`,
         }));
@@ -856,7 +993,8 @@ export default function HomeScreen() {
                             : "home-item-value-debit"
                     }`}
                 >
-                    {item.tipo === "credito" ? "+" : "-"}R$ {formatCurrency(Number(item.valor))}
+                    {item.tipo === "credito" ? "+" : "-"}R${" "}
+                    {formatCurrency(Number(item.valor))}
                 </span>
             </ListGroupItem>
         );
@@ -922,6 +1060,8 @@ export default function HomeScreen() {
                             </span>
                         </div>
                     </section>
+
+                    <SaveScoreCard score={financialScore} />
 
                     <section className="home-graph-panel">
                         <GraphicCard
@@ -1176,8 +1316,10 @@ export default function HomeScreen() {
                                                 </p>
 
                                                 <small className="home-item-subtitle d-block">
-                                                    Todo dia {item.billingDate || item.billingDay} —{" "}
-                                                    {freqMap[item.frequency] || item.frequency}
+                                                    Todo dia{" "}
+                                                    {item.billingDate || item.billingDay} —{" "}
+                                                    {freqMap[item.frequency] ||
+                                                        item.frequency}
                                                 </small>
 
                                                 {item.category && (

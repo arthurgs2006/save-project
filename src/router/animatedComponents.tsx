@@ -29,6 +29,7 @@ import Benefits from "../pages/benefits/Benefits.tsx";
 import Help from "../pages/help/help.tsx";
 import FinancialEducation from "../pages/financial_education/FinancialEducation.tsx";
 import FinancialLesson from "../pages/financial_education/FinancialLesson.tsx";
+import FinancialHealth from "../pages/financial_health/FinancialHealth.tsx";
 
 export default function AnimatedRoutes() {
     const location = useLocation();
@@ -51,6 +52,7 @@ export default function AnimatedRoutes() {
         "/registerRecurringCredit",
         "/financial-education",
         "/financial-education/:slug",
+        "/financial-health",
     ];
 
     useEffect(() => {
@@ -101,6 +103,11 @@ export default function AnimatedRoutes() {
                     <Route
                         path="/financial-education/:slug"
                         element={<FinancialLesson />}
+                    />
+
+                    <Route
+                        path="/financial-health"
+                        element={<FinancialHealth />}
                     />
 
                     <Route path="/investments" element={<Investments />} />
