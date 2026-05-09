@@ -42,6 +42,8 @@ builder.Services.AddScoped<IValidator<WithdrawRequestDto>, WithdrawRequestValida
 
 builder.Services.AddScoped<EducationService>();
 
+builder.Services.AddScoped<FinancialHealthService>();
+
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IValidator<CreateUserDto>, UserValidator>();
