@@ -5,6 +5,10 @@ namespace SaveApp.Api.DTOs.Investments
         public decimal InitialValue { get; set; }
         public decimal MonthlyContribution { get; set; }
         public int Months { get; set; }
-        public string Profile { get; set; } = "";
+
+        public string Profile { get; set; } = "moderado";
+
+        public string GoalType { get; set; } = "crescimento";
+        public decimal? TargetAmount { get; set; }
     }
 }

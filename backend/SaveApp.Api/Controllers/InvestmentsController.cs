@@ -33,10 +33,13 @@ namespace SaveApp.Api.Controllers
                 var result = _investmentsService.Simulate(dto);
                 return Ok(result);
             }
-            catch (Exception ex)
+            catch
             {
-                return BadRequest(new { message = ex.Message });
-            }
+                return StatusCode(500, new
+                    {
+                        message = "Ocorreu um erro ao processar a simulação de investimento."
+                    });
+}
         }
 
         [HttpGet("options")]
