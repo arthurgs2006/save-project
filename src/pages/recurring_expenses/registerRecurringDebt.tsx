@@ -14,13 +14,23 @@ type Frequency = "monthly" | "weekly" | "daily" | "yearly";
 
 interface RecurringDebt {
     id: number;
+    userId?: number;
     name: string;
     value: number;
+    type?: "debit";
     category: string;
     frequency: Frequency;
-    billingDate: number;
+    billingDay?: number;
+    billingDate?: number;
     description: string;
-    createdAt: string;
+    startDate: string;
+    endDate: string | null;
+    isActive?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    periodLabel?: string;
+    statusLabel?: string;
+    monthlyEquivalent?: number;
 }
 
 interface User {
@@ -38,6 +48,53 @@ interface User {
         tipo: "credito" | "debito";
         status?: string;
     }>;
+}
+
+function getApiRoot() {
+    return BASE_URL.endsWith("/api") ? BASE_URL : `${BASE_URL}/api`;
+}
+
+function toInputDate(value?: string | null) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value).slice(0, 10);
+    }
+
+    return date.toISOString().slice(0, 10);
+}
+
+function getTodayInputDate() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function getBillingDay(item: RecurringDebt) {
+    return Number(item.billingDay ?? item.billingDate ?? 1);
+}
+
+function normalizeRecurringDebtFromApi(item: any): RecurringDebt {
+    return {
+        id: Number(item.id ?? item.Id ?? Date.now()),
+        userId: Number(item.userId ?? item.UserId ?? 0),
+        name: item.name ?? item.Name ?? "",
+        value: Number(item.value ?? item.Value ?? 0),
+        type: "debit",
+        category: item.category ?? item.Category ?? "",
+        frequency: (item.frequency ?? item.Frequency ?? "monthly") as Frequency,
+        billingDay: Number(item.billingDay ?? item.BillingDay ?? item.billingDate ?? 1),
+        billingDate: Number(item.billingDay ?? item.BillingDay ?? item.billingDate ?? 1),
+        description: item.description ?? item.Description ?? "",
+        startDate: toInputDate(item.startDate ?? item.StartDate),
+        endDate: item.endDate || item.EndDate ? toInputDate(item.endDate ?? item.EndDate) : null,
+        isActive: item.isActive ?? item.IsActive ?? true,
+        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+        updatedAt: item.updatedAt ?? item.UpdatedAt ?? undefined,
+        periodLabel: item.periodLabel ?? item.PeriodLabel ?? "",
+        statusLabel: item.statusLabel ?? item.StatusLabel ?? "",
+        monthlyEquivalent: Number(item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0),
+    };
 }
 
 export default function RegisterRecurringDebt() {
@@ -60,6 +117,11 @@ export default function RegisterRecurringDebt() {
     const [frequency, setFrequency] = useState<Frequency>("monthly");
     const [billingDate, setBillingDate] = useState("");
     const [description, setDescription] = useState("");
+
+    const [startDate, setStartDate] = useState(getTodayInputDate());
+    const [endDate, setEndDate] = useState("");
+    const [hasNoEndDate, setHasNoEndDate] = useState(true);
+
     const [saving, setSaving] = useState(false);
 
     const freqMap: Record<Frequency, string> = {
@@ -109,8 +171,18 @@ export default function RegisterRecurringDebt() {
         setValue(String(debt.value));
         setCategory(debt.category);
         setFrequency(debt.frequency);
-        setBillingDate(String(debt.billingDate));
+        setBillingDate(String(getBillingDay(debt)));
         setDescription(debt.description || "");
+
+        setStartDate(toInputDate(debt.startDate || debt.createdAt || getTodayInputDate()));
+
+        if (debt.endDate) {
+            setEndDate(toInputDate(debt.endDate));
+            setHasNoEndDate(false);
+        } else {
+            setEndDate("");
+            setHasNoEndDate(true);
+        }
     }, [user, isEditing, editId]);
 
     const originalDebt = useMemo(() => {
@@ -131,8 +203,10 @@ export default function RegisterRecurringDebt() {
 
         if (numericValue > 0 && projectedBalance < 0) {
             insight = "Atenção: esse débito pode deixar seu saldo projetado negativo.";
-        } else if (numericValue > 0) {
-            insight = `Esse débito representa aproximadamente ${formatCurrency(monthlyImpact)} por mês.`;
+        } else if (numericValue > 0 && hasNoEndDate) {
+            insight = `Esse débito representa aproximadamente ${formatCurrency(monthlyImpact)} por mês, sem data final definida.`;
+        } else if (numericValue > 0 && !hasNoEndDate && endDate) {
+            insight = `Esse débito representa aproximadamente ${formatCurrency(monthlyImpact)} por mês até ${formatDateLabel(endDate)}.`;
         }
 
         return {
@@ -142,7 +216,7 @@ export default function RegisterRecurringDebt() {
             projectedBalance,
             insight,
         };
-    }, [value, frequency, user, isEditing]);
+    }, [value, frequency, user, isEditing, hasNoEndDate, endDate]);
 
     function getMonthlyEquivalent(amount: number, freq: Frequency) {
         if (freq === "daily") return amount * 30;
@@ -158,6 +232,14 @@ export default function RegisterRecurringDebt() {
         });
     }
 
+    function formatDateLabel(value: string) {
+        if (!value) return "";
+
+        const [year, month, day] = value.split("-");
+
+        return `${day}/${month}/${year}`;
+    }
+
     function resetForm() {
         setName("");
         setValue("");
@@ -165,27 +247,28 @@ export default function RegisterRecurringDebt() {
         setFrequency("monthly");
         setBillingDate("");
         setDescription("");
+        setStartDate(getTodayInputDate());
+        setEndDate("");
+        setHasNoEndDate(true);
     }
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
+    function validateForm() {
         if (!user) {
             setAlert({
                 isOpen: true,
                 message: "Usuário não encontrado. Faça login novamente.",
                 type: "danger",
             });
-            return;
+            return false;
         }
 
-        if (!name.trim() || !value || !category || !billingDate) {
+        if (!name.trim() || !value || !category || !billingDate || !startDate) {
             setAlert({
                 isOpen: true,
                 message: "Preencha todos os campos obrigatórios.",
                 type: "warning",
             });
-            return;
+            return false;
         }
 
         const numericValue = Number(value);
@@ -197,7 +280,7 @@ export default function RegisterRecurringDebt() {
                 message: "Digite um valor válido.",
                 type: "warning",
             });
-            return;
+            return false;
         }
 
         if (
@@ -207,33 +290,101 @@ export default function RegisterRecurringDebt() {
         ) {
             setAlert({
                 isOpen: true,
-                message: "Informe um dia de cobrança válido.",
+                message: "Informe um dia de cobrança válido entre 1 e 31.",
                 type: "warning",
             });
-            return;
+            return false;
         }
+
+        if (!hasNoEndDate && !endDate) {
+            setAlert({
+                isOpen: true,
+                message: "Informe a data final ou marque que não existe data para terminar.",
+                type: "warning",
+            });
+            return false;
+        }
+
+        if (!hasNoEndDate && endDate < startDate) {
+            setAlert({
+                isOpen: true,
+                message: "A data final não pode ser menor que a data inicial.",
+                type: "warning",
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    async function saveRecurringInBackend() {
+        if (!user) throw new Error("Usuário não encontrado.");
+
+        const payload = {
+            userId: user.id,
+            name: name.trim(),
+            value: Number(value),
+            type: "debit",
+            frequency,
+            billingDay: Number(billingDate),
+            category,
+            description: description.trim(),
+            startDate,
+            endDate: hasNoEndDate ? null : endDate,
+            isActive: true,
+        };
+
+        const url = isEditing
+            ? `${getApiRoot()}/recurring-transactions/${editId}`
+            : `${getApiRoot()}/recurring-transactions`;
+
+        const response = await fetch(url, {
+            method: isEditing ? "PUT" : "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const raw = await response.text();
+
+        if (!response.ok) {
+            throw new Error(raw || "Erro ao salvar no back-end.");
+        }
+
+        return normalizeRecurringDebtFromApi(JSON.parse(raw));
+    }
+
+    async function updateUserCacheAndJsonServer(savedDebt: RecurringDebt) {
+        if (!user) return;
 
         const now = new Date();
 
-        const newDebt: RecurringDebt = {
-            id: isEditing ? editId : Date.now(),
-            name: name.trim(),
-            value: numericValue,
-            category,
-            frequency,
-            billingDate: numericBillingDate,
-            description: description.trim(),
-            createdAt: originalDebt?.createdAt || now.toISOString(),
+        const normalizedDebt: RecurringDebt = {
+            ...savedDebt,
+            userId: user.id,
+            type: "debit",
+            billingDate: getBillingDay(savedDebt),
+            billingDay: getBillingDay(savedDebt),
+            startDate: toInputDate(savedDebt.startDate || startDate),
+            endDate: savedDebt.endDate ? toInputDate(savedDebt.endDate) : null,
+            createdAt: savedDebt.createdAt || originalDebt?.createdAt || now.toISOString(),
+            updatedAt: now.toISOString(),
         };
-
-        const oldValue = originalDebt?.value || 0;
-        const balanceAdjustment = isEditing ? oldValue - numericValue : -numericValue;
 
         const updatedDebts = isEditing
             ? (user.recurringDebts || []).map((item) =>
-                  item.id === editId ? newDebt : item
+                  item.id === editId ? normalizedDebt : item
               )
-            : [...(user.recurringDebts || []), newDebt];
+            : [...(user.recurringDebts || []), normalizedDebt];
+
+        const statementExists = isEditing
+            ? false
+            : (user.extratos || []).some(
+                  (item) =>
+                      item.status === "Recorrente" &&
+                      item.descricao?.includes(normalizedDebt.name)
+              );
 
         const newStatement = {
             id: Date.now(),
@@ -247,35 +398,46 @@ export default function RegisterRecurringDebt() {
                 minute: "2-digit",
             })}`,
             descricao: isEditing
-                ? `Débito recorrente editado: ${newDebt.name}`
-                : `Débito recorrente cadastrado: ${newDebt.name}`,
-            valor: numericValue,
+                ? `Débito recorrente editado: ${normalizedDebt.name}`
+                : `Débito recorrente cadastrado: ${normalizedDebt.name}`,
+            valor: Number(normalizedDebt.value),
             tipo: "debito" as const,
             status: "Recorrente",
         };
 
         const updatedUser: User = {
             ...user,
-            saldo_final: Number(user.saldo_final ?? 0) + balanceAdjustment,
             recurringDebts: updatedDebts,
-            extratos: [...(user.extratos || []), newStatement],
+            extratos: statementExists
+                ? user.extratos || []
+                : [...(user.extratos || []), newStatement],
         };
 
-        try {
-            setSaving(true);
+        setUser(updatedUser);
+        localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
 
-            const response = await fetch(`${BASE_URL}/users/${user.id}`, {
+        try {
+            await fetch(`${BASE_URL}/users/${user.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updatedUser),
             });
+        } catch {
+            console.warn("Não foi possível sincronizar o usuário local.");
+        }
+    }
 
-            if (!response.ok) {
-                throw new Error();
-            }
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
 
-            setUser(updatedUser);
-            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+        if (!validateForm()) return;
+
+        try {
+            setSaving(true);
+
+            const savedDebt = await saveRecurringInBackend();
+
+            await updateUserCacheAndJsonServer(savedDebt);
 
             setAlert({
                 isOpen: true,
@@ -290,10 +452,13 @@ export default function RegisterRecurringDebt() {
             } else {
                 setTimeout(() => navigate("/registerDebt/"), 900);
             }
-        } catch {
+        } catch (error) {
+            console.error(error);
+
             setAlert({
                 isOpen: true,
-                message: "Erro ao salvar débito recorrente.",
+                message:
+                    "Erro ao salvar no back-end. Confira se a API está rodando e se a rota /api/recurring-transactions foi registrada.",
                 type: "danger",
             });
         } finally {
@@ -318,8 +483,8 @@ export default function RegisterRecurringDebt() {
 
                     <section className="recurring-hero">
                         <div>
-                            <span className="recurring-badge negative-badge">
-                                {isEditing ? "Editando saída" : "Novo custo recorrente"}
+                            <span className="recurring-badge danger-badge">
+                                {isEditing ? "Editando saída" : "Nova saída recorrente"}
                             </span>
 
                             <h1>
@@ -345,8 +510,8 @@ export default function RegisterRecurringDebt() {
                             </div>
 
                             <div>
-                                <span>Saldo após impacto</span>
-                                <strong>{formatCurrency(preview.projectedBalance)}</strong>
+                                <span>Frequência</span>
+                                <strong>{freqMap[frequency]}</strong>
                             </div>
                         </div>
                     </section>
@@ -359,7 +524,7 @@ export default function RegisterRecurringDebt() {
                                     <input
                                         value={name}
                                         onChange={(event) => setName(event.target.value)}
-                                        placeholder="Ex: Netflix, Academia, Internet..."
+                                        placeholder="Ex: Netflix, aluguel, internet..."
                                     />
                                 </label>
 
@@ -382,14 +547,13 @@ export default function RegisterRecurringDebt() {
                                         onChange={(event) => setCategory(event.target.value)}
                                     >
                                         <option value="">Selecione...</option>
-                                        <option value="Streaming">Streaming</option>
-                                        <option value="Educação">Educação</option>
-                                        <option value="Saúde">Saúde</option>
-                                        <option value="Transporte">Transporte</option>
+                                        <option value="Assinatura">Assinatura</option>
                                         <option value="Moradia">Moradia</option>
                                         <option value="Internet">Internet</option>
-                                        <option value="Serviços">Serviços</option>
-                                        <option value="Estética">Estética</option>
+                                        <option value="Transporte">Transporte</option>
+                                        <option value="Educação">Educação</option>
+                                        <option value="Saúde">Saúde</option>
+                                        <option value="Lazer">Lazer</option>
                                         <option value="Outros">Outros</option>
                                     </select>
                                 </label>
@@ -408,7 +572,7 @@ export default function RegisterRecurringDebt() {
                                 </label>
 
                                 <label>
-                                    Dia da cobrança
+                                    Dia de cobrança
                                     <input
                                         type="number"
                                         min="1"
@@ -418,14 +582,48 @@ export default function RegisterRecurringDebt() {
                                         placeholder="1 a 31"
                                     />
                                 </label>
+
+                                <label>
+                                    Começa em
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(event) => setStartDate(event.target.value)}
+                                    />
+                                </label>
+
+                                <label>
+                                    Termina em
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        disabled={hasNoEndDate}
+                                        onChange={(event) => setEndDate(event.target.value)}
+                                    />
+                                </label>
                             </div>
+
+                            <label className="recurring-period-check">
+                                <input
+                                    type="checkbox"
+                                    checked={hasNoEndDate}
+                                    onChange={(event) => {
+                                        setHasNoEndDate(event.target.checked);
+
+                                        if (event.target.checked) {
+                                            setEndDate("");
+                                        }
+                                    }}
+                                />
+                                <span>Esse débito recorrente não tem data para terminar</span>
+                            </label>
 
                             <label className="recurring-textarea-label">
                                 Descrição
                                 <textarea
                                     value={description}
                                     onChange={(event) => setDescription(event.target.value)}
-                                    placeholder="Ex: assinatura mensal, conta fixa, cobrança automática..."
+                                    placeholder="Ex: assinatura mensal, parcela, conta fixa..."
                                 />
                             </label>
 
