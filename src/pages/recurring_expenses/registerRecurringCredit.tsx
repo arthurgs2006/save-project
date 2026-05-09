@@ -14,13 +14,23 @@ type Frequency = "monthly" | "weekly" | "daily" | "yearly";
 
 interface RecurringCredit {
     id: number;
+    userId?: number;
     name: string;
     value: number;
+    type?: "credit";
     category: string;
     frequency: Frequency;
-    billingDate: number;
+    billingDay?: number;
+    billingDate?: number;
     description: string;
-    createdAt: string;
+    startDate: string;
+    endDate: string | null;
+    isActive?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    periodLabel?: string;
+    statusLabel?: string;
+    monthlyEquivalent?: number;
 }
 
 interface User {
@@ -38,6 +48,53 @@ interface User {
         tipo: "credito" | "debito";
         status?: string;
     }>;
+}
+
+function getApiRoot() {
+    return BASE_URL.endsWith("/api") ? BASE_URL : `${BASE_URL}/api`;
+}
+
+function toInputDate(value?: string | null) {
+    if (!value) return "";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value).slice(0, 10);
+    }
+
+    return date.toISOString().slice(0, 10);
+}
+
+function getTodayInputDate() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function getBillingDay(item: RecurringCredit) {
+    return Number(item.billingDay ?? item.billingDate ?? 1);
+}
+
+function normalizeRecurringCreditFromApi(item: any): RecurringCredit {
+    return {
+        id: Number(item.id ?? item.Id ?? Date.now()),
+        userId: Number(item.userId ?? item.UserId ?? 0),
+        name: item.name ?? item.Name ?? "",
+        value: Number(item.value ?? item.Value ?? 0),
+        type: "credit",
+        category: item.category ?? item.Category ?? "",
+        frequency: (item.frequency ?? item.Frequency ?? "monthly") as Frequency,
+        billingDay: Number(item.billingDay ?? item.BillingDay ?? item.billingDate ?? 1),
+        billingDate: Number(item.billingDay ?? item.BillingDay ?? item.billingDate ?? 1),
+        description: item.description ?? item.Description ?? "",
+        startDate: toInputDate(item.startDate ?? item.StartDate),
+        endDate: item.endDate || item.EndDate ? toInputDate(item.endDate ?? item.EndDate) : null,
+        isActive: item.isActive ?? item.IsActive ?? true,
+        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+        updatedAt: item.updatedAt ?? item.UpdatedAt ?? undefined,
+        periodLabel: item.periodLabel ?? item.PeriodLabel ?? "",
+        statusLabel: item.statusLabel ?? item.StatusLabel ?? "",
+        monthlyEquivalent: Number(item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0),
+    };
 }
 
 export default function RegisterRecurringCredit() {
@@ -60,6 +117,11 @@ export default function RegisterRecurringCredit() {
     const [frequency, setFrequency] = useState<Frequency>("monthly");
     const [billingDate, setBillingDate] = useState("");
     const [description, setDescription] = useState("");
+
+    const [startDate, setStartDate] = useState(getTodayInputDate());
+    const [endDate, setEndDate] = useState("");
+    const [hasNoEndDate, setHasNoEndDate] = useState(true);
+
     const [saving, setSaving] = useState(false);
 
     const freqMap: Record<Frequency, string> = {
@@ -109,8 +171,18 @@ export default function RegisterRecurringCredit() {
         setValue(String(credit.value));
         setCategory(credit.category);
         setFrequency(credit.frequency);
-        setBillingDate(String(credit.billingDate));
+        setBillingDate(String(getBillingDay(credit)));
         setDescription(credit.description || "");
+
+        setStartDate(toInputDate(credit.startDate || credit.createdAt || getTodayInputDate()));
+
+        if (credit.endDate) {
+            setEndDate(toInputDate(credit.endDate));
+            setHasNoEndDate(false);
+        } else {
+            setEndDate("");
+            setHasNoEndDate(true);
+        }
     }, [user, isEditing, editId]);
 
     const originalCredit = useMemo(() => {
@@ -129,8 +201,12 @@ export default function RegisterRecurringCredit() {
             insight = "Você está editando uma entrada recorrente existente.";
         }
 
-        if (numericValue > 0) {
-            insight = `Essa entrada representa aproximadamente ${formatCurrency(monthlyImpact)} por mês.`;
+        if (numericValue > 0 && hasNoEndDate) {
+            insight = `Essa entrada representa aproximadamente ${formatCurrency(monthlyImpact)} por mês, sem data final definida.`;
+        }
+
+        if (numericValue > 0 && !hasNoEndDate && endDate) {
+            insight = `Essa entrada representa aproximadamente ${formatCurrency(monthlyImpact)} por mês até ${formatDateLabel(endDate)}.`;
         }
 
         return {
@@ -140,7 +216,7 @@ export default function RegisterRecurringCredit() {
             projectedBalance,
             insight,
         };
-    }, [value, frequency, user, isEditing]);
+    }, [value, frequency, user, isEditing, hasNoEndDate, endDate]);
 
     function getMonthlyEquivalent(amount: number, freq: Frequency) {
         if (freq === "daily") return amount * 30;
@@ -156,6 +232,14 @@ export default function RegisterRecurringCredit() {
         });
     }
 
+    function formatDateLabel(value: string) {
+        if (!value) return "";
+
+        const [year, month, day] = value.split("-");
+
+        return `${day}/${month}/${year}`;
+    }
+
     function resetForm() {
         setName("");
         setValue("");
@@ -163,27 +247,28 @@ export default function RegisterRecurringCredit() {
         setFrequency("monthly");
         setBillingDate("");
         setDescription("");
+        setStartDate(getTodayInputDate());
+        setEndDate("");
+        setHasNoEndDate(true);
     }
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-
+    function validateForm() {
         if (!user) {
             setAlert({
                 isOpen: true,
                 message: "Usuário não encontrado. Faça login novamente.",
                 type: "danger",
             });
-            return;
+            return false;
         }
 
-        if (!name.trim() || !value || !category || !billingDate) {
+        if (!name.trim() || !value || !category || !billingDate || !startDate) {
             setAlert({
                 isOpen: true,
                 message: "Preencha todos os campos obrigatórios.",
                 type: "warning",
             });
-            return;
+            return false;
         }
 
         const numericValue = Number(value);
@@ -195,7 +280,7 @@ export default function RegisterRecurringCredit() {
                 message: "Digite um valor válido.",
                 type: "warning",
             });
-            return;
+            return false;
         }
 
         if (
@@ -205,33 +290,101 @@ export default function RegisterRecurringCredit() {
         ) {
             setAlert({
                 isOpen: true,
-                message: "Informe um dia de recebimento válido.",
+                message: "Informe um dia de recebimento válido entre 1 e 31.",
                 type: "warning",
             });
-            return;
+            return false;
         }
+
+        if (!hasNoEndDate && !endDate) {
+            setAlert({
+                isOpen: true,
+                message: "Informe a data final ou marque que não existe data para terminar.",
+                type: "warning",
+            });
+            return false;
+        }
+
+        if (!hasNoEndDate && endDate < startDate) {
+            setAlert({
+                isOpen: true,
+                message: "A data final não pode ser menor que a data inicial.",
+                type: "warning",
+            });
+            return false;
+        }
+
+        return true;
+    }
+
+    async function saveRecurringInBackend() {
+        if (!user) throw new Error("Usuário não encontrado.");
+
+        const payload = {
+            userId: user.id,
+            name: name.trim(),
+            value: Number(value),
+            type: "credit",
+            frequency,
+            billingDay: Number(billingDate),
+            category,
+            description: description.trim(),
+            startDate,
+            endDate: hasNoEndDate ? null : endDate,
+            isActive: true,
+        };
+
+        const url = isEditing
+            ? `${getApiRoot()}/recurring-transactions/${editId}`
+            : `${getApiRoot()}/recurring-transactions`;
+
+        const response = await fetch(url, {
+            method: isEditing ? "PUT" : "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const raw = await response.text();
+
+        if (!response.ok) {
+            throw new Error(raw || "Erro ao salvar no back-end.");
+        }
+
+        return normalizeRecurringCreditFromApi(JSON.parse(raw));
+    }
+
+    async function updateUserCacheAndJsonServer(savedCredit: RecurringCredit) {
+        if (!user) return;
 
         const now = new Date();
 
-        const newCredit: RecurringCredit = {
-            id: isEditing ? editId : Date.now(),
-            name: name.trim(),
-            value: numericValue,
-            category,
-            frequency,
-            billingDate: numericBillingDate,
-            description: description.trim(),
-            createdAt: originalCredit?.createdAt || now.toISOString(),
+        const normalizedCredit: RecurringCredit = {
+            ...savedCredit,
+            userId: user.id,
+            type: "credit",
+            billingDate: getBillingDay(savedCredit),
+            billingDay: getBillingDay(savedCredit),
+            startDate: toInputDate(savedCredit.startDate || startDate),
+            endDate: savedCredit.endDate ? toInputDate(savedCredit.endDate) : null,
+            createdAt: savedCredit.createdAt || originalCredit?.createdAt || now.toISOString(),
+            updatedAt: now.toISOString(),
         };
-
-        const oldValue = originalCredit?.value || 0;
-        const balanceAdjustment = isEditing ? numericValue - oldValue : numericValue;
 
         const updatedCredits = isEditing
             ? (user.recurringCredits || []).map((item) =>
-                  item.id === editId ? newCredit : item
+                  item.id === editId ? normalizedCredit : item
               )
-            : [...(user.recurringCredits || []), newCredit];
+            : [...(user.recurringCredits || []), normalizedCredit];
+
+        const statementExists = isEditing
+            ? false
+            : (user.extratos || []).some(
+                  (item) =>
+                      item.status === "Recorrente" &&
+                      item.descricao?.includes(normalizedCredit.name)
+              );
 
         const newStatement = {
             id: Date.now(),
@@ -245,35 +398,46 @@ export default function RegisterRecurringCredit() {
                 minute: "2-digit",
             })}`,
             descricao: isEditing
-                ? `Crédito recorrente editado: ${newCredit.name}`
-                : `Crédito recorrente cadastrado: ${newCredit.name}`,
-            valor: numericValue,
+                ? `Crédito recorrente editado: ${normalizedCredit.name}`
+                : `Crédito recorrente cadastrado: ${normalizedCredit.name}`,
+            valor: Number(normalizedCredit.value),
             tipo: "credito" as const,
             status: "Recorrente",
         };
 
         const updatedUser: User = {
             ...user,
-            saldo_final: Number(user.saldo_final ?? 0) + balanceAdjustment,
             recurringCredits: updatedCredits,
-            extratos: [...(user.extratos || []), newStatement],
+            extratos: statementExists
+                ? user.extratos || []
+                : [...(user.extratos || []), newStatement],
         };
 
-        try {
-            setSaving(true);
+        setUser(updatedUser);
+        localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
 
-            const response = await fetch(`${BASE_URL}/users/${user.id}`, {
+        try {
+            await fetch(`${BASE_URL}/users/${user.id}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updatedUser),
             });
+        } catch {
+            console.warn("Não foi possível sincronizar o usuário local.");
+        }
+    }
 
-            if (!response.ok) {
-                throw new Error();
-            }
+    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
 
-            setUser(updatedUser);
-            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+        if (!validateForm()) return;
+
+        try {
+            setSaving(true);
+
+            const savedCredit = await saveRecurringInBackend();
+
+            await updateUserCacheAndJsonServer(savedCredit);
 
             setAlert({
                 isOpen: true,
@@ -288,10 +452,13 @@ export default function RegisterRecurringCredit() {
             } else {
                 setTimeout(() => navigate("/registerDebt/"), 900);
             }
-        } catch {
+        } catch (error) {
+            console.error(error);
+
             setAlert({
                 isOpen: true,
-                message: "Erro ao salvar crédito recorrente.",
+                message:
+                    "Erro ao salvar no back-end. Confira se a API está rodando e se a rota /api/recurring-transactions foi registrada.",
                 type: "danger",
             });
         } finally {
@@ -414,7 +581,41 @@ export default function RegisterRecurringCredit() {
                                         placeholder="1 a 31"
                                     />
                                 </label>
+
+                                <label>
+                                    Começa em
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(event) => setStartDate(event.target.value)}
+                                    />
+                                </label>
+
+                                <label>
+                                    Termina em
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        disabled={hasNoEndDate}
+                                        onChange={(event) => setEndDate(event.target.value)}
+                                    />
+                                </label>
                             </div>
+
+                            <label className="recurring-period-check">
+                                <input
+                                    type="checkbox"
+                                    checked={hasNoEndDate}
+                                    onChange={(event) => {
+                                        setHasNoEndDate(event.target.checked);
+
+                                        if (event.target.checked) {
+                                            setEndDate("");
+                                        }
+                                    }}
+                                />
+                                <span>Esse crédito recorrente não tem data para terminar</span>
+                            </label>
 
                             <label className="recurring-textarea-label">
                                 Descrição

@@ -2,6 +2,7 @@ using FluentValidation;
 using SaveApp.Api.Data.Repositories;
 using SaveApp.Api.DTOs.User;
 using SaveApp.Api.DTOs.Benefits;
+using SaveApp.Api.DTOs.Recurring;
 using SaveApp.Api.DTOs.Investments;
 using SaveApp.Api.DTOs.Recommendations;
 using SaveApp.Api.Services;
@@ -25,6 +26,9 @@ builder.Services.AddScoped<IValidator<InvestmentSimulationRequestDto>, Investmen
 
 builder.Services.AddScoped<RecommendationsService>();
 builder.Services.AddScoped<IValidator<RecommendationRequestDto>, RecommendationValidator>();
+
+builder.Services.AddScoped<RecurringTransactionsService>();
+builder.Services.AddScoped<IValidator<RecurringTransactionRequestDto>, RecurringTransactionValidator>();
 
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();

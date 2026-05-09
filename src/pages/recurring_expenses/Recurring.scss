@@ -462,4 +462,56 @@
             width: 100%;
         }
     }
+
+    .recurring-period-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 16px;
+    color: #cbd5e1;
+    font-weight: 800;
+    cursor: pointer;
+
+    input {
+        width: 18px;
+        height: 18px;
+        accent-color: #22c55e;
+        cursor: pointer;
+    }
+
+    span {
+        line-height: 1.4;
+    }
+}
+
+.recurring-form-grid input:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.recurring-period-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 16px;
+    color: #cbd5e1;
+    font-weight: 800;
+    cursor: pointer;
+
+    input {
+        width: 18px;
+        height: 18px;
+        accent-color: #ef4444;
+        cursor: pointer;
+    }
+
+    span {
+        line-height: 1.4;
+    }
+}
+
+.recurring-form-grid input:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
 }
