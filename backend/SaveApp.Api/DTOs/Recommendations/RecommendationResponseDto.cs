@@ -3,8 +3,14 @@ namespace SaveApp.Api.DTOs.Recommendations
     public class RecommendationResponseDto
     {
         public int UserId { get; set; }
+
         public string FinancialProfile { get; set; } = "";
         public string Summary { get; set; } = "";
+
+        public decimal MonthlyCredits { get; set; }
+        public decimal MonthlyDebits { get; set; }
+        public decimal MonthlyResult { get; set; }
+        public decimal ExpenseRate { get; set; }
 
         public List<string> Insights { get; set; } = new();
 
