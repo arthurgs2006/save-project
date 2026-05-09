@@ -27,6 +27,8 @@ import RecurringDebtsMenu from "../pages/recurring_expenses/menuRecurringDebts.t
 import TransactionHistory from "../pages/homescreen/transactionHistory.tsx";
 import Benefits from "../pages/benefits/Benefits.tsx";
 import Help from "../pages/help/help.tsx";
+import FinancialEducation from "../pages/financial_education/FinancialEducation.tsx";
+import FinancialLesson from "../pages/financial_education/FinancialLesson.tsx";
 
 export default function AnimatedRoutes() {
     const location = useLocation();
@@ -47,6 +49,8 @@ export default function AnimatedRoutes() {
         "/registerDebt",
         "/registerRecurringDebt",
         "/registerRecurringCredit",
+        "/financial-education",
+        "/financial-education/:slug",
     ];
 
     useEffect(() => {
@@ -89,6 +93,16 @@ export default function AnimatedRoutes() {
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/help" element={<Help />} />
 
+                    <Route
+                        path="/financial-education"
+                        element={<FinancialEducation />}
+                    />
+
+                    <Route
+                        path="/financial-education/:slug"
+                        element={<FinancialLesson />}
+                    />
+
                     <Route path="/investments" element={<Investments />} />
                     <Route path="/currency" element={<Currency />} />
                     <Route path="/cards-banks" element={<CardsBanks />} />
@@ -111,6 +125,7 @@ export default function AnimatedRoutes() {
                         path="/registerRecurringDebt"
                         element={<RegisterRecurringDebt />}
                     />
+
                     <Route
                         path="/registerRecurringDebt/"
                         element={<RegisterRecurringDebt />}
@@ -120,6 +135,7 @@ export default function AnimatedRoutes() {
                         path="/registerRecurringCredit"
                         element={<RegisterRecurringCredit />}
                     />
+
                     <Route
                         path="/registerRecurringCredit/"
                         element={<RegisterRecurringCredit />}
@@ -129,12 +145,14 @@ export default function AnimatedRoutes() {
                         path="/registerDebt/newRecurringDebt"
                         element={<RegisterRecurringDebt />}
                     />
+
                     <Route
                         path="/registerCredit/newRecurringCredit"
                         element={<RegisterRecurringCredit />}
                     />
 
                     <Route path="/transaction/:id" element={<DetailsID />} />
+
                     <Route
                         path="/transaction-history"
                         element={<TransactionHistory />}
