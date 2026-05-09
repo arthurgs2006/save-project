@@ -6,6 +6,13 @@ import { BASE_URL, BENEFITS_API_URL } from "../../config";
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import AlertModal from "../../components/generic_components/AlertModal";
+
+import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
+import {
+    getEducationRecommendation,
+    type EducationRecommendation,
+} from "../../services/educationApi";
+
 import "./DepositPage.scss";
 
 interface DepositStatement {
@@ -90,7 +97,9 @@ function normalizeGoal(item: any): Goal {
         name: item.name ?? item.Name ?? item.title ?? item.Title ?? "",
         targetAmount: Number(item.targetAmount ?? item.TargetAmount ?? 0),
         currentAmount: Number(item.currentAmount ?? item.CurrentAmount ?? 0),
-        monthlyContribution: Number(item.monthlyContribution ?? item.MonthlyContribution ?? 0),
+        monthlyContribution: Number(
+            item.monthlyContribution ?? item.MonthlyContribution ?? 0
+        ),
         deadline: item.deadline ?? item.Deadline ?? null,
         category: item.category ?? item.Category ?? "outros",
         priority: item.priority ?? item.Priority ?? "media",
@@ -98,7 +107,9 @@ function normalizeGoal(item: any): Goal {
         color: item.color ?? item.Color ?? "#38bdf8",
         notes: item.notes ?? item.Notes ?? "",
         status: item.status ?? item.Status ?? "active",
-        progressPercentage: Number(item.progressPercentage ?? item.ProgressPercentage ?? 0),
+        progressPercentage: Number(
+            item.progressPercentage ?? item.ProgressPercentage ?? 0
+        ),
         missingAmount: Number(item.missingAmount ?? item.MissingAmount ?? 0),
         monthlyNeeded: Number(item.monthlyNeeded ?? item.MonthlyNeeded ?? 0),
         insightTitle: item.insightTitle ?? item.InsightTitle ?? "",
@@ -139,6 +150,41 @@ function normalizeStatement(item: any): DepositStatement {
     };
 }
 
+function mergeStatements(
+    localStatements: DepositStatement[] = [],
+    apiStatements: DepositStatement[] = []
+) {
+    const map = new Map<string, DepositStatement>();
+
+    [...localStatements, ...apiStatements].forEach((item) => {
+        const key = String(item.transactionId || item.id);
+        map.set(key, item);
+    });
+
+    return Array.from(map.values());
+}
+
+function hasEmergencyReserveGoal(goals: Goal[] = []) {
+    return goals.some((goal) => {
+        const text = [
+            goal.title,
+            goal.name,
+            goal.category,
+            goal.notes,
+            goal.insightTitle,
+            goal.insightMessage,
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            text.includes("reserva") ||
+            text.includes("emergência") ||
+            text.includes("emergencia")
+        );
+    });
+}
+
 export default function DepositPage() {
     const [user, setUser] = useState<User | null>(null);
     const [depositValue, setDepositValue] = useState("");
@@ -146,6 +192,9 @@ export default function DepositPage() {
     const [description, setDescription] = useState("");
     const [category, setCategory] = useState("Conta");
     const [loading, setLoading] = useState(false);
+
+    const [educationRecommendation, setEducationRecommendation] =
+        useState<EducationRecommendation | null>(null);
 
     const [alert, setAlert] = useState<{
         isOpen: boolean;
@@ -160,18 +209,38 @@ export default function DepositPage() {
             if (!storedUser) return;
 
             const parsedUser: User = JSON.parse(storedUser);
-            let baseUser: User = parsedUser;
 
-            setUser(parsedUser);
+            let baseUser: User = {
+                ...parsedUser,
+                saldo_final: Number(parsedUser.saldo_final || 0),
+                extratos: parsedUser.extratos || [],
+                goals: parsedUser.goals || [],
+            };
+
+            setUser(baseUser);
 
             try {
                 const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
 
                 if (response.ok) {
-                    baseUser = await response.json();
+                    const serverUser = await response.json();
+
+                    baseUser = {
+                        ...serverUser,
+                        saldo_final: Number(
+                            parsedUser.saldo_final ?? serverUser.saldo_final ?? 0
+                        ),
+                        extratos: mergeStatements(
+                            serverUser.extratos || [],
+                            parsedUser.extratos || []
+                        ),
+                        goals: parsedUser.goals || serverUser.goals || [],
+                    };
                 }
             } catch {
-                console.warn("Erro ao carregar usuário no servidor principal. Usando dados locais.");
+                console.warn(
+                    "Erro ao carregar usuário no servidor principal. Usando dados locais."
+                );
             }
 
             try {
@@ -186,7 +255,9 @@ export default function DepositPage() {
 
                     baseUser = {
                         ...baseUser,
-                        goals: Array.isArray(goalsData) ? goalsData.map(normalizeGoal) : [],
+                        goals: Array.isArray(goalsData)
+                            ? goalsData.map(normalizeGoal)
+                            : [],
                     };
                 } else {
                     console.warn("Não foi possível carregar metas da API .NET:", rawGoals);
@@ -204,25 +275,23 @@ export default function DepositPage() {
 
                 if (statementsResponse.ok) {
                     const statementsData = JSON.parse(rawStatements);
+
                     const apiStatements = Array.isArray(statementsData)
                         ? statementsData.map(normalizeStatement)
                         : [];
 
-                    const mergedStatements = [
-                        ...(baseUser.extratos || []),
-                        ...apiStatements.filter((apiStatement) => {
-                            return !(baseUser.extratos || []).some(
-                                (localStatement) =>
-                                    String(localStatement.transactionId) ===
-                                    String(apiStatement.transactionId)
-                            );
-                        }),
-                    ];
-
                     baseUser = {
                         ...baseUser,
-                        extratos: mergedStatements,
+                        extratos: mergeStatements(
+                            baseUser.extratos || [],
+                            apiStatements
+                        ),
                     };
+                } else {
+                    console.warn("Não foi possível carregar extratos da API .NET:", {
+                        status: statementsResponse.status,
+                        body: rawStatements,
+                    });
                 }
             } catch (error) {
                 console.warn("Erro ao buscar extratos da API .NET.", error);
@@ -272,7 +341,8 @@ export default function DepositPage() {
         if (numericDeposit > 0 && selectedGoalData) {
             insight = `Esse depósito será somado ao seu saldo e também direcionado para a meta "${getGoalName(selectedGoalData)}".`;
         } else if (numericDeposit > 0) {
-            insight = "Esse depósito será adicionado ao seu saldo geral e registrado no histórico.";
+            insight =
+                "Esse depósito será adicionado ao seu saldo geral e registrado no histórico.";
         }
 
         return {
@@ -285,6 +355,25 @@ export default function DepositPage() {
             insight,
         };
     }, [numericDeposit, selectedGoalData, user]);
+
+    useEffect(() => {
+        async function loadEducationRecommendation() {
+            if (!user?.id) return;
+
+            const goals = user.goals || [];
+
+            const recommendation = await getEducationRecommendation(user.id, "deposit", {
+                amount: numericDeposit,
+                currentBalance: Number(user.saldo_final || 0),
+                hasGoals: goals.length > 0,
+                hasEmergencyReserve: hasEmergencyReserveGoal(goals),
+            });
+
+            setEducationRecommendation(recommendation);
+        }
+
+        loadEducationRecommendation();
+    }, [user?.id, user?.saldo_final, user?.goals, numericDeposit]);
 
     function formatCurrency(value: number) {
         return value.toLocaleString("pt-BR", {
@@ -395,7 +484,7 @@ export default function DepositPage() {
             const updatedUser: User = {
                 ...user,
                 saldo_final: Number(result.newBalance),
-                extratos: [...(user.extratos || []), statement],
+                extratos: mergeStatements([...(user.extratos || []), statement], []),
                 goals: reloadedGoals || user.goals || [],
             };
 
@@ -568,7 +657,9 @@ export default function DepositPage() {
                                             onClick={handleDeposit}
                                             disabled={loading}
                                         >
-                                            {loading ? "Processando..." : "Confirmar depósito"}
+                                            {loading
+                                                ? "Processando..."
+                                                : "Confirmar depósito"}
                                         </button>
                                     </div>
                                 </div>
@@ -614,6 +705,10 @@ export default function DepositPage() {
                                 </aside>
                             </section>
 
+                            <EducationRecommendationCard
+                                recommendation={educationRecommendation}
+                            />
+
                             {recentStatements.length > 0 && (
                                 <section className="deposit-history">
                                     <div className="deposit-history-header">
@@ -647,7 +742,10 @@ export default function DepositPage() {
 
                                                 <div className="deposit-history-value">
                                                     <strong>
-                                                        + {formatCurrency(Number(transaction.valor))}
+                                                        +{" "}
+                                                        {formatCurrency(
+                                                            Number(transaction.valor)
+                                                        )}
                                                     </strong>
                                                     <span>{transaction.status}</span>
                                                 </div>

@@ -650,4 +650,13 @@
     .home-export-btn {
         width: fit-content;
     }
+
+    .home-education-section {
+        display: grid;
+        gap: 12px;
+    }
+
+    .home-education-section .education-recommendation-card {
+        margin: 0;
+    }
 }

@@ -6,6 +6,13 @@ import { BASE_URL, BENEFITS_API_URL } from "../../config";
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import AlertModal from "../../components/generic_components/AlertModal";
+
+import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
+import {
+    getEducationRecommendation,
+    type EducationRecommendation,
+} from "../../services/educationApi";
+
 import "./WithdrawPage.scss";
 
 interface WithdrawStatement {
@@ -76,12 +83,29 @@ function normalizeStatement(item: any): WithdrawStatement {
     };
 }
 
+function mergeStatements(
+    localStatements: WithdrawStatement[] = [],
+    apiStatements: WithdrawStatement[] = []
+) {
+    const map = new Map<string, WithdrawStatement>();
+
+    [...localStatements, ...apiStatements].forEach((item) => {
+        const key = String(item.transactionId || item.id);
+        map.set(key, item);
+    });
+
+    return Array.from(map.values());
+}
+
 export default function WithdrawPage() {
     const [user, setUser] = useState<User | null>(null);
     const [withdrawValue, setWithdrawValue] = useState("");
     const [category, setCategory] = useState<WithdrawCategory>("Conta");
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const [educationRecommendation, setEducationRecommendation] =
+        useState<EducationRecommendation | null>(null);
 
     const [alert, setAlert] = useState<{
         isOpen: boolean;
@@ -96,15 +120,31 @@ export default function WithdrawPage() {
             if (!storedUser) return;
 
             const parsedUser: User = JSON.parse(storedUser);
-            let baseUser: User = parsedUser;
 
-            setUser(parsedUser);
+            let baseUser: User = {
+                ...parsedUser,
+                saldo_final: Number(parsedUser.saldo_final || 0),
+                extratos: parsedUser.extratos || [],
+            };
+
+            setUser(baseUser);
 
             try {
                 const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
 
                 if (response.ok) {
-                    baseUser = await response.json();
+                    const serverUser = await response.json();
+
+                    baseUser = {
+                        ...serverUser,
+                        saldo_final: Number(
+                            parsedUser.saldo_final ?? serverUser.saldo_final ?? 0
+                        ),
+                        extratos: mergeStatements(
+                            serverUser.extratos || [],
+                            parsedUser.extratos || []
+                        ),
+                    };
                 }
             } catch {
                 console.warn("Erro ao carregar usuário no servidor principal. Usando dados locais.");
@@ -124,23 +164,15 @@ export default function WithdrawPage() {
                         ? statementsData.map(normalizeStatement)
                         : [];
 
-                    const mergedStatements = [
-                        ...(baseUser.extratos || []),
-                        ...apiStatements.filter((apiStatement) => {
-                            return !(baseUser.extratos || []).some(
-                                (localStatement) =>
-                                    String(localStatement.transactionId) ===
-                                    String(apiStatement.transactionId)
-                            );
-                        }),
-                    ];
-
                     baseUser = {
                         ...baseUser,
-                        extratos: mergedStatements,
+                        extratos: mergeStatements(baseUser.extratos || [], apiStatements),
                     };
                 } else {
-                    console.warn("Não foi possível carregar extratos da API .NET:", rawStatements);
+                    console.warn("Não foi possível carregar extratos da API .NET:", {
+                        status: statementsResponse.status,
+                        body: rawStatements,
+                    });
                 }
             } catch (error) {
                 console.warn("Erro ao buscar extratos da API .NET.", error);
@@ -194,6 +226,21 @@ export default function WithdrawPage() {
             insight,
         };
     }, [numericWithdraw, user]);
+
+    useEffect(() => {
+        async function loadEducationRecommendation() {
+            if (!user?.id) return;
+
+            const recommendation = await getEducationRecommendation(user.id, "withdraw", {
+                amount: numericWithdraw,
+                currentBalance: Number(user.saldo_final || 0),
+            });
+
+            setEducationRecommendation(recommendation);
+        }
+
+        loadEducationRecommendation();
+    }, [user?.id, user?.saldo_final, numericWithdraw]);
 
     function formatCurrency(value: number) {
         return value.toLocaleString("pt-BR", {
@@ -286,7 +333,7 @@ export default function WithdrawPage() {
             const updatedUser: User = {
                 ...user,
                 saldo_final: Number(result.newBalance),
-                extratos: [...(user.extratos || []), statement],
+                extratos: mergeStatements([...(user.extratos || []), statement], []),
             };
 
             setUser(updatedUser);
@@ -473,11 +520,16 @@ export default function WithdrawPage() {
                                         </div>
 
                                         <small>
-                                            Saldo final previsto: {formatCurrency(preview.nextBalance)}
+                                            Saldo final previsto:{" "}
+                                            {formatCurrency(preview.nextBalance)}
                                         </small>
                                     </div>
                                 </aside>
                             </section>
+
+                            <EducationRecommendationCard
+                                recommendation={educationRecommendation}
+                            />
 
                             {recentStatements.length > 0 && (
                                 <section className="withdraw-history">
