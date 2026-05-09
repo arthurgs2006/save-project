@@ -180,6 +180,36 @@ function normalizeRecurringItem(item: any): RecurringItem {
     };
 }
 
+function normalizeBalanceStatement(item: any): Extrato {
+    return {
+        id: item.id ?? item.Id ?? Date.now(),
+        transactionId: item.transactionId ?? item.TransactionId ?? "",
+        data: item.data ?? item.Data ?? "",
+        hora: item.hora ?? item.Hora ?? "",
+        dataHora: item.dataHora ?? item.DataHora ?? "",
+        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+        descricao: item.descricao ?? item.Descricao ?? "",
+        valor: Number(item.valor ?? item.Valor ?? 0),
+        tipo: (item.tipo ?? item.Tipo ?? "credito") as "credito" | "debito",
+        status: item.status ?? item.Status ?? "",
+        metodo: item.metodo ?? item.Metodo ?? "",
+        origem: item.origem ?? item.Origem ?? "",
+        goalId: item.goalId ?? item.GoalId ?? null,
+        goalName: item.goalName ?? item.GoalName ?? null,
+    };
+}
+
+function mergeStatements(localStatements: Extrato[] = [], apiStatements: Extrato[] = []) {
+    const map = new Map<string, Extrato>();
+
+    [...localStatements, ...apiStatements].forEach((item) => {
+        const key = String(item.transactionId || item.id);
+        map.set(key, item);
+    });
+
+    return Array.from(map.values());
+}
+
 function getDateFromValue(value?: string | null) {
     if (!value) return null;
 
@@ -265,18 +295,75 @@ export default function HomeScreen() {
             }
 
             const parsedUser: User = JSON.parse(storedUser);
-            let baseUser: User = parsedUser;
 
-            setUser(parsedUser);
+            let baseUser: User = {
+                ...parsedUser,
+                saldo_final: Number(parsedUser.saldo_final || 0),
+                extratos: parsedUser.extratos || [],
+                goals: parsedUser.goals || [],
+                recurringDebts: parsedUser.recurringDebts || [],
+                recurringCredits: parsedUser.recurringCredits || [],
+            };
+
+            setUser(baseUser);
 
             try {
                 const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
 
                 if (response.ok) {
-                    baseUser = await response.json();
+                    const serverUser = await response.json();
+
+                    baseUser = {
+                        ...serverUser,
+
+                        // Importante:
+                        // depósito e saque agora atualizam o localStorage pela API .NET.
+                        // Então a Home não pode sobrescrever o saldo local com o saldo antigo do Render.
+                        saldo_final: Number(parsedUser.saldo_final ?? serverUser.saldo_final ?? 0),
+
+                        // Junta os extratos antigos do Render com os novos locais.
+                        extratos: mergeStatements(
+                            serverUser.extratos || [],
+                            parsedUser.extratos || []
+                        ),
+
+                        goals: parsedUser.goals || serverUser.goals || [],
+                        recurringDebts: parsedUser.recurringDebts || serverUser.recurringDebts || [],
+                        recurringCredits:
+                            parsedUser.recurringCredits || serverUser.recurringCredits || [],
+                    };
                 }
             } catch {
                 console.warn("Servidor principal indisponível. Usando usuário local.");
+            }
+
+            try {
+                const balanceUrl = `${getBenefitsApiRoot()}/balance/user/${parsedUser.id}/statements`;
+
+                console.log("URL EXTRATOS BALANCE HOME:", balanceUrl);
+
+                const balanceResponse = await fetch(balanceUrl);
+                const rawBalance = await balanceResponse.text();
+
+                if (balanceResponse.ok) {
+                    const balanceData = JSON.parse(rawBalance);
+
+                    const apiStatements = Array.isArray(balanceData)
+                        ? balanceData.map(normalizeBalanceStatement)
+                        : [];
+
+                    baseUser = {
+                        ...baseUser,
+                        extratos: mergeStatements(baseUser.extratos || [], apiStatements),
+                    };
+                } else {
+                    console.warn("Não foi possível buscar extratos do BalanceService:", {
+                        status: balanceResponse.status,
+                        body: rawBalance,
+                    });
+                }
+            } catch (error) {
+                console.warn("Não foi possível carregar extratos da API .NET na Home.", error);
             }
 
             try {
@@ -437,8 +524,6 @@ export default function HomeScreen() {
               ? "current"
               : "future"
         : "current";
-
-    const selectedMonthIsFuture = selectedMonth ? selectedMonth > currentMonthKey : false;
 
     const recurringDebts = user?.recurringDebts || [];
     const recurringCredits = user?.recurringCredits || [];

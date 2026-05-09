@@ -1,6 +1,7 @@
 using FluentValidation;
 using SaveApp.Api.Data.Repositories;
 using SaveApp.Api.DTOs.User;
+using SaveApp.Api.DTOs.Balance;
 using SaveApp.Api.DTOs.Goals;
 using SaveApp.Api.DTOs.Benefits;
 using SaveApp.Api.DTOs.Recurring;
@@ -34,6 +35,10 @@ builder.Services.AddScoped<IValidator<RecurringTransactionRequestDto>, Recurring
 builder.Services.AddScoped<GoalsService>();
 builder.Services.AddScoped<IValidator<GoalRequestDto>, GoalRequestValidator>();
 builder.Services.AddScoped<IValidator<GoalMovementRequestDto>, GoalMovementRequestValidator>();
+
+builder.Services.AddScoped<BalanceService>();
+builder.Services.AddScoped<IValidator<DepositRequestDto>, DepositRequestValidator>();
+builder.Services.AddScoped<IValidator<WithdrawRequestDto>, WithdrawRequestValidator>();
 
 builder.Services.AddScoped<UserRepository>();
 builder.Services.AddScoped<UserService>();
