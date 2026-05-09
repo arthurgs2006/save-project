@@ -19,7 +19,7 @@ import DetailsID from "../pages/extract_details/$id.tsx";
 import Settings from "../pages/settings/settings.tsx";
 import NotFound from "../pages/NotFound/NotFound.tsx";
 import Deposit from "../pages/manageBalance/deposit.tsx";
-import Debts from "../pages/manageBalance/dept.tsx";
+import Withdraw from "../pages/manageBalance/withdraw.tsx";
 import CreateGoal from "../pages/goals/createGoal.tsx";
 import RegisterRecurringDebt from "../pages/recurring_expenses/registerRecurringDebt.tsx";
 import RegisterRecurringCredit from "../pages/recurring_expenses/registerRecurringCredit.tsx";
@@ -90,7 +90,7 @@ export default function AnimatedRoutes() {
                     <Route path="/expenses" element={<Expenses />} />
 
                     <Route path="/deposit" element={<Deposit />} />
-                    <Route path="/debts" element={<Debts />} />
+                    <Route path="/withdraw" element={<Withdraw />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route
                         path="/registerDebt/newRecurringDebt"

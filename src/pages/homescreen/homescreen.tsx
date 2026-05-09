@@ -553,7 +553,7 @@ export default function HomeScreen() {
                             <Button
                                 color="link"
                                 className="home-action-btn home-action-btn-primary"
-                                onClick={() => navigate("/debts")}
+                                onClick={() => navigate("/withdraw")}
                             >
                                 <div className="home-action-icon">
                                     <i className="bi bi-arrow-up-right"></i>
