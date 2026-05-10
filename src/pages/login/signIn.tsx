@@ -91,7 +91,8 @@ export default function SignIn() {
                 saldo_final: Number(data.balance || 0),
                 receita: data.income || "",
                 preferencias: data.categories || [],
-                extratos: []
+                extratos: [],
+                twoFactorEnabled: false
             };
 
             const res = await fetch(`${API_URL}/users`, {

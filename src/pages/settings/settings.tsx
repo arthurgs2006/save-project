@@ -22,6 +22,13 @@ const serviceSettings: SettingsItem[] = [
         path: "/profile",
     },
     {
+        title: "Segurança (2FA)",
+        description: "Ative ou desative a autenticação em duas etapas via e-mail.",
+        icon: "bi-shield-lock-fill",
+        path: "/security", 
+        badge: "Recomendado"
+    },
+    {
         title: "Perfil de investimentos",
         description: "Ajuste seu perfil conservador, moderado ou agressivo.",
         icon: "bi-graph-up-arrow",

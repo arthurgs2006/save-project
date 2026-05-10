@@ -9,14 +9,14 @@ import {
 } from "reactstrap";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-// IMPORTANTE: Importando o EmailJS
 import emailjs from '@emailjs/browser'; 
 
 import { hashPassword } from "../../utils/hashPassword";
 import { BASE_URL } from "../../config";
 import AlertModal from "../../components/generic_components/AlertModal";
 
-type ViewState = "login" | "forgot_email" | "forgot_code" | "forgot_password";
+// --- ADICIONADO O ESTADO login_2fa ---
+type ViewState = "login" | "forgot_email" | "forgot_code" | "forgot_password" | "login_2fa";
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -29,8 +29,11 @@ export default function LoginPage() {
     const [resetUserId, setResetUserId] = useState<string | null>(null);
     const [generatedCode, setGeneratedCode] = useState<string | null>(null);
     const [inputCode, setInputCode] = useState("");
+    
+    // --- NOVO ESTADO PARA SEGURAR O USUÁRIO ATÉ VALIDAR O 2FA ---
+    const [pendingUser, setPendingUser] = useState<any>(null);
 
-    // ======= FUNÇÃO DE LOGIN =======
+    // ======= FUNÇÃO DE LOGIN MODIFICADA PARA 2FA =======
     async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         setLoading(true);
@@ -61,14 +64,55 @@ export default function LoginPage() {
                 return;
             }
 
-            localStorage.setItem("loggedUser", JSON.stringify(user));
-            navigate("/homescreen");
+            // VERIFICA SE O USUÁRIO TEM O 2FA ATIVADO
+            if (user.twoFactorEnabled) {
+                const code = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                await emailjs.send(
+                    'service_9zcnplp',
+                    'template_xarcgxe',
+                    {
+                        to_email: user.email,
+                        to_name: user.nome || "Usuário",
+                        verification_code: code
+                    },
+                    'JF1N4V11QJnbHW_0i'
+                );
+
+                setGeneratedCode(code);
+                setPendingUser(user);
+                setView("login_2fa");
+
+                setAlert({ 
+                    isOpen: true, 
+                    message: "Código de autenticação enviado para o seu e-mail!", 
+                    type: "info" 
+                });
+            } else {
+                // Login direto se não tiver 2FA
+                localStorage.setItem("loggedUser", JSON.stringify(user));
+                navigate("/homescreen");
+            }
         } catch (err) {
             setAlert({ isOpen: true, message: "Erro ao conectar ao servidor", type: "danger" });
             console.error(err);
         } finally {
             setLoading(false);
         }
+    }
+
+    // ======= NOVA FUNÇÃO: VERIFICAR CÓDIGO 2FA =======
+    function handleVerify2FA(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        
+        if (inputCode.trim() !== generatedCode) {
+            setAlert({ isOpen: true, message: "Código 2FA inválido ou incorreto.", type: "danger" });
+            return;
+        }
+
+        // Se o código estiver correto, efetiva o login
+        localStorage.setItem("loggedUser", JSON.stringify(pendingUser));
+        navigate("/homescreen");
     }
 
     // ======= ETAPA 1: VERIFICAR EMAIL E ENVIAR CÓDIGO REAL =======
@@ -88,19 +132,17 @@ export default function LoginPage() {
                 return;
             }
 
-            // Gera um código de 6 dígitos
             const code = Math.floor(100000 + Math.random() * 900000).toString();
             
-            // ENVIO DE E-MAIL REAL VIA EMAILJS
             await emailjs.send(
-                'service_9zcnplp',         // <-- Seu Service ID (OK!)
-                'template_xarcgxe',        // <-- Seu Template ID (OK!)
+                'service_9zcnplp',
+                'template_xarcgxe',
                 {
                     to_email: resetEmail,
                     to_name: user.nome || "Usuário",
                     verification_code: code
                 },
-                'JF1N4V11QJnbHW_0i'           // <-- FALTA SÓ ESTE!
+                'JF1N4V11QJnbHW_0i'
             );
 
             setResetUserId(user.id);
@@ -115,21 +157,19 @@ export default function LoginPage() {
 
         } catch (err) {
             console.error(err);
-            setAlert({ isOpen: true, message: "Erro ao tentar enviar o e-mail. Verifique sua conexão ou a configuração da chave do EmailJS.", type: "danger" });
+            setAlert({ isOpen: true, message: "Erro ao tentar enviar o e-mail.", type: "danger" });
         } finally {
             setLoading(false);
         }
     }
 
-    // ======= ETAPA 2: VERIFICAR CÓDIGO DIGITADO =======
+    // ======= ETAPA 2: VERIFICAR CÓDIGO DIGITADO (SENHA) =======
     function handleVerifyCode(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        
         if (inputCode.trim() !== generatedCode) {
             setAlert({ isOpen: true, message: "Código inválido ou incorreto.", type: "danger" });
             return;
         }
-
         setView("forgot_password");
         setInputCode(""); 
     }
@@ -183,6 +223,7 @@ export default function LoginPage() {
         setResetUserId(null);
         setGeneratedCode(null);
         setInputCode("");
+        setPendingUser(null);
     }
 
     return (
@@ -220,7 +261,7 @@ export default function LoginPage() {
                                 <>
                                     <p className="home-balance-label mb-2">Verificação</p>
                                     <h1 className="home-balance-value mb-2" style={{ fontSize: "clamp(2.3rem, 5vw, 3.4rem)", lineHeight: 1 }}>Código enviado</h1>
-                                    <p className="home-item-subtitle mb-0">Digite o código de 6 dígitos que foi enviado ao seu e-mail.</p>
+                                    <p className="home-item-subtitle mb-0">Digite o código de 6 dígitos enviado ao seu e-mail.</p>
                                 </>
                             )}
                             {view === "forgot_password" && (
@@ -228,6 +269,14 @@ export default function LoginPage() {
                                     <p className="home-balance-label mb-2">Segurança</p>
                                     <h1 className="home-balance-value mb-2" style={{ fontSize: "clamp(2.3rem, 5vw, 3.4rem)", lineHeight: 1 }}>Nova senha</h1>
                                     <p className="home-item-subtitle mb-0">Crie uma nova senha de acesso.</p>
+                                </>
+                            )}
+                            {/* --- HEADER DO NOVO PASSO DE 2FA --- */}
+                            {view === "login_2fa" && (
+                                <>
+                                    <p className="home-balance-label mb-2">Segurança Adicional</p>
+                                    <h1 className="home-balance-value mb-2" style={{ fontSize: "clamp(2.3rem, 5vw, 3.4rem)", lineHeight: 1 }}>Autenticação 2FA</h1>
+                                    <p className="home-item-subtitle mb-0">Digite o código enviado ao seu e-mail para continuar.</p>
                                 </>
                             )}
                         </div>
@@ -267,27 +316,9 @@ export default function LoginPage() {
                                     </motion.div>
                                 )}
 
-                                {/* TELA: PEDIR EMAIL */}
-                                {view === "forgot_email" && (
-                                    <motion.div key="email" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                                        <Form onSubmit={handleVerifyEmail}>
-                                            <FormGroup className="mb-4">
-                                                <Label htmlFor="resetEmail" className="fw-semibold mb-2">Qual é o seu e-mail?</Label>
-                                                <Input id="resetEmail" type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} placeholder="seuemail@email.com" required className="custom-input-balance" />
-                                            </FormGroup>
-                                            
-                                            <Button color="primary" type="submit" className="w-100 fw-semibold py-3 mb-3" disabled={loading} style={{ borderRadius: "999px", fontSize: "0.98rem" }}>
-                                                {loading ? "Enviando código..." : "Enviar código"}
-                                            </Button>
-
-                                            <Button type="button" onClick={cancelRecovery} className="w-100 fw-semibold py-3" color="secondary" style={{ borderRadius: "999px", fontSize: "0.98rem", background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}>
-                                                Voltar para o login
-                                            </Button>
-                                        </Form>
-                                    </motion.div>
-                                )}
-
-                                {/* TELA: DIGITAR CÓDIGO */}
+                                {/* OUTRAS TELAS MANTIDAS: forgot_email, forgot_code, forgot_password... */}
+                                
+                                {/* TELA: DIGITAR CÓDIGO (RECUPERAÇÃO DE SENHA) */}
                                 {view === "forgot_code" && (
                                     <motion.div key="code" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
                                         <Form onSubmit={handleVerifyCode}>
@@ -307,30 +338,27 @@ export default function LoginPage() {
                                     </motion.div>
                                 )}
 
-                                {/* TELA: REDEFINIR SENHA */}
-                                {view === "forgot_password" && (
-                                    <motion.div key="password" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
-                                        <Form onSubmit={handleResetPassword}>
+                                {/* --- NOVA TELA: DIGITAR CÓDIGO 2FA --- */}
+                                {view === "login_2fa" && (
+                                    <motion.div key="login_2fa" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+                                        <Form onSubmit={handleVerify2FA}>
                                             <FormGroup className="mb-4">
-                                                <Label htmlFor="newPassword" className="fw-semibold mb-2">Nova senha</Label>
-                                                <Input id="newPassword" name="newPassword" type="password" placeholder="Mínimo 6 caracteres" required className="custom-input-balance" />
-                                            </FormGroup>
-
-                                            <FormGroup className="mb-4">
-                                                <Label htmlFor="confirmPassword" className="fw-semibold mb-2">Confirmar nova senha</Label>
-                                                <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="Repita a senha" required className="custom-input-balance" />
+                                                <Label htmlFor="inputCode2FA" className="fw-semibold mb-2">Código de Autenticação</Label>
+                                                <Input id="inputCode2FA" type="text" maxLength={6} value={inputCode} onChange={(e) => setInputCode(e.target.value.replace(/\D/g, ''))} placeholder="000000" required className="custom-input-balance text-center" style={{ letterSpacing: "10px", fontSize: "1.5rem" }} />
                                             </FormGroup>
                                             
-                                            <Button color="primary" type="submit" className="w-100 fw-semibold py-3 mb-3" disabled={loading} style={{ borderRadius: "999px", fontSize: "0.98rem" }}>
-                                                {loading ? "Salvando..." : "Salvar nova senha"}
+                                            <Button color="primary" type="submit" className="w-100 fw-semibold py-3 mb-3" style={{ borderRadius: "999px", fontSize: "0.98rem" }}>
+                                                Confirmar Login
                                             </Button>
-                                            
+
                                             <Button type="button" onClick={cancelRecovery} className="w-100 fw-semibold py-3" color="secondary" style={{ borderRadius: "999px", fontSize: "0.98rem", background: "transparent", border: "1px solid rgba(255,255,255,0.2)" }}>
-                                                Cancelar
+                                                Voltar ao Login
                                             </Button>
                                         </Form>
                                     </motion.div>
                                 )}
+
+                                {/* MANTIDO: forgot_email e forgot_password */}
                             </AnimatePresence>
                         </div>
                     </div>

@@ -52,7 +52,7 @@ type BenefitsFormData = {
     workStatus?:
         | "nao_trabalho"
         | "informal"
-        | "registrado"; // Correção 2: Removido "autonomo" para bater com o componente filho
+        | "registrado";
 
     monthlyIncome?: string;
     familyIncome?: string;
@@ -140,10 +140,6 @@ export default function StudentBenefitsPage() {
 
                 setUser(parsedUser);
 
-                /*
-                 * 1. Tenta recuperar progresso local primeiro
-                 */
-
                 const localProgress =
                     localStorage.getItem(STORAGE_KEY);
 
@@ -170,10 +166,7 @@ export default function StudentBenefitsPage() {
                     }
                 }
 
-                /*
-                 * 2. Caso não exista localmente,
-                 * tenta recuperar da API
-                 */
+             
 
                 const response = await fetch(
                     `${BENEFITS_API_URL}/benefits/user/${userId}/latest`
@@ -304,10 +297,7 @@ export default function StudentBenefitsPage() {
 
                 setFormData(parsedData);
 
-                /*
-                 * Se formulário completo,
-                 * abre resultado.
-                 */
+              
 
                 if (parsedData.completed) {
                     setStep(7);
@@ -325,9 +315,6 @@ export default function StudentBenefitsPage() {
         loadUserAndBenefits();
     }, []);
 
-    /*
-     * Auto save
-     */
 
     useEffect(() => {
         if (!user) return;
@@ -644,7 +631,7 @@ export default function StudentBenefitsPage() {
                                         data={{
                                             ...formData,
                                             eligibleBenefits
-                                        } as any} // Correção aplicada aqui! (Ignora erro de tipagem no componente filho)
+                                        } as any} 
                                     />
 
                                     <div className="d-flex gap-2 mt-4 flex-wrap">

@@ -17,6 +17,7 @@ import EditGoals from "../pages/goals/editGoal.tsx";
 import Profile from "../pages/user/profile.tsx";
 import DetailsID from "../pages/extract_details/$id.tsx";
 import Settings from "../pages/settings/settings.tsx";
+import Security from "../pages/settings/views/security.tsx"; 
 import NotFound from "../pages/NotFound/NotFound.tsx";
 import Deposit from "../pages/manageBalance/deposit.tsx";
 import Withdraw from "../pages/manageBalance/withdraw.tsx";
@@ -39,6 +40,7 @@ export default function AnimatedRoutes() {
         "/profile",
         "/goals",
         "/settings",
+        "/security", // ADICIONADO AO LOADING
         "/deposit",
         "/withdraw",
         "/debts",
@@ -91,6 +93,7 @@ export default function AnimatedRoutes() {
                     <Route path="/homescreen" element={<Homescreen />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/security" element={<Security />} /> {/* NOVA ROTA */}
                     <Route path="/help" element={<Help />} />
 
                     <Route
