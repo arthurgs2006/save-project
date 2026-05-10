@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Container } from "reactstrap";
 import { motion } from "framer-motion";
@@ -17,12 +16,12 @@ import HousingSituation from "./steps/HousingSituation";
 import DistanceSituation from "./steps/DistanceSituation";
 import BenefitsResult from "./steps/BenefitsResult";
 
-
 interface User {
     id?: number | string;
     Id?: number | string;
     nome?: string;
     Nome?: string;
+    name?: string; // Correção 1: Adicionado 'name'
 }
 
 type BenefitsFormData = {
@@ -53,8 +52,7 @@ type BenefitsFormData = {
     workStatus?:
         | "nao_trabalho"
         | "informal"
-        | "registrado"
-        | "autonomo";
+        | "registrado"; // Correção 2: Removido "autonomo" para bater com o componente filho
 
     monthlyIncome?: string;
     familyIncome?: string;
@@ -89,6 +87,7 @@ type BenefitsFormData = {
     hasDisability?: "sim" | "nao";
 
     completed?: boolean;
+    eligibleBenefits?: string[]; // Correção 3: Adicionado eligibleBenefits
 };
 
 const STORAGE_KEY = "benefits-progress";
@@ -427,6 +426,7 @@ export default function StudentBenefitsPage() {
             "Auxílio creche"
         );
     }
+    
     function getUserFirstName() {
         const name = user?.nome || user?.name || "usuário";
         return name.split(" ")[0];
@@ -595,7 +595,7 @@ export default function StudentBenefitsPage() {
                                     onBack={() =>
                                         goToStep(2)
                                     }
-                                    data={formData}
+                                    data={formData as any}
                                 />
                             )}
 
@@ -679,4 +679,3 @@ export default function StudentBenefitsPage() {
         </div>
     );
 }
-
