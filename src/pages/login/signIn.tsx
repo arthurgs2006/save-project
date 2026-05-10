@@ -61,17 +61,16 @@ export default function SignIn() {
     } | null>(null);
 
     function next(values: SignUpData) {
-        // --- VALIDAÇÃO INTERCEPTADA AQUI ---
-        // Se a etapa estiver enviando um CPF, verificamos se ele é válido antes de avançar
+     
         if (values.cpf && !isValidCPF(values.cpf)) {
             setAlert({
                 isOpen: true,
                 message: "CPF inválido. Verifique os números digitados.",
                 type: "warning"
             });
-            return; // Interrompe a função aqui, impedindo o avanço da etapa
+            return; 
         }
-        // -----------------------------------
+   
 
         setData((prev) => ({ ...prev, ...values }));
         setStep((prev) => prev + 1);
