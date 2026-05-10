@@ -1,44 +1,52 @@
 import { useEffect, useMemo, useState } from "react";
 import { Container } from "reactstrap";
 import { motion } from "framer-motion";
-import { BASE_URL } from "../../config";
+import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import AlertModal from "../../components/generic_components/AlertModal";
+
+import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
+import {
+    getEducationRecommendation,
+    type EducationRecommendation,
+} from "../../services/educationApi";
+
 import "./WithdrawPage.scss";
 
 interface WithdrawStatement {
-    id: number;
+    id: number | string;
     transactionId: string;
-    tipo: string;
+    tipo: "credito" | "debito" | string;
     descricao: string;
     valor: number;
     data: string;
     hora: string;
     dataHora: string;
     createdAt: string;
-    status: "concluido";
-    metodo: "saldo_manual";
-    origem: "saque";
+    status: string;
+    metodo: string;
+    origem: string;
     category?: string;
+    goalId?: number | null;
+    goalName?: string | null;
 }
 
 interface User {
-    id: number;
+    id: number | string;
     nome?: string;
     name?: string;
     saldo_final: number;
     extratos: WithdrawStatement[];
 }
 
-interface WithdrawMetadata {
-    id: number;
-    transactionId: string;
-    createdAt: string;
-    date: string;
-    hour: string;
-    dateTimeLabel: string;
+interface BalanceOperationResponse {
+    userId: string;
+    previousBalance: number;
+    newBalance: number;
+    statement: WithdrawStatement;
+    message: string;
 }
 
 type WithdrawCategory =
@@ -51,12 +59,53 @@ type WithdrawCategory =
     | "Compras"
     | "Outros";
 
+function getApiRoot() {
+    return BENEFITS_API_URL;
+}
+
+function normalizeStatement(item: any): WithdrawStatement {
+    return {
+        id: item.id ?? item.Id ?? Date.now(),
+        transactionId: item.transactionId ?? item.TransactionId ?? "",
+        tipo: item.tipo ?? item.Tipo ?? "debito",
+        descricao: item.descricao ?? item.Descricao ?? "",
+        valor: Number(item.valor ?? item.Valor ?? 0),
+        data: item.data ?? item.Data ?? "",
+        hora: item.hora ?? item.Hora ?? "",
+        dataHora: item.dataHora ?? item.DataHora ?? "",
+        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+        status: item.status ?? item.Status ?? "concluido",
+        metodo: item.metodo ?? item.Metodo ?? "saldo_manual",
+        origem: item.origem ?? item.Origem ?? "saque",
+        category: item.category ?? item.Category ?? "",
+        goalId: item.goalId ?? item.GoalId ?? null,
+        goalName: item.goalName ?? item.GoalName ?? null,
+    };
+}
+
+function mergeStatements(
+    localStatements: WithdrawStatement[] = [],
+    apiStatements: WithdrawStatement[] = []
+) {
+    const map = new Map<string, WithdrawStatement>();
+
+    [...localStatements, ...apiStatements].forEach((item) => {
+        const key = String(item.transactionId || item.id);
+        map.set(key, item);
+    });
+
+    return Array.from(map.values());
+}
+
 export default function WithdrawPage() {
     const [user, setUser] = useState<User | null>(null);
     const [withdrawValue, setWithdrawValue] = useState("");
     const [category, setCategory] = useState<WithdrawCategory>("Conta");
     const [description, setDescription] = useState("");
     const [loading, setLoading] = useState(false);
+
+    const [educationRecommendation, setEducationRecommendation] =
+        useState<EducationRecommendation | null>(null);
 
     const [alert, setAlert] = useState<{
         isOpen: boolean;
@@ -70,23 +119,67 @@ export default function WithdrawPage() {
 
             if (!storedUser) return;
 
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
+            const parsedUser: User = JSON.parse(storedUser);
+
+            let baseUser: User = {
+                ...parsedUser,
+                saldo_final: Number(parsedUser.saldo_final || 0),
+                extratos: parsedUser.extratos || [],
+            };
+
+            setUser(baseUser);
 
             try {
                 const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
 
-                if (!response.ok) {
-                    throw new Error("Erro ao carregar usuário");
+                if (response.ok) {
+                    const serverUser = await response.json();
+
+                    baseUser = {
+                        ...serverUser,
+                        saldo_final: Number(
+                            parsedUser.saldo_final ?? serverUser.saldo_final ?? 0
+                        ),
+                        extratos: mergeStatements(
+                            serverUser.extratos || [],
+                            parsedUser.extratos || []
+                        ),
+                    };
                 }
-
-                const data: User = await response.json();
-
-                setUser(data);
-                localStorage.setItem("loggedUser", JSON.stringify(data));
             } catch {
-                console.warn("Erro ao carregar usuário. Usando dados locais.");
+                console.warn("Erro ao carregar usuário no servidor principal. Usando dados locais.");
             }
+
+            try {
+                const statementsResponse = await fetch(
+                    `${getApiRoot()}/balance/user/${parsedUser.id}/statements`
+                );
+
+                const rawStatements = await statementsResponse.text();
+
+                if (statementsResponse.ok) {
+                    const statementsData = JSON.parse(rawStatements);
+
+                    const apiStatements = Array.isArray(statementsData)
+                        ? statementsData.map(normalizeStatement)
+                        : [];
+
+                    baseUser = {
+                        ...baseUser,
+                        extratos: mergeStatements(baseUser.extratos || [], apiStatements),
+                    };
+                } else {
+                    console.warn("Não foi possível carregar extratos da API .NET:", {
+                        status: statementsResponse.status,
+                        body: rawStatements,
+                    });
+                }
+            } catch (error) {
+                console.warn("Erro ao buscar extratos da API .NET.", error);
+            }
+
+            setUser(baseUser);
+            localStorage.setItem("loggedUser", JSON.stringify(baseUser));
         }
 
         loadUser();
@@ -101,7 +194,10 @@ export default function WithdrawPage() {
 
         return [...user.extratos]
             .reverse()
-            .filter((transaction) => transaction.origem === "saque" || transaction.tipo === "debito")
+            .filter(
+                (transaction) =>
+                    transaction.origem === "saque" || transaction.tipo === "debito"
+            )
             .slice(0, 5);
     }, [user]);
 
@@ -131,55 +227,26 @@ export default function WithdrawPage() {
         };
     }, [numericWithdraw, user]);
 
+    useEffect(() => {
+        async function loadEducationRecommendation() {
+            if (!user?.id) return;
+
+            const recommendation = await getEducationRecommendation(user.id, "withdraw", {
+                amount: numericWithdraw,
+                currentBalance: Number(user.saldo_final || 0),
+            });
+
+            setEducationRecommendation(recommendation);
+        }
+
+        loadEducationRecommendation();
+    }, [user?.id, user?.saldo_final, numericWithdraw]);
+
     function formatCurrency(value: number) {
         return value.toLocaleString("pt-BR", {
             style: "currency",
             currency: "BRL",
         });
-    }
-
-    function buildWithdrawMetadata(): WithdrawMetadata {
-        const now = new Date();
-        const timestamp = now.getTime();
-
-        const date = now.toLocaleDateString("pt-BR");
-        const hour = now.toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-        });
-
-        return {
-            id: timestamp,
-            transactionId: `SAQ-${timestamp}-${Math.floor(1000 + Math.random() * 9000)}`,
-            createdAt: now.toISOString(),
-            date,
-            hour,
-            dateTimeLabel: `${date} às ${hour}`,
-        };
-    }
-
-    function createWithdrawStatement(
-        meta: WithdrawMetadata,
-        withdraw: number
-    ): WithdrawStatement {
-        const customDescription = description.trim();
-
-        return {
-            id: meta.id,
-            transactionId: meta.transactionId,
-            tipo: "debito",
-            descricao: customDescription || `Saque registrado: ${category}`,
-            valor: withdraw,
-            data: meta.date,
-            hora: meta.hour,
-            dataHora: meta.dateTimeLabel,
-            createdAt: meta.createdAt,
-            status: "concluido",
-            metodo: "saldo_manual",
-            origem: "saque",
-            category,
-        };
     }
 
     function resetForm() {
@@ -193,6 +260,15 @@ export default function WithdrawPage() {
             setAlert({
                 isOpen: true,
                 message: "Usuário não encontrado. Faça login novamente.",
+                type: "danger",
+            });
+            return;
+        }
+
+        if (!String(user.id || "").trim()) {
+            setAlert({
+                isOpen: true,
+                message: "ID do usuário inválido. Faça login novamente.",
                 type: "danger",
             });
             return;
@@ -216,43 +292,67 @@ export default function WithdrawPage() {
             return;
         }
 
-        const meta = buildWithdrawMetadata();
-        const newBalance = Number(user.saldo_final || 0) - numericWithdraw;
-        const newStatement = createWithdrawStatement(meta, numericWithdraw);
-
-        const updatedUser: User = {
-            ...user,
-            saldo_final: newBalance,
-            extratos: [...(user.extratos || []), newStatement],
+        const payload = {
+            userId: String(user.id),
+            amount: numericWithdraw,
+            currentBalance: Number(user.saldo_final || 0),
+            category,
+            description: description.trim(),
         };
 
         try {
             setLoading(true);
 
-            const response = await fetch(`${BASE_URL}/users/${user.id}`, {
-                method: "PUT",
+            const url = `${getApiRoot()}/balance/withdraw`;
+
+            console.log("URL SAQUE:", url);
+            console.log("PAYLOAD SAQUE:", payload);
+
+            const response = await fetch(url, {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedUser),
+                body: JSON.stringify(payload),
             });
 
+            const raw = await response.text();
+
             if (!response.ok) {
-                throw new Error("Erro ao atualizar dados");
+                console.error("Erro da API ao realizar saque:", {
+                    url,
+                    status: response.status,
+                    body: raw,
+                    payload,
+                });
+
+                throw new Error(raw || "Erro ao realizar saque.");
             }
 
-            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+            const result: BalanceOperationResponse = JSON.parse(raw);
+            const statement = normalizeStatement(result.statement);
+
+            const updatedUser: User = {
+                ...user,
+                saldo_final: Number(result.newBalance),
+                extratos: mergeStatements([...(user.extratos || []), statement], []),
+            };
 
             setUser(updatedUser);
+            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+
             resetForm();
 
             setAlert({
                 isOpen: true,
-                message: "Saque realizado com sucesso.",
+                message: result.message || "Saque realizado com sucesso.",
                 type: "success",
             });
-        } catch {
+        } catch (error) {
+            console.error(error);
+
             setAlert({
                 isOpen: true,
-                message: "Erro ao realizar saque.",
+                message:
+                    "Erro ao realizar saque. Confira se a API .NET está rodando e se a rota /api/balance/withdraw foi registrada.",
                 type: "danger",
             });
         } finally {
@@ -420,11 +520,16 @@ export default function WithdrawPage() {
                                         </div>
 
                                         <small>
-                                            Saldo final previsto: {formatCurrency(preview.nextBalance)}
+                                            Saldo final previsto:{" "}
+                                            {formatCurrency(preview.nextBalance)}
                                         </small>
                                     </div>
                                 </aside>
                             </section>
+
+                            <EducationRecommendationCard
+                                recommendation={educationRecommendation}
+                            />
 
                             {recentStatements.length > 0 && (
                                 <section className="withdraw-history">
@@ -449,9 +554,11 @@ export default function WithdrawPage() {
                                                     <div>
                                                         <h3>{transaction.descricao}</h3>
                                                         <p>{transaction.dataHora}</p>
-                                                        <small>
-                                                            ID: {transaction.transactionId}
-                                                        </small>
+                                                        {transaction.transactionId && (
+                                                            <small>
+                                                                ID: {transaction.transactionId}
+                                                            </small>
+                                                        )}
                                                     </div>
                                                 </div>
 

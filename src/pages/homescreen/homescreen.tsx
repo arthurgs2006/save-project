@@ -4,10 +4,23 @@ import { Container, Button, ListGroup, ListGroupItem } from "reactstrap";
 import { motion } from "framer-motion";
 
 import { exportStatementPdf } from "../../utils/pdf";
-import { BASE_URL } from "../../config";
+import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
+
+import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
+import {
+    getEducationRecommendation,
+    type EducationRecommendation,
+} from "../../services/educationApi";
+
+import SaveScoreCard from "../../components/financial_health/SaveScoreCard";
+import {
+    analyzeFinancialHealth,
+    type FinancialScoreResponse,
+} from "../../services/financialHealthApi";
+
 import "./Home.scss";
 
 interface Extrato {
@@ -29,12 +42,22 @@ interface Extrato {
 
 interface RecurringItem {
     id: number | string;
+    userId?: string;
     name: string;
     value: number;
-    billingDate: string;
+    type?: "credit" | "debit";
+    tipo?: "credito" | "debito";
+    billingDate?: string | number;
+    billingDay?: string | number;
     frequency: string;
     category?: string;
     description?: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    isActive?: boolean;
+    monthlyEquivalent?: number;
+    periodLabel?: string;
+    statusLabel?: string;
     createdAt?: string;
 }
 
@@ -119,23 +142,165 @@ const secondaryActions: ToolAction[] = [
         route: "/investments",
     },
     {
-        title: "Cartões",
-        description: "Gerencie cartões cadastrados.",
+        title: "Cartões e Bancos",
+        description: "Compare contas, cartões, taxas e benefícios.",
         icon: "bi-credit-card-2-front",
         route: "/cards-banks",
     },
     {
-        title: "Bancos",
-        description: "Contas e instituições.",
-        icon: "bi-bank",
-        route: "/cards-banks",
+        title: "Educação Financeira",
+        description: "Aprenda a tomar decisões melhores com seu dinheiro.",
+        icon: "bi-mortarboard-fill",
+        route: "/financial-education",
     },
 ];
+
+function getBenefitsApiRoot() {
+    return BENEFITS_API_URL;
+}
+
+function normalizeRecurringItem(item: any): RecurringItem {
+    const rawType = String(item.type ?? item.Type ?? "").toLowerCase();
+
+    return {
+        id: item.id ?? item.Id ?? Date.now(),
+        userId: String(item.userId ?? item.UserId ?? ""),
+        name: item.name ?? item.Name ?? "",
+        value: Number(item.value ?? item.Value ?? 0),
+        type: rawType === "credit" ? "credit" : "debit",
+        billingDate:
+            item.billingDate ??
+            item.BillingDate ??
+            item.billingDay ??
+            item.BillingDay ??
+            1,
+        billingDay:
+            item.billingDay ??
+            item.BillingDay ??
+            item.billingDate ??
+            item.BillingDate ??
+            1,
+        frequency: item.frequency ?? item.Frequency ?? "monthly",
+        category: item.category ?? item.Category ?? "",
+        description: item.description ?? item.Description ?? "",
+        startDate: item.startDate ?? item.StartDate ?? null,
+        endDate: item.endDate ?? item.EndDate ?? null,
+        isActive: item.isActive ?? item.IsActive ?? true,
+        monthlyEquivalent: Number(
+            item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0
+        ),
+        periodLabel: item.periodLabel ?? item.PeriodLabel ?? "",
+        statusLabel: item.statusLabel ?? item.StatusLabel ?? "",
+        createdAt: item.createdAt ?? item.CreatedAt ?? "",
+    };
+}
+
+function normalizeBalanceStatement(item: any): Extrato {
+    return {
+        id: item.id ?? item.Id ?? Date.now(),
+        transactionId: item.transactionId ?? item.TransactionId ?? "",
+        data: item.data ?? item.Data ?? "",
+        hora: item.hora ?? item.Hora ?? "",
+        dataHora: item.dataHora ?? item.DataHora ?? "",
+        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+        descricao: item.descricao ?? item.Descricao ?? "",
+        valor: Number(item.valor ?? item.Valor ?? 0),
+        tipo: (item.tipo ?? item.Tipo ?? "credito") as "credito" | "debito",
+        status: item.status ?? item.Status ?? "",
+        metodo: item.metodo ?? item.Metodo ?? "",
+        origem: item.origem ?? item.Origem ?? "",
+        goalId: item.goalId ?? item.GoalId ?? null,
+        goalName: item.goalName ?? item.GoalName ?? null,
+    };
+}
+
+function mergeStatements(
+    localStatements: Extrato[] = [],
+    apiStatements: Extrato[] = []
+) {
+    const map = new Map<string, Extrato>();
+
+    [...localStatements, ...apiStatements].forEach((item) => {
+        const key = String(item.transactionId || item.id);
+        map.set(key, item);
+    });
+
+    return Array.from(map.values());
+}
+
+function getDateFromValue(value?: string | null) {
+    if (!value) return null;
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    return date;
+}
+
+function getMonthKeyFromDate(date: Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getMonthStart(monthKey: string) {
+    const [year, month] = monthKey.split("-");
+
+    return new Date(Number(year), Number(month) - 1, 1);
+}
+
+function getMonthEnd(monthKey: string) {
+    const [year, month] = monthKey.split("-");
+
+    return new Date(Number(year), Number(month), 0);
+}
+
+function getRecurringType(item: RecurringItem) {
+    if (item.type === "credit" || item.tipo === "credito") return "credit";
+
+    return "debit";
+}
+
+function isRecurringValidForMonth(item: RecurringItem, monthKey: string) {
+    if (item.isActive === false) return false;
+
+    const monthStart = getMonthStart(monthKey);
+    const monthEnd = getMonthEnd(monthKey);
+
+    const startDate = getDateFromValue(item.startDate || item.createdAt || null);
+    const endDate = getDateFromValue(item.endDate || null);
+
+    if (startDate && startDate > monthEnd) return false;
+    if (endDate && endDate < monthStart) return false;
+
+    return true;
+}
+
+function getRecurringMonthlyEquivalent(item: RecurringItem) {
+    if (item.monthlyEquivalent && item.monthlyEquivalent > 0) {
+        return item.monthlyEquivalent;
+    }
+
+    const value = Number(item.value || 0);
+
+    if (item.frequency === "daily") return value * 30;
+    if (item.frequency === "weekly") return value * 4.33;
+    if (item.frequency === "yearly") return value / 12;
+
+    return value;
+}
 
 export default function HomeScreen() {
     const [user, setUser] = useState<User | null>(null);
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-    const [activityTab, setActivityTab] = useState<"movements" | "recurring">("movements");
+    const [activityTab, setActivityTab] = useState<"movements" | "recurring">(
+        "movements"
+    );
+
+    const [educationRecommendation, setEducationRecommendation] =
+        useState<EducationRecommendation | null>(null);
+
+    const [financialScore, setFinancialScore] =
+        useState<FinancialScoreResponse | null>(null);
 
     const navigate = useNavigate();
 
@@ -156,19 +321,120 @@ export default function HomeScreen() {
             }
 
             const parsedUser: User = JSON.parse(storedUser);
-            setUser(parsedUser);
+
+            let baseUser: User = {
+                ...parsedUser,
+                saldo_final: Number(parsedUser.saldo_final || 0),
+                extratos: parsedUser.extratos || [],
+                goals: parsedUser.goals || [],
+                recurringDebts: parsedUser.recurringDebts || [],
+                recurringCredits: parsedUser.recurringCredits || [],
+            };
+
+            setUser(baseUser);
 
             try {
                 const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
 
-                if (!response.ok) return;
+                if (response.ok) {
+                    const serverUser = await response.json();
 
-                const data: User = await response.json();
-                setUser(data);
-                localStorage.setItem("loggedUser", JSON.stringify(data));
+                    baseUser = {
+                        ...serverUser,
+                        saldo_final: Number(
+                            parsedUser.saldo_final ?? serverUser.saldo_final ?? 0
+                        ),
+                        extratos: mergeStatements(
+                            serverUser.extratos || [],
+                            parsedUser.extratos || []
+                        ),
+                        goals: parsedUser.goals || serverUser.goals || [],
+                        recurringDebts:
+                            parsedUser.recurringDebts ||
+                            serverUser.recurringDebts ||
+                            [],
+                        recurringCredits:
+                            parsedUser.recurringCredits ||
+                            serverUser.recurringCredits ||
+                            [],
+                    };
+                }
             } catch {
-                console.warn("Servidor indisponível.");
+                console.warn("Servidor principal indisponível. Usando usuário local.");
             }
+
+            try {
+                const balanceUrl = `${getBenefitsApiRoot()}/balance/user/${
+                    parsedUser.id
+                }/statements`;
+
+                console.log("URL EXTRATOS BALANCE HOME:", balanceUrl);
+
+                const balanceResponse = await fetch(balanceUrl);
+                const rawBalance = await balanceResponse.text();
+
+                if (balanceResponse.ok) {
+                    const balanceData = JSON.parse(rawBalance);
+
+                    const apiStatements = Array.isArray(balanceData)
+                        ? balanceData.map(normalizeBalanceStatement)
+                        : [];
+
+                    baseUser = {
+                        ...baseUser,
+                        extratos: mergeStatements(
+                            baseUser.extratos || [],
+                            apiStatements
+                        ),
+                    };
+                } else {
+                    console.warn("Não foi possível buscar extratos do BalanceService:", {
+                        status: balanceResponse.status,
+                        body: rawBalance,
+                    });
+                }
+            } catch (error) {
+                console.warn("Não foi possível carregar extratos da API .NET na Home.", error);
+            }
+
+            try {
+                const recurringUrl = `${getBenefitsApiRoot()}/recurring-transactions/user/${
+                    parsedUser.id
+                }`;
+
+                console.log("URL RECORRENTES HOME:", recurringUrl);
+
+                const recurringResponse = await fetch(recurringUrl);
+                const raw = await recurringResponse.text();
+
+                if (recurringResponse.ok) {
+                    const recurringData = JSON.parse(raw);
+
+                    const normalizedRecurrings = Array.isArray(recurringData)
+                        ? recurringData.map(normalizeRecurringItem)
+                        : [];
+
+                    baseUser = {
+                        ...baseUser,
+                        recurringDebts: normalizedRecurrings.filter(
+                            (item) => getRecurringType(item) === "debit"
+                        ),
+                        recurringCredits: normalizedRecurrings.filter(
+                            (item) => getRecurringType(item) === "credit"
+                        ),
+                    };
+                } else {
+                    console.error("Erro ao buscar recorrentes na Home:", {
+                        status: recurringResponse.status,
+                        body: raw,
+                    });
+                }
+            } catch (error) {
+                console.warn("Não foi possível carregar recorrentes da API .NET na Home.", error);
+            }
+
+            setUser(baseUser);
+            localStorage.setItem("loggedUser", JSON.stringify(baseUser));
         }
 
         loadUser();
@@ -182,9 +448,7 @@ export default function HomeScreen() {
     }
 
     function getCurrentMonthKey() {
-        const today = new Date();
-
-        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+        return getMonthKeyFromDate(new Date());
     }
 
     function getMonthKey(dateStr?: string) {
@@ -201,7 +465,7 @@ export default function HomeScreen() {
 
         if (Number.isNaN(parsed.getTime())) return "";
 
-        return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}`;
+        return getMonthKeyFromDate(parsed);
     }
 
     function getDaysInMonth(year: number, month: number) {
@@ -209,6 +473,12 @@ export default function HomeScreen() {
     }
 
     function calculateTotalForMonth(recurring: RecurringItem, monthKey: string) {
+        if (!isRecurringValidForMonth(recurring, monthKey)) return 0;
+
+        if (recurring.monthlyEquivalent && recurring.monthlyEquivalent > 0) {
+            return recurring.monthlyEquivalent;
+        }
+
         const [year, monthStr] = monthKey.split("-");
         const yearNumber = Number(year);
         const monthNumber = Number(monthStr) - 1;
@@ -216,23 +486,15 @@ export default function HomeScreen() {
 
         switch (recurring.frequency) {
             case "daily":
-                return recurring.value * daysInMonth;
+                return Number(recurring.value || 0) * daysInMonth;
             case "weekly":
-                return recurring.value * Math.ceil(daysInMonth / 7);
+                return Number(recurring.value || 0) * Math.ceil(daysInMonth / 7);
             case "yearly":
-                return recurring.value / 12;
+                return Number(recurring.value || 0) / 12;
             case "monthly":
             default:
-                return recurring.value;
+                return Number(recurring.value || 0);
         }
-    }
-
-    function getMonthlyEquivalent(value: number, frequency?: string) {
-        if (frequency === "daily") return value * 30;
-        if (frequency === "weekly") return value * 4.33;
-        if (frequency === "yearly") return value / 12;
-
-        return value;
     }
 
     function getUserFirstName() {
@@ -296,42 +558,51 @@ export default function HomeScreen() {
               : "future"
         : "current";
 
-    const selectedMonthIsFuture = selectedMonth ? selectedMonth > currentMonthKey : false;
-
-    function filterValidRecurring(createdAt?: string) {
-        if (!selectedMonth) return true;
-
-        if (!createdAt) {
-            return selectedMonth >= currentMonthKey;
-        }
-
-        return getMonthKey(createdAt) <= selectedMonth;
-    }
-
     const recurringDebts = user?.recurringDebts || [];
     const recurringCredits = user?.recurringCredits || [];
 
     const recurringSummary = useMemo(() => {
-        const totalCredits = recurringCredits.reduce((sum, item) => {
-            return sum + getMonthlyEquivalent(Number(item.value || 0), item.frequency);
-        }, 0);
+        const totalCredits = recurringCredits
+            .filter((item) => isRecurringValidForMonth(item, currentMonthKey))
+            .reduce((sum, item) => sum + getRecurringMonthlyEquivalent(item), 0);
 
-        const totalDebts = recurringDebts.reduce((sum, item) => {
-            return sum + getMonthlyEquivalent(Number(item.value || 0), item.frequency);
-        }, 0);
+        const totalDebts = recurringDebts
+            .filter((item) => isRecurringValidForMonth(item, currentMonthKey))
+            .reduce((sum, item) => sum + getRecurringMonthlyEquivalent(item), 0);
 
         return {
             totalCredits,
             totalDebts,
             balance: totalCredits - totalDebts,
         };
-    }, [recurringCredits, recurringDebts]);
+    }, [recurringCredits, recurringDebts, currentMonthKey]);
+
+    useEffect(() => {
+        async function loadEducationRecommendation() {
+            if (!user?.id) return;
+
+            const recommendation = await getEducationRecommendation(user.id, "home", {
+                balance: Number(user.saldo_final || 0),
+                recurringCredits: recurringSummary.totalCredits,
+                recurringDebits: recurringSummary.totalDebts,
+            });
+
+            setEducationRecommendation(recommendation);
+        }
+
+        loadEducationRecommendation();
+    }, [
+        user?.id,
+        user?.saldo_final,
+        recurringSummary.totalCredits,
+        recurringSummary.totalDebts,
+    ]);
 
     const projectedBalance = useMemo(() => {
         if (!user) return 0;
 
         if (!selectedMonth) {
-            return Number(user.saldo_final || 0);
+            return Number(user.saldo_final || 0) + recurringSummary.balance;
         }
 
         if (selectedMonth < currentMonthKey) {
@@ -343,25 +614,23 @@ export default function HomeScreen() {
 
         while (monthCursor <= selectedMonth) {
             for (const debt of user.recurringDebts || []) {
-                if (getMonthKey(debt.createdAt) <= monthCursor || !debt.createdAt) {
-                    sum -= calculateTotalForMonth(debt, monthCursor);
-                }
+                sum -= calculateTotalForMonth(debt, monthCursor);
             }
 
             for (const credit of user.recurringCredits || []) {
-                if (getMonthKey(credit.createdAt) <= monthCursor || !credit.createdAt) {
-                    sum += calculateTotalForMonth(credit, monthCursor);
-                }
+                sum += calculateTotalForMonth(credit, monthCursor);
             }
 
             const [year, month] = monthCursor.split("-");
             const next = new Date(Number(year), Number(month), 1);
 
-            monthCursor = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+            monthCursor = `${next.getFullYear()}-${String(
+                next.getMonth() + 1
+            ).padStart(2, "0")}`;
         }
 
         return Number(user.saldo_final || 0) + sum;
-    }, [user, selectedMonth, currentMonthKey]);
+    }, [user, selectedMonth, currentMonthKey, recurringSummary.balance]);
 
     const statementItems = useMemo(() => {
         if (!user) return [];
@@ -375,30 +644,40 @@ export default function HomeScreen() {
         const recurringPreview: Extrato[] = showRecurringInMonth
             ? [
                   ...(user.recurringDebts || [])
-                      .filter((debt) => filterValidRecurring(debt.createdAt))
+                      .filter((debt) =>
+                          isRecurringValidForMonth(debt, statementMonthKey)
+                      )
                       .map((debt) => ({
                           id: `recurring-debit-${debt.id}-${statementMonthKey}`,
-                          data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                          data: `${statementMonthKey.split("-")[1]}/${
+                              statementMonthKey.split("-")[0]
+                          }`,
                           descricao: `Débito recorrente: ${debt.name}`,
                           valor: calculateTotalForMonth(debt, statementMonthKey),
                           tipo: "debito" as const,
-                          status: statementMode === "future" ? "Previsto" : "Recorrente",
+                          status:
+                              statementMode === "future" ? "Previsto" : "Recorrente",
                       })),
                   ...(user.recurringCredits || [])
-                      .filter((credit) => filterValidRecurring(credit.createdAt))
+                      .filter((credit) =>
+                          isRecurringValidForMonth(credit, statementMonthKey)
+                      )
                       .map((credit) => ({
                           id: `recurring-credit-${credit.id}-${statementMonthKey}`,
-                          data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                          data: `${statementMonthKey.split("-")[1]}/${
+                              statementMonthKey.split("-")[0]
+                          }`,
                           descricao: `Crédito recorrente: ${credit.name}`,
                           valor: calculateTotalForMonth(credit, statementMonthKey),
                           tipo: "credito" as const,
-                          status: statementMode === "future" ? "Previsto" : "Recorrente",
+                          status:
+                              statementMode === "future" ? "Previsto" : "Recorrente",
                       })),
               ]
             : [];
 
         return [...actualItems, ...recurringPreview];
-    }, [user, statementMonthKey, currentMonthKey, statementMode, selectedMonth]);
+    }, [user, statementMonthKey, currentMonthKey, statementMode]);
 
     const displayExtratos = useMemo(() => {
         if (!user) return [];
@@ -476,8 +755,13 @@ export default function HomeScreen() {
     const goalsOverview = useMemo(() => {
         const goals = user?.goals || [];
 
-        const activeGoals = goals.filter((goal) => goal.status !== "completed").length;
-        const completedGoals = goals.filter((goal) => goal.status === "completed").length;
+        const activeGoals = goals.filter(
+            (goal) => goal.status !== "completed"
+        ).length;
+
+        const completedGoals = goals.filter(
+            (goal) => goal.status === "completed"
+        ).length;
 
         const totalTarget = goals.reduce(
             (sum, goal) => sum + Number(goal.targetAmount || 0),
@@ -489,18 +773,111 @@ export default function HomeScreen() {
             0
         );
 
-        const progress = totalTarget > 0 ? Math.min((totalCurrent / totalTarget) * 100, 100) : 0;
+        const progress =
+            totalTarget > 0 ? Math.min((totalCurrent / totalTarget) * 100, 100) : 0;
 
         return {
             activeGoals,
             completedGoals,
+            totalTarget,
+            totalCurrent,
             progress,
         };
     }, [user]);
 
+    useEffect(() => {
+        async function loadFinancialHealth() {
+            if (!user?.id) return;
+
+            const goals = user.goals || [];
+            const extratos = user.extratos || [];
+
+            const currentItems = extratos.filter((item) => {
+                return getMonthKey(item.data || item.createdAt) === currentMonthKey;
+            });
+
+            const monthlyCredits = currentItems
+                .filter((item) => item.tipo === "credito")
+                .reduce((sum, item) => sum + Number(item.valor || 0), 0);
+
+            const monthlyDebits = currentItems
+                .filter((item) => item.tipo === "debito")
+                .reduce((sum, item) => sum + Number(item.valor || 0), 0);
+
+            const goalsTargetTotal = goals.reduce(
+                (sum, goal) => sum + Number(goal.targetAmount || 0),
+                0
+            );
+
+            const goalsCurrentTotal = goals.reduce(
+                (sum, goal) => sum + Number(goal.currentAmount || 0),
+                0
+            );
+
+            const hasEmergencyReserve = goals.some((goal) => {
+                const text = `${goal.title || ""} ${goal.name || ""}`.toLowerCase();
+
+                return (
+                    text.includes("reserva") ||
+                    text.includes("emergência") ||
+                    text.includes("emergencia")
+                );
+            });
+
+            const response = await analyzeFinancialHealth({
+                userId: user.id,
+
+                balance: Number(user.saldo_final || 0),
+                monthlyIncome: recurringSummary.totalCredits || monthlyCredits,
+
+                monthlyRecurringCredits: recurringSummary.totalCredits,
+                monthlyRecurringDebits: recurringSummary.totalDebts,
+
+                monthlyCredits,
+                monthlyDebits,
+
+                transactionsCount: extratos.length,
+
+                goalsCount: goals.length,
+                activeGoalsCount: goals.filter(
+                    (goal) => goal.status !== "completed"
+                ).length,
+                completedGoalsCount: goals.filter(
+                    (goal) => goal.status === "completed"
+                ).length,
+
+                goalsTargetTotal,
+                goalsCurrentTotal,
+
+                hasEmergencyReserve,
+
+                lessonsOpened: Number(localStorage.getItem("lessonsOpened") || 0),
+                lessonsCompleted: Number(
+                    localStorage.getItem("lessonsCompleted") || 0
+                ),
+            });
+
+            setFinancialScore(response);
+        }
+
+        loadFinancialHealth();
+    }, [
+        user?.id,
+        user?.saldo_final,
+        user?.extratos,
+        user?.goals,
+        recurringSummary.totalCredits,
+        recurringSummary.totalDebts,
+        currentMonthKey,
+    ]);
+
     const homeInsight = useMemo(() => {
         if (recurringSummary.balance < 0) {
             return "Seus custos recorrentes estão pesando no saldo projetado.";
+        }
+
+        if (recurringSummary.balance > 0) {
+            return "Suas entradas recorrentes estão ajudando o saldo projetado.";
         }
 
         if (currentMonthOverview.balance > 0) {
@@ -534,7 +911,8 @@ export default function HomeScreen() {
         const rows = statementItems.map((item) => ({
             data: item.data,
             hora: item.hora || "",
-            descricao: item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito"),
+            descricao:
+                item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito"),
             tipo: item.tipo === "credito" ? "Crédito" : "Débito",
             valor: `R$ ${formatCurrency(Number(item.valor))}`,
         }));
@@ -615,7 +993,8 @@ export default function HomeScreen() {
                             : "home-item-value-debit"
                     }`}
                 >
-                    {item.tipo === "credito" ? "+" : "-"}R$ {formatCurrency(Number(item.valor))}
+                    {item.tipo === "credito" ? "+" : "-"}R${" "}
+                    {formatCurrency(Number(item.valor))}
                 </span>
             </ListGroupItem>
         );
@@ -683,6 +1062,8 @@ export default function HomeScreen() {
                         </div>
                     </section>
 
+                    <SaveScoreCard score={financialScore} />
+
                     <section className="home-graph-panel">
                         <GraphicCard
                             user={user}
@@ -697,6 +1078,23 @@ export default function HomeScreen() {
                                     current === monthKey ? null : monthKey
                                 );
                             }}
+                        />
+                    </section>
+
+                    <section className="home-education-section">
+                        <div className="home-section-header">
+                            <div>
+                                <span className="home-kicker home-kicker-muted">
+                                    Aprenda com seus dados
+                                </span>
+                                <h5 className="home-section-title">
+                                    Interpretação financeira do mês
+                                </h5>
+                            </div>
+                        </div>
+
+                        <EducationRecommendationCard
+                            recommendation={educationRecommendation}
                         />
                     </section>
 
@@ -919,8 +1317,10 @@ export default function HomeScreen() {
                                                 </p>
 
                                                 <small className="home-item-subtitle d-block">
-                                                    Todo dia {item.billingDate} —{" "}
-                                                    {freqMap[item.frequency] || item.frequency}
+                                                    Todo dia{" "}
+                                                    {item.billingDate || item.billingDay} —{" "}
+                                                    {freqMap[item.frequency] ||
+                                                        item.frequency}
                                                 </small>
 
                                                 {item.category && (

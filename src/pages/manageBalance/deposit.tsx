@@ -1,58 +1,75 @@
 import { useEffect, useMemo, useState } from "react";
 import { Container } from "reactstrap";
 import { motion } from "framer-motion";
-import { BASE_URL } from "../../config";
+import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import AlertModal from "../../components/generic_components/AlertModal";
+
+import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
+import {
+    getEducationRecommendation,
+    type EducationRecommendation,
+} from "../../services/educationApi";
+
 import "./DepositPage.scss";
 
 interface DepositStatement {
-    id: number;
+    id: number | string;
     transactionId: string;
-    tipo: string;
+    tipo: "credito" | "debito" | string;
     descricao: string;
     valor: number;
     data: string;
     hora: string;
     dataHora: string;
     createdAt: string;
-    status: "concluido";
-    metodo: "saldo_manual";
-    origem: "deposito";
+    status: string;
+    metodo: string;
+    origem: string;
+    category?: string;
     goalId?: number | null;
     goalName?: string | null;
 }
 
 interface GoalDeposit {
     id: number;
-    transactionId: string;
-    value?: number;
-    amount?: number;
-    time?: string;
+    amount: number;
+    description: string;
     date: string;
-    hour: string;
-    dateTimeLabel: string;
-    status: "concluido";
-    method: "saldo_manual";
-    type?: "add";
-    description?: string;
+    type: "add" | "remove";
 }
 
 interface Goal {
     id: number;
+    userId?: string;
     name?: string;
     title?: string;
     targetAmount?: number;
     currentAmount?: number;
+    monthlyContribution?: number;
+    deadline?: string | null;
+    category?: string;
+    priority?: string;
+    icon?: string;
+    color?: string;
+    notes?: string;
     deposits?: GoalDeposit[];
     status?: "active" | "completed";
+    progressPercentage?: number;
+    missingAmount?: number;
+    monthlyNeeded?: number;
+    insightTitle?: string;
+    insightMessage?: string;
+    insightTone?: string;
+    isCompleted?: boolean;
+    isExpired?: boolean;
     updatedAt?: string;
 }
 
 interface User {
-    id: number;
+    id: number | string;
     nome?: string;
     name?: string;
     saldo_final: number;
@@ -60,13 +77,112 @@ interface User {
     goals?: Goal[];
 }
 
-interface DepositMetadata {
-    id: number;
-    transactionId: string;
-    createdAt: string;
-    date: string;
-    hour: string;
-    dateTimeLabel: string;
+interface BalanceOperationResponse {
+    userId: string;
+    previousBalance: number;
+    newBalance: number;
+    statement: DepositStatement;
+    message: string;
+}
+
+function getApiRoot() {
+    return BENEFITS_API_URL;
+}
+
+function normalizeGoal(item: any): Goal {
+    return {
+        id: Number(item.id ?? item.Id ?? Date.now()),
+        userId: String(item.userId ?? item.UserId ?? ""),
+        title: item.title ?? item.Title ?? item.name ?? item.Name ?? "",
+        name: item.name ?? item.Name ?? item.title ?? item.Title ?? "",
+        targetAmount: Number(item.targetAmount ?? item.TargetAmount ?? 0),
+        currentAmount: Number(item.currentAmount ?? item.CurrentAmount ?? 0),
+        monthlyContribution: Number(
+            item.monthlyContribution ?? item.MonthlyContribution ?? 0
+        ),
+        deadline: item.deadline ?? item.Deadline ?? null,
+        category: item.category ?? item.Category ?? "outros",
+        priority: item.priority ?? item.Priority ?? "media",
+        icon: item.icon ?? item.Icon ?? "bi-bullseye",
+        color: item.color ?? item.Color ?? "#38bdf8",
+        notes: item.notes ?? item.Notes ?? "",
+        status: item.status ?? item.Status ?? "active",
+        progressPercentage: Number(
+            item.progressPercentage ?? item.ProgressPercentage ?? 0
+        ),
+        missingAmount: Number(item.missingAmount ?? item.MissingAmount ?? 0),
+        monthlyNeeded: Number(item.monthlyNeeded ?? item.MonthlyNeeded ?? 0),
+        insightTitle: item.insightTitle ?? item.InsightTitle ?? "",
+        insightMessage: item.insightMessage ?? item.InsightMessage ?? "",
+        insightTone: item.insightTone ?? item.InsightTone ?? "info",
+        isCompleted: Boolean(item.isCompleted ?? item.IsCompleted ?? false),
+        isExpired: Boolean(item.isExpired ?? item.IsExpired ?? false),
+        deposits: Array.isArray(item.deposits ?? item.Deposits)
+            ? (item.deposits ?? item.Deposits).map((deposit: any) => ({
+                  id: Number(deposit.id ?? deposit.Id ?? Date.now()),
+                  amount: Number(deposit.amount ?? deposit.Amount ?? 0),
+                  description: deposit.description ?? deposit.Description ?? "",
+                  date: deposit.date ?? deposit.Date ?? new Date().toISOString(),
+                  type: deposit.type ?? deposit.Type ?? "add",
+              }))
+            : [],
+        updatedAt: item.updatedAt ?? item.UpdatedAt ?? new Date().toISOString(),
+    };
+}
+
+function normalizeStatement(item: any): DepositStatement {
+    return {
+        id: item.id ?? item.Id ?? Date.now(),
+        transactionId: item.transactionId ?? item.TransactionId ?? "",
+        tipo: item.tipo ?? item.Tipo ?? "credito",
+        descricao: item.descricao ?? item.Descricao ?? "",
+        valor: Number(item.valor ?? item.Valor ?? 0),
+        data: item.data ?? item.Data ?? "",
+        hora: item.hora ?? item.Hora ?? "",
+        dataHora: item.dataHora ?? item.DataHora ?? "",
+        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+        status: item.status ?? item.Status ?? "concluido",
+        metodo: item.metodo ?? item.Metodo ?? "saldo_manual",
+        origem: item.origem ?? item.Origem ?? "deposito",
+        category: item.category ?? item.Category ?? "",
+        goalId: item.goalId ?? item.GoalId ?? null,
+        goalName: item.goalName ?? item.GoalName ?? null,
+    };
+}
+
+function mergeStatements(
+    localStatements: DepositStatement[] = [],
+    apiStatements: DepositStatement[] = []
+) {
+    const map = new Map<string, DepositStatement>();
+
+    [...localStatements, ...apiStatements].forEach((item) => {
+        const key = String(item.transactionId || item.id);
+        map.set(key, item);
+    });
+
+    return Array.from(map.values());
+}
+
+function hasEmergencyReserveGoal(goals: Goal[] = []) {
+    return goals.some((goal) => {
+        const text = [
+            goal.title,
+            goal.name,
+            goal.category,
+            goal.notes,
+            goal.insightTitle,
+            goal.insightMessage,
+        ]
+            .join(" ")
+            .toLowerCase();
+
+        return (
+            text.includes("reserva") ||
+            text.includes("emergência") ||
+            text.includes("emergencia")
+        );
+    });
 }
 
 export default function DepositPage() {
@@ -74,7 +190,11 @@ export default function DepositPage() {
     const [depositValue, setDepositValue] = useState("");
     const [selectedGoal, setSelectedGoal] = useState("none");
     const [description, setDescription] = useState("");
+    const [category, setCategory] = useState("Conta");
     const [loading, setLoading] = useState(false);
+
+    const [educationRecommendation, setEducationRecommendation] =
+        useState<EducationRecommendation | null>(null);
 
     const [alert, setAlert] = useState<{
         isOpen: boolean;
@@ -88,24 +208,97 @@ export default function DepositPage() {
 
             if (!storedUser) return;
 
-            const parsedUser = JSON.parse(storedUser);
+            const parsedUser: User = JSON.parse(storedUser);
 
-            setUser(parsedUser);
+            let baseUser: User = {
+                ...parsedUser,
+                saldo_final: Number(parsedUser.saldo_final || 0),
+                extratos: parsedUser.extratos || [],
+                goals: parsedUser.goals || [],
+            };
+
+            setUser(baseUser);
 
             try {
                 const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
 
-                if (!response.ok) {
-                    throw new Error("Erro ao carregar usuário");
+                if (response.ok) {
+                    const serverUser = await response.json();
+
+                    baseUser = {
+                        ...serverUser,
+                        saldo_final: Number(
+                            parsedUser.saldo_final ?? serverUser.saldo_final ?? 0
+                        ),
+                        extratos: mergeStatements(
+                            serverUser.extratos || [],
+                            parsedUser.extratos || []
+                        ),
+                        goals: parsedUser.goals || serverUser.goals || [],
+                    };
                 }
-
-                const data: User = await response.json();
-
-                setUser(data);
-                localStorage.setItem("loggedUser", JSON.stringify(data));
             } catch {
-                console.warn("Erro ao carregar usuário. Usando dados locais.");
+                console.warn(
+                    "Erro ao carregar usuário no servidor principal. Usando dados locais."
+                );
             }
+
+            try {
+                const goalsResponse = await fetch(
+                    `${getApiRoot()}/goals/user/${parsedUser.id}?status=all`
+                );
+
+                const rawGoals = await goalsResponse.text();
+
+                if (goalsResponse.ok) {
+                    const goalsData = JSON.parse(rawGoals);
+
+                    baseUser = {
+                        ...baseUser,
+                        goals: Array.isArray(goalsData)
+                            ? goalsData.map(normalizeGoal)
+                            : [],
+                    };
+                } else {
+                    console.warn("Não foi possível carregar metas da API .NET:", rawGoals);
+                }
+            } catch (error) {
+                console.warn("Erro ao buscar metas da API .NET.", error);
+            }
+
+            try {
+                const statementsResponse = await fetch(
+                    `${getApiRoot()}/balance/user/${parsedUser.id}/statements`
+                );
+
+                const rawStatements = await statementsResponse.text();
+
+                if (statementsResponse.ok) {
+                    const statementsData = JSON.parse(rawStatements);
+
+                    const apiStatements = Array.isArray(statementsData)
+                        ? statementsData.map(normalizeStatement)
+                        : [];
+
+                    baseUser = {
+                        ...baseUser,
+                        extratos: mergeStatements(
+                            baseUser.extratos || [],
+                            apiStatements
+                        ),
+                    };
+                } else {
+                    console.warn("Não foi possível carregar extratos da API .NET:", {
+                        status: statementsResponse.status,
+                        body: rawStatements,
+                    });
+                }
+            } catch (error) {
+                console.warn("Erro ao buscar extratos da API .NET.", error);
+            }
+
+            setUser(baseUser);
+            localStorage.setItem("loggedUser", JSON.stringify(baseUser));
         }
 
         loadUser();
@@ -126,7 +319,10 @@ export default function DepositPage() {
 
         return [...user.extratos]
             .reverse()
-            .filter((transaction) => transaction.origem === "deposito" || transaction.tipo === "credito")
+            .filter(
+                (transaction) =>
+                    transaction.origem === "deposito" || transaction.tipo === "credito"
+            )
             .slice(0, 5);
     }, [user]);
 
@@ -145,7 +341,8 @@ export default function DepositPage() {
         if (numericDeposit > 0 && selectedGoalData) {
             insight = `Esse depósito será somado ao seu saldo e também direcionado para a meta "${getGoalName(selectedGoalData)}".`;
         } else if (numericDeposit > 0) {
-            insight = "Esse depósito será adicionado ao seu saldo geral e registrado no histórico.";
+            insight =
+                "Esse depósito será adicionado ao seu saldo geral e registrado no histórico.";
         }
 
         return {
@@ -159,6 +356,25 @@ export default function DepositPage() {
         };
     }, [numericDeposit, selectedGoalData, user]);
 
+    useEffect(() => {
+        async function loadEducationRecommendation() {
+            if (!user?.id) return;
+
+            const goals = user.goals || [];
+
+            const recommendation = await getEducationRecommendation(user.id, "deposit", {
+                amount: numericDeposit,
+                currentBalance: Number(user.saldo_final || 0),
+                hasGoals: goals.length > 0,
+                hasEmergencyReserve: hasEmergencyReserveGoal(goals),
+            });
+
+            setEducationRecommendation(recommendation);
+        }
+
+        loadEducationRecommendation();
+    }, [user?.id, user?.saldo_final, user?.goals, numericDeposit]);
+
     function formatCurrency(value: number) {
         return value.toLocaleString("pt-BR", {
             style: "currency",
@@ -170,111 +386,30 @@ export default function DepositPage() {
         return goal.title || goal.name || "Meta sem nome";
     }
 
-    function buildDepositMetadata(): DepositMetadata {
-        const now = new Date();
-        const timestamp = now.getTime();
-
-        const date = now.toLocaleDateString("pt-BR");
-        const hour = now.toLocaleTimeString("pt-BR", {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-        });
-
-        return {
-            id: timestamp,
-            transactionId: `DEP-${timestamp}-${Math.floor(1000 + Math.random() * 9000)}`,
-            createdAt: now.toISOString(),
-            date,
-            hour,
-            dateTimeLabel: `${date} às ${hour}`,
-        };
-    }
-
-    function createDepositStatement(
-        meta: DepositMetadata,
-        deposit: number,
-        goal: Goal | null
-    ): DepositStatement {
-        const customDescription = description.trim();
-
-        return {
-            id: meta.id,
-            transactionId: meta.transactionId,
-            tipo: "credito",
-            descricao:
-                customDescription ||
-                (goal
-                    ? `Depósito direcionado para a meta: ${getGoalName(goal)}`
-                    : "Depósito realizado no saldo geral"),
-            valor: deposit,
-            data: meta.date,
-            hora: meta.hour,
-            dataHora: meta.dateTimeLabel,
-            createdAt: meta.createdAt,
-            status: "concluido",
-            metodo: "saldo_manual",
-            origem: "deposito",
-            goalId: goal?.id ?? null,
-            goalName: goal ? getGoalName(goal) : null,
-        };
-    }
-
-    function createGoalDeposit(meta: DepositMetadata, deposit: number): GoalDeposit {
-        return {
-            id: meta.id,
-            transactionId: meta.transactionId,
-            value: deposit,
-            amount: deposit,
-            time: meta.createdAt,
-            date: meta.date,
-            hour: meta.hour,
-            dateTimeLabel: meta.dateTimeLabel,
-            status: "concluido",
-            method: "saldo_manual",
-            type: "add",
-            description: description.trim() || "Depósito manual",
-        };
-    }
-
-    function updateLocalGoals(updatedGoals: Goal[]) {
-        const storedGoals = localStorage.getItem("saveapp_goals");
-
-        if (!storedGoals) return;
-
-        try {
-            const parsedGoals = JSON.parse(storedGoals);
-
-            if (!Array.isArray(parsedGoals)) return;
-
-            const syncedGoals = parsedGoals.map((localGoal: Goal) => {
-                const updatedGoal = updatedGoals.find((goal) => goal.id === localGoal.id);
-
-                return updatedGoal
-                    ? {
-                          ...localGoal,
-                          currentAmount: updatedGoal.currentAmount,
-                          deposits: updatedGoal.deposits,
-                          status:
-                              Number(updatedGoal.currentAmount || 0) >=
-                              Number(updatedGoal.targetAmount || localGoal.targetAmount || 0)
-                                  ? "completed"
-                                  : localGoal.status,
-                          updatedAt: new Date().toISOString(),
-                      }
-                    : localGoal;
-            });
-
-            localStorage.setItem("saveapp_goals", JSON.stringify(syncedGoals));
-        } catch {
-            return;
-        }
-    }
-
     function resetForm() {
         setDepositValue("");
         setSelectedGoal("none");
         setDescription("");
+        setCategory("Conta");
+    }
+
+    async function reloadGoals(userId: string | number) {
+        try {
+            const response = await fetch(`${getApiRoot()}/goals/user/${userId}?status=all`);
+            const raw = await response.text();
+
+            if (!response.ok) {
+                console.warn("Erro ao recarregar metas:", raw);
+                return null;
+            }
+
+            const data = JSON.parse(raw);
+
+            return Array.isArray(data) ? data.map(normalizeGoal) : [];
+        } catch (error) {
+            console.warn("Erro ao recarregar metas.", error);
+            return null;
+        }
     }
 
     async function handleDeposit() {
@@ -282,6 +417,15 @@ export default function DepositPage() {
             setAlert({
                 isOpen: true,
                 message: "Usuário não encontrado. Faça login novamente.",
+                type: "danger",
+            });
+            return;
+        }
+
+        if (!String(user.id || "").trim()) {
+            setAlert({
+                isOpen: true,
+                message: "ID do usuário inválido. Faça login novamente.",
                 type: "danger",
             });
             return;
@@ -296,68 +440,71 @@ export default function DepositPage() {
             return;
         }
 
-        const meta = buildDepositMetadata();
-        const newBalance = Number(user.saldo_final || 0) + numericDeposit;
-
-        const newStatement = createDepositStatement(
-            meta,
-            numericDeposit,
-            selectedGoalData
-        );
-
-        let updatedGoals = [...(user.goals || [])];
-
-        if (selectedGoalData) {
-            const goalDeposit = createGoalDeposit(meta, numericDeposit);
-
-            updatedGoals = updatedGoals.map((goal) => {
-                if (goal.id !== selectedGoalData.id) return goal;
-
-                return {
-                    ...goal,
-                    currentAmount: Number(goal.currentAmount || 0) + numericDeposit,
-                    deposits: [...(goal.deposits || []), goalDeposit],
-                };
-            });
-        }
-
-        const updatedUser: User = {
-            ...user,
-            saldo_final: newBalance,
-            extratos: [...(user.extratos || []), newStatement],
-            goals: updatedGoals,
+        const payload = {
+            userId: String(user.id),
+            amount: numericDeposit,
+            currentBalance: Number(user.saldo_final || 0),
+            category,
+            description: description.trim(),
+            goalId: selectedGoalData ? Number(selectedGoalData.id) : null,
         };
 
         try {
             setLoading(true);
 
-            const response = await fetch(`${BASE_URL}/users/${user.id}`, {
-                method: "PUT",
+            const url = `${getApiRoot()}/balance/deposit`;
+
+            console.log("URL DEPÓSITO:", url);
+            console.log("PAYLOAD DEPÓSITO:", payload);
+
+            const response = await fetch(url, {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updatedUser),
+                body: JSON.stringify(payload),
             });
 
+            const raw = await response.text();
+
             if (!response.ok) {
-                throw new Error("Erro ao atualizar dados");
+                console.error("Erro da API ao realizar depósito:", {
+                    url,
+                    status: response.status,
+                    body: raw,
+                    payload,
+                });
+
+                throw new Error(raw || "Erro ao realizar depósito.");
             }
 
-            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
-            updateLocalGoals(updatedGoals);
+            const result: BalanceOperationResponse = JSON.parse(raw);
+            const statement = normalizeStatement(result.statement);
+
+            const reloadedGoals = await reloadGoals(user.id);
+
+            const updatedUser: User = {
+                ...user,
+                saldo_final: Number(result.newBalance),
+                extratos: mergeStatements([...(user.extratos || []), statement], []),
+                goals: reloadedGoals || user.goals || [],
+            };
 
             setUser(updatedUser);
+            localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
+
             resetForm();
 
             setAlert({
                 isOpen: true,
-                message: selectedGoalData
-                    ? "Depósito realizado e meta atualizada com sucesso."
-                    : "Depósito realizado com sucesso.",
+                message: result.message || "Depósito realizado com sucesso.",
                 type: "success",
             });
-        } catch {
+        } catch (error) {
+            console.error(error);
+
             setAlert({
                 isOpen: true,
-                message: "Erro ao realizar depósito.",
+                message:
+                    "Erro ao realizar depósito. Confira se a API .NET está rodando e se a rota /api/balance/deposit foi registrada.",
                 type: "danger",
             });
         } finally {
@@ -444,6 +591,23 @@ export default function DepositPage() {
                                         </label>
 
                                         <label>
+                                            Categoria
+                                            <select
+                                                value={category}
+                                                onChange={(event) =>
+                                                    setCategory(event.target.value)
+                                                }
+                                            >
+                                                <option value="Conta">Conta</option>
+                                                <option value="Salário">Salário</option>
+                                                <option value="Renda extra">Renda extra</option>
+                                                <option value="Reembolso">Reembolso</option>
+                                                <option value="Meta">Meta</option>
+                                                <option value="Outros">Outros</option>
+                                            </select>
+                                        </label>
+
+                                        <label>
                                             Direcionar para
                                             <select
                                                 value={selectedGoal}
@@ -478,24 +642,26 @@ export default function DepositPage() {
                                     </div>
 
                                     <div className="deposit-actions">
-    <button
-        type="button"
-        className="deposit-secondary-btn"
-        onClick={resetForm}
-        disabled={loading}
-    >
-        Limpar
-    </button>
+                                        <button
+                                            type="button"
+                                            className="deposit-secondary-btn"
+                                            onClick={resetForm}
+                                            disabled={loading}
+                                        >
+                                            Limpar
+                                        </button>
 
-    <button
-        type="button"
-        className="deposit-main-btn"
-        onClick={handleDeposit}
-        disabled={loading}
-    >
-        {loading ? "Processando..." : "Confirmar depósito"}
-    </button>
-</div>
+                                        <button
+                                            type="button"
+                                            className="deposit-main-btn"
+                                            onClick={handleDeposit}
+                                            disabled={loading}
+                                        >
+                                            {loading
+                                                ? "Processando..."
+                                                : "Confirmar depósito"}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <aside className="deposit-preview-card">
@@ -539,6 +705,10 @@ export default function DepositPage() {
                                 </aside>
                             </section>
 
+                            <EducationRecommendationCard
+                                recommendation={educationRecommendation}
+                            />
+
                             {recentStatements.length > 0 && (
                                 <section className="deposit-history">
                                     <div className="deposit-history-header">
@@ -562,15 +732,20 @@ export default function DepositPage() {
                                                     <div>
                                                         <h3>{transaction.descricao}</h3>
                                                         <p>{transaction.dataHora}</p>
-                                                        <small>
-                                                            ID: {transaction.transactionId}
-                                                        </small>
+                                                        {transaction.transactionId && (
+                                                            <small>
+                                                                ID: {transaction.transactionId}
+                                                            </small>
+                                                        )}
                                                     </div>
                                                 </div>
 
                                                 <div className="deposit-history-value">
                                                     <strong>
-                                                        + {formatCurrency(Number(transaction.valor))}
+                                                        +{" "}
+                                                        {formatCurrency(
+                                                            Number(transaction.valor)
+                                                        )}
                                                     </strong>
                                                     <span>{transaction.status}</span>
                                                 </div>
