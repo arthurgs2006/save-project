@@ -69,12 +69,8 @@ function monthlyRecurringValue(item: RecurringItem) {
             return item.value * 30;
 
         case "weekly":
-<<<<<<< HEAD
             return item.value * 4;
 
-=======
-            return item.value * 4.33;
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
         case "yearly":
             return item.value / 12;
 
@@ -226,8 +222,7 @@ export default function GraphicCard({
             periodKeys.push(key);
         }
 
-<<<<<<< HEAD
-        const recurringItems = [
+        const localRecurrings = [
             ...(user.recurringDebts || []).map((item) => ({
                 ...item,
                 tipo: "debito" as const,
@@ -236,16 +231,6 @@ export default function GraphicCard({
             ...(user.recurringCredits || []).map((item) => ({
                 ...item,
                 tipo: "credito" as const,
-=======
-        const localRecurrings = [
-            ...(user.recurringDebts || []).map((item) => ({
-                ...item,
-                type: "debit" as const,
-            })),
-            ...(user.recurringCredits || []).map((item) => ({
-                ...item,
-                type: "credit" as const,
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
             })),
         ];
 
@@ -255,10 +240,7 @@ export default function GraphicCard({
 
         recurringItems.forEach((item) => {
             const monthlyValue = monthlyRecurringValue(item);
-<<<<<<< HEAD
-=======
             const sign = getRecurringSign(item);
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
 
             periodKeys.forEach((key) => {
                 const [year, month] = key.split("-");
@@ -274,8 +256,6 @@ export default function GraphicCard({
                     hoje.getMonth(),
                     1
                 );
-
-<<<<<<< HEAD
                 if (monthDate >= firstOfCurrentMonth) {
                     recurringMap[key] =
                         (recurringMap[key] || 0) +
@@ -284,10 +264,7 @@ export default function GraphicCard({
                                 ? monthlyValue
                                 : -monthlyValue
                         );
-=======
-                if (monthDate >= firstOfCurrentMonth && isRecurringValidForMonth(item, key)) {
-                    recurringMap[key] = (recurringMap[key] || 0) + monthlyValue * sign;
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
+
                 }
             });
         });
@@ -382,8 +359,8 @@ export default function GraphicCard({
     const range = Math.max(max - min, 1);
 
     function getBarHeight(valor: number) {
-    const normalized =
-        (valor - min) / range;
+        const normalized =
+            (valor - min) / range;
 
         return 70 + normalized * 35;
     }
@@ -399,27 +376,19 @@ export default function GraphicCard({
                             : ""
                     }`}
                     style={{
-<<<<<<< HEAD
                         cursor: onSelectMonth
                             ? "pointer"
                             : "default",
 
-=======
-                        cursor: onSelectMonth ? "pointer" : "default",
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
                         outline:
                             item.key === selectedMonth
                                 ? "2px solid rgba(255, 255, 255, 0.6)"
                                 : undefined,
-<<<<<<< HEAD
 
                         borderRadius:
                             item.key === selectedMonth
                                 ? "18px"
                                 : undefined,
-=======
-                        borderRadius: item.key === selectedMonth ? "18px" : undefined,
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
                     }}
                     onClick={() =>
                         onSelectMonth?.(item.key)
@@ -427,7 +396,6 @@ export default function GraphicCard({
                 >
                     <div
                         className={`wallet-pill-bar ${
-<<<<<<< HEAD
                             item.atual
                                 ? "active"
                                 : item.futuro
@@ -439,11 +407,6 @@ export default function GraphicCard({
                                 item.valor
                             )}px`,
                         }}
-=======
-                            item.atual ? "active" : item.futuro ? "future" : "past"
-                        }`}
-                        style={{ height: `${getBarHeight(item.valor, item.atual)}px` }}
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
                     />
 
                     <span
@@ -460,4 +423,3 @@ export default function GraphicCard({
         </div>
     );
 }
-
