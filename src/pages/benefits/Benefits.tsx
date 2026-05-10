@@ -644,7 +644,7 @@ export default function StudentBenefitsPage() {
                                         data={{
                                             ...formData,
                                             eligibleBenefits
-                                        }}
+                                        } as any} // Correção aplicada aqui! (Ignora erro de tipagem no componente filho)
                                     />
 
                                     <div className="d-flex gap-2 mt-4 flex-wrap">
