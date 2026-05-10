@@ -636,7 +636,7 @@ export default function HomeScreen() {
             <div className="home-bg-orb home-bg-orb-3"></div>
 
             <Container className="home-shell py-4 py-md-5">
-                <AccountHeader name={user.nome} />
+                <AccountHeader name={getUserFirstName()} />
 
                 <motion.main
                     className="home-main"
@@ -647,7 +647,8 @@ export default function HomeScreen() {
                     <section className="home-hero-panel">
                         <div className="home-hero-copy">
                             <span className="home-kicker">Resumo financeiro</span>
-                            <h1>Olá, {getUserFirstName()}</h1>
+                            {/* <h1>Olá, {getUserFirstName()}</h1> */}
+                            <h1>Já sabe dos seus gastos?</h1>
                             <p>{homeInsight}</p>
                         </div>
 

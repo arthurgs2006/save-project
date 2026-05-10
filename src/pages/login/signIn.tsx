@@ -28,6 +28,27 @@ type SignUpData = {
     categories?: string[];
 };
 
+// --- FUNÇÃO VALIDADORA DE CPF ADICIONADA AQUI ---
+function isValidCPF(cpf: string): boolean {
+    const cleanCPF = cpf.replace(/\D/g, "");
+
+    if (cleanCPF.length !== 11 || /^(\d)\1{10}$/.test(cleanCPF)) {
+        return false;
+    }
+
+    const calcDigit = (tamanho: number) => {
+        let soma = 0;
+        for (let i = 0; i < tamanho; i++) {
+            soma += parseInt(cleanCPF[i]) * (tamanho + 1 - i);
+        }
+        const resto = (soma * 10) % 11;
+        return resto === 10 ? 0 : resto;
+    };
+
+    return calcDigit(9) === parseInt(cleanCPF[9]) && calcDigit(10) === parseInt(cleanCPF[10]);
+}
+// ------------------------------------------------
+
 export default function SignIn() {
     const navigate = useNavigate();
 
@@ -40,6 +61,18 @@ export default function SignIn() {
     } | null>(null);
 
     function next(values: SignUpData) {
+        // --- VALIDAÇÃO INTERCEPTADA AQUI ---
+        // Se a etapa estiver enviando um CPF, verificamos se ele é válido antes de avançar
+        if (values.cpf && !isValidCPF(values.cpf)) {
+            setAlert({
+                isOpen: true,
+                message: "CPF inválido. Verifique os números digitados.",
+                type: "warning"
+            });
+            return; // Interrompe a função aqui, impedindo o avanço da etapa
+        }
+        // -----------------------------------
+
         setData((prev) => ({ ...prev, ...values }));
         setStep((prev) => prev + 1);
     }
@@ -185,11 +218,6 @@ export default function SignIn() {
                                 )}
                             </motion.div>
 
-                            {data.email && step >= 3 && (
-                                <div className="mt-4">
-                                    <OpenFinanceConnect clientUserId={data.email} />
-                                </div>
-                            )}
 
                             <div className="text-center mt-4">
                                 <span className="home-item-subtitle">

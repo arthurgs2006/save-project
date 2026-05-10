@@ -45,6 +45,9 @@ export default function Profile() {
     const [user, setUser] = useState<User | null>(null);
     const [activeSection, setActiveSection] = useState<ActiveSection>("personal");
     const [saving, setSaving] = useState(false);
+    
+    // NOVO: Estado para controle de deleção da conta
+    const [deleting, setDeleting] = useState(false);
 
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -306,6 +309,51 @@ export default function Profile() {
         }
     }
 
+    // NOVO: Função para fazer Logout
+    function handleLogout() {
+        localStorage.removeItem("loggedUser");
+        // Ajuste o redirecionamento abaixo caso use uma rota diferente para o login no seu TCC
+        window.location.href = "/login"; 
+    }
+
+    // NOVO: Função para excluir conta do usuário
+    async function handleDeleteAccount() {
+        if (!user) return;
+
+        const confirmDelete = window.confirm(
+            "Tem certeza que deseja excluir sua conta permanentemente? Esta ação não pode ser desfeita e você perderá todos os seus dados."
+        );
+
+        if (!confirmDelete) return;
+
+        try {
+            setDeleting(true);
+
+            const response = await fetch(`${BASE_URL}/users/${user.id}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error("Erro ao excluir a conta");
+            }
+
+            showAlert("Sua conta foi excluída com sucesso.", "success");
+            localStorage.removeItem("loggedUser");
+            
+            // Redireciona o usuário para a página de login/home após a exclusão
+            setTimeout(() => {
+                window.location.href = "/login";
+            }, 1500);
+
+        } catch (error) {
+            showAlert("Erro ao tentar excluir sua conta. Tente novamente mais tarde.", "danger");
+            setDeleting(false);
+        }
+    }
+
     function showAlert(message: string, type: "success" | "danger" | "warning" | "info") {
         setAlert({
             isOpen: true,
@@ -325,7 +373,7 @@ export default function Profile() {
     return (
         <main className="profile-page">
             <Container className="profile-container">
-                <AccountHeader name={name || user.nome || user.name} />
+                <AccountHeader name={name || user.nome || user.name} showUserGreeting={false} showSettingsButton={false} />
 
                 <motion.div
                     initial={{ opacity: 0, y: 18 }}
@@ -386,7 +434,7 @@ export default function Profile() {
                     </section>
 
                     <section className="profile-layout">
-                        <aside className="profile-sidebar">
+                        <aside className="profile-sidebar" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <button
                                 className={activeSection === "personal" ? "active" : ""}
                                 onClick={() => setActiveSection("personal")}
@@ -417,6 +465,15 @@ export default function Profile() {
                             >
                                 <i className="bi bi-sliders"></i>
                                 Preferências
+                            </button>
+
+                            {/* NOVO: Botão de Sair da Conta (Logout) com marginTop auto para afastar dos outros caso o layout permita */}
+                            <button
+                                style={{ marginTop: "1rem", color: "#dc3545", borderColor: "transparent", background: "transparent", textAlign: "left", padding: "0.5rem 1rem", cursor: "pointer", fontWeight: "bold" }}
+                                onClick={handleLogout}
+                            >
+                                <i className="bi bi-box-arrow-right" style={{ marginRight: "0.5rem" }}></i>
+                                Sair da conta
                             </button>
                         </aside>
 
@@ -643,6 +700,26 @@ export default function Profile() {
                                             />
                                         </label>
                                     </div>
+
+                                    {/* NOVO: Bloco de exclusão de conta dentro da aba de Segurança */}
+                                    <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid #eaeaea' }}>
+                                        <h3 style={{ color: '#dc3545', fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+                                            <i className="bi bi-exclamation-triangle-fill" style={{ marginRight: "0.5rem" }}></i>
+                                            <b>Zona de Perigo</b>
+                                        </h3>
+                                        <p style={{fontSize: '0.9rem', marginBottom: '1rem' }}>
+                                            Ao excluir sua conta, todos os seus dados serão apagados permanentemente do SaveApp. Esta ação não pode ser desfeita.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            className="profile-secondary-btn"
+                                            style={{ color: '#dc3545', borderColor: '#dc3545' }}
+                                            onClick={handleDeleteAccount}
+                                            disabled={deleting}
+                                        >
+                                            {deleting ? "Excluindo conta..." : "Excluir minha conta"}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 
@@ -719,7 +796,7 @@ export default function Profile() {
                                     type="button"
                                     className="profile-secondary-btn"
                                     onClick={() => hydrateForm(user)}
-                                    disabled={saving}
+                                    disabled={saving || deleting}
                                 >
                                     Descartar alterações
                                 </button>
@@ -728,7 +805,7 @@ export default function Profile() {
                                     type="button"
                                     className="profile-main-btn"
                                     onClick={saveProfile}
-                                    disabled={saving}
+                                    disabled={saving || deleting}
                                 >
                                     {saving ? "Salvando..." : "Salvar perfil"}
                                 </button>

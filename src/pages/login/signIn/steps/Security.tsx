@@ -1,4 +1,5 @@
 import { useState } from "react";
+import AlertModal from "../../../../components/generic_components/AlertModal";
 
 type SecurityProps = {
     onNext: (data: { password: string }) => void;
@@ -7,15 +8,33 @@ type SecurityProps = {
 export default function Security({ onNext }: SecurityProps) {
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
+    
+    const [modalInfo, setModalInfo] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: "success" | "danger" | "warning" | "info";
+    }>({
+        isOpen: false,
+        message: "",
+        type: "info",
+    });
 
     function handleContinue() {
         if (!password.trim() || !confirm.trim()) {
-            alert("Preencha os campos de senha.");
+            setModalInfo({
+                isOpen: true,
+                message: "Preencha os campos de senha.",
+                type: "warning",
+            });
             return;
         }
 
         if (password !== confirm) {
-            alert("As senhas não coincidem.");
+            setModalInfo({
+                isOpen: true,
+                message: "As senhas não coincidem.",
+                type: "warning",
+            });
             return;
         }
 
@@ -65,6 +84,15 @@ export default function Security({ onNext }: SecurityProps) {
             >
                 Continuar
             </button>
+
+            {/* O Modal é renderizado baseando-se no estado local */}
+            <AlertModal
+                isOpen={modalInfo.isOpen}
+                message={modalInfo.message}
+                type={modalInfo.type}
+                cancelText="OK"
+                onClose={() => setModalInfo({ ...modalInfo, isOpen: false })}
+            />
         </div>
     );
 }

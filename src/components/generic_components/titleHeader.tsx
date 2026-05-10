@@ -14,13 +14,14 @@ export default function Header({
   title = "Título da Página",
   backLink = "/homescreen",
   extraActions = [],
-  showCreateButton = false,
+  showCreateButton = false
 }: HeaderProps) {
 
 
   const finalActions: ExtraAction[] = [
     ...extraActions,
     ...(showCreateButton ? [{ to: "/goals/create", icon: "bi-plus-lg" }] : [])
+    
   ];
 
   return (

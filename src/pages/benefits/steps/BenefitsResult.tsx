@@ -216,13 +216,6 @@ export default function BenefitsResult({ onBack, data }: BenefitsResultProps) {
                 </>
             )}
 
-            <button
-                type="button"
-                className="benefits-result__back"
-                onClick={onBack}
-            >
-                Voltar
-            </button>
         </div>
     );
 }

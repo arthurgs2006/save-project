@@ -103,14 +103,14 @@ export default function Settings() {
     return (
         <main className="settings-page">
             <Container className="settings-container">
-                <AccountHeader name={userName} />
+                <AccountHeader name={userName} showSettingsButton={false} showUserGreeting={false} />
 
                 <motion.div
                     initial={{ opacity: 0, y: 18 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.35 }}
                 >
-                    <TitleHeader title="Configurações" />
+                    <TitleHeader title="Configurações" showCreateButton={false} />
 
                     <section className="settings-hero">
                         <div>
