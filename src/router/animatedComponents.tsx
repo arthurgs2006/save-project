@@ -70,13 +70,7 @@ export default function AnimatedRoutes() {
         const isCurrencyRoute =
             location.pathname === "/currency" ||
             location.pathname.startsWith("/currency");
-<<<<<<< HEAD
         const delay = isCurrencyRoute ? 1000 : 500;
-=======
-
-        const delay = isCurrencyRoute ? 7000 : 500;
-
->>>>>>> 657370aa31d5bc7da6f388821d0b6e09c80950d7
         const timer = setTimeout(() => {
             setLoading(false);
         }, delay);
