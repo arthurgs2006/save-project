@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Container, Form, FormGroup, Label, Input, Button } from "reactstrap";
+import { BASE_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
@@ -32,8 +33,13 @@ export default function EditGoalPage() {
             return;
         }
 
-        fetch(`https://database-save-app.onrender.com/users/${storedUser.id}`)
-            .then((res) => res.json())
+        fetch(`${BASE_URL}/api/auth/users/${storedUser.id}`)
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Falha ao carregar usuário.");
+                }
+                return res.json();
+            })
             .then((data) => {
                 setUser(data);
 
@@ -106,16 +112,24 @@ export default function EditGoalPage() {
             ),
         };
 
-        fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
+        fetch(`${BASE_URL}/api/auth/users/${user.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updatedUser),
         })
-            .then(() => {
+            .then(async (response) => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || "Erro ao salvar alterações.");
+                }
+
                 setAlert({ isOpen: true, message: "Meta atualizada com sucesso!", type: "success" });
                 navigate("/goals");
             })
-            .catch(() => setAlert({ isOpen: true, message: "Erro ao salvar alterações.", type: "danger" }));
+            .catch((error) => {
+                console.error(error);
+                setAlert({ isOpen: true, message: "Erro ao salvar alterações.", type: "danger" });
+            });
     }
 
     function handleRedirectFunds() {
@@ -152,19 +166,27 @@ export default function EditGoalPage() {
             ),
         };
 
-        fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
+        fetch(`${BASE_URL}/api/auth/users/${user.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updatedUser),
         })
-            .then(() => {
+            .then(async (response) => {
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || "Erro ao direcionar valor.");
+                }
+
                 setAlert({ isOpen: true, message: "Valor direcionado com sucesso!", type: "success" });
                 setUser(updatedUser);
                 setGoal(updatedGoal);
                 setDepositValue("");
                 localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
             })
-            .catch(() => setAlert({ isOpen: true, message: "Erro ao direcionar valor.", type: "danger" }));
+            .catch((error) => {
+                console.error(error);
+                setAlert({ isOpen: true, message: "Erro ao direcionar valor.", type: "danger" });
+            });
     }
 
     const saldoDisponivel = Number(user.saldo_final ?? user.balance ?? 0);

@@ -223,7 +223,7 @@ export default function FinancialHealth() {
             setUser(baseUser);
 
             try {
-                const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
+                const response = await fetch(`${BASE_URL}/api/auth/users/${parsedUser.id}`);
 
                 if (response.ok) {
                     const serverUser = await response.json();

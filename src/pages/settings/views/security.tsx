@@ -31,8 +31,8 @@ export default function Security() {
         const newValue = !is2FAEnabled;
 
         try {
-            const res = await fetch(`${BASE_URL}/users/${user.id}`, {
-                method: "PATCH",
+            const res = await fetch(`${BASE_URL}/api/auth/users/${user.id}`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ twoFactorEnabled: newValue })
             });

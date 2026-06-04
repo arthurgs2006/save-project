@@ -80,7 +80,7 @@ export default function LoginPage() {
 
         try {
             const res = await fetch(
-                `${BASE_URL}/users`
+                `${BASE_URL}/api/auth/users`
             );
 
             if (!res.ok) {
@@ -223,7 +223,7 @@ export default function LoginPage() {
 
         try {
             const res = await fetch(
-                `${BASE_URL}/users`
+                `${BASE_URL}/api/auth/users`
             );
 
             const users = await res.json();
@@ -374,9 +374,9 @@ export default function LoginPage() {
                 );
 
             const res = await fetch(
-                `${BASE_URL}/users/${resetUserId}`,
+                `${BASE_URL}/api/auth/users/${resetUserId}`,
                 {
-                    method: "PATCH",
+                    method: "PUT",
                     headers: {
                         "Content-Type":
                             "application/json"

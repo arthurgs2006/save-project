@@ -82,6 +82,7 @@ export default function SignIn() {
 
             const newUser = {
                 id: uuidv4(),
+                name: data.name || "",
                 nome: data.name || "",
                 email: data.email || "",
                 telefone: data.phone || "",
@@ -94,7 +95,7 @@ export default function SignIn() {
                 twoFactorEnabled: false
             };
 
-            const res = await fetch(`${API_URL}/users`, {
+            const res = await fetch(`${API_URL}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newUser)

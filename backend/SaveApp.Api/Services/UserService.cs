@@ -1,3 +1,4 @@
+using System.Linq;
 using SaveApp.Api.Data.Repositories;
 using SaveApp.Api.DTOs.User;
 using SaveApp.Api.Models;
@@ -32,6 +33,14 @@ namespace SaveApp.Api.Services
                 Password = dto.Password
             };
 
+            if (dto.AdditionalData != null)
+            {
+                foreach (var kvp in dto.AdditionalData)
+                {
+                    newUser.AdditionalData[kvp.Key] = kvp.Value;
+                }
+            }
+
             users.Add(newUser);
             _repository.SaveAll(users);
 
@@ -41,6 +50,39 @@ namespace SaveApp.Api.Services
         public List<User> GetAll()
         {
             return _repository.GetAll();
+        }
+
+        public User? GetById(int id)
+        {
+            return _repository.GetById(id);
+        }
+
+        public User? Update(int id, UpdateUserDto dto)
+        {
+            var user = _repository.GetById(id);
+
+            if (user == null)
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+                user.Name = dto.Name;
+
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+                user.Email = dto.Email;
+
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+                user.Password = dto.Password;
+
+            if (dto.AdditionalData != null)
+            {
+                foreach (var kvp in dto.AdditionalData)
+                {
+                    user.AdditionalData[kvp.Key] = kvp.Value;
+                }
+            }
+
+            _repository.Save(user);
+            return user;
         }
 
         public bool Delete(int id)

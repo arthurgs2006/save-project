@@ -14,10 +14,10 @@ export async function getBankBalance(
 
   try {
 
-    const res = await fetch(`${BASE_URL}/users/${userId}`);
+    const res = await fetch(`${BASE_URL}/api/auth/users/${userId}`);
 
     if (!res.ok) {
-      throw new Error("Usuário não encontrado no JSON Server.");
+      throw new Error("Usuário não encontrado no servidor.");
     }
 
     const user = await res.json();

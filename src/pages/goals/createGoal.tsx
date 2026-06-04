@@ -13,6 +13,7 @@ import {
 } from "reactstrap";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { BASE_URL } from "../../config";
 import AlertModal from "../../components/generic_components/AlertModal";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
@@ -54,9 +55,16 @@ export default function CreateGoalPage() {
 
         if (!storedUser?.id) return;
 
-        fetch(`https://database-save-app.onrender.com/users/${storedUser.id}`)
-            .then((res) => res.json())
-            .then((data) => setUser(data))
+        fetch(`${BASE_URL}/api/auth/users/${storedUser.id}`)
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("Falha ao carregar usuário.");
+                }
+                return res.json();
+            })
+            .then((currentUser) => {
+                setUser(currentUser);
+            })
             .catch(() => console.warn("Erro ao carregar usuário."));
 
         setIcon(getRandomIcon());
@@ -159,14 +167,26 @@ export default function CreateGoalPage() {
             goals: [...(user.goals || []), newGoal],
         };
 
-        await fetch(`https://database-save-app.onrender.com/users/${user.id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(updatedUser),
-        });
+        try {
+            const response = await fetch(`${BASE_URL}/api/auth/users/${user.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedUser),
+            });
 
-        localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
-        navigate("/goals");
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(errorText || "Falha ao salvar a meta.");
+            }
+
+            const savedUser = await response.json();
+
+            localStorage.setItem("loggedUser", JSON.stringify(savedUser));
+            navigate("/goals");
+        } catch (error: any) {
+            console.error(error);
+            setAlert({ isOpen: true, message: error?.message || "Erro ao salvar a meta.", type: "danger" });
+        }
     };
 
     return (

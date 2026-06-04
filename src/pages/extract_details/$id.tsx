@@ -27,7 +27,7 @@ export default function ReceitasPage() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    fetch(`${BASE_URL}/users/${parsedUser.id}`)
+    fetch(`${BASE_URL}/api/auth/users/${parsedUser.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {

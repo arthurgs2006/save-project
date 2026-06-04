@@ -6,7 +6,7 @@ export const USE_LOCAL_SERVER = false;
 // true → usa servidor local Node (/connect-token)
 // false → usa servidor remoto
 
-export const BASE_URL = "https://database-save-app.onrender.com";
+export const BASE_URL = "https://save-project.onrender.com";
 export const LOCAL_SERVER_URL = "http://localhost:3001";
 
 export const API_URL = USE_LOCAL_SERVER
@@ -23,7 +23,8 @@ export const USE_LOCAL_BENEFITS_API = false;
 export const LOCAL_BENEFITS_API_URL = "http://localhost:5254/api";
 
 // Backend remoto (caso publique depois)
-export const REMOTE_BENEFITS_API_URL = "https://database-save-app.onrender.com/";
+export const REMOTE_BENEFITS_API_URL =
+    "https://save-project.onrender.com/api";
 
 export const BENEFITS_API_URL = USE_LOCAL_BENEFITS_API
     ? LOCAL_BENEFITS_API_URL

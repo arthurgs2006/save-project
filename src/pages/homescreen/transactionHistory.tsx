@@ -72,7 +72,7 @@ export default function TransactionHistory() {
             setUser(parsedUser);
 
             try {
-                const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
+                const response = await fetch(`${BASE_URL}/api/auth/users/${parsedUser.id}`);
 
                 if (!response.ok) return;
 

@@ -46,6 +46,35 @@ namespace SaveApp.Api.Controllers
             return Ok(users);
         }
 
+        [HttpGet("users/{id}")]
+        public IActionResult GetUser(int id)
+        {
+            var user = _userService.GetById(id);
+
+            if (user == null)
+                return NotFound(new { message = "Usuário não encontrado." });
+
+            return Ok(user);
+        }
+
+        [HttpPut("users/{id}")]
+        public IActionResult UpdateUser(int id, [FromBody] UpdateUserDto dto)
+        {
+            try
+            {
+                var updatedUser = _userService.Update(id, dto);
+
+                if (updatedUser == null)
+                    return NotFound(new { message = "Usuário não encontrado." });
+
+                return Ok(updatedUser);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpDelete("users/{id}")]
         public IActionResult DeleteUser(int id)
         {

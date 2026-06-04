@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SaveApp.Api.DTOs.User
 {
-    public class CreateUserDto
+    public class UpdateUserDto
     {
         public string Name { get; set; } = "";
         public string Email { get; set; } = "";

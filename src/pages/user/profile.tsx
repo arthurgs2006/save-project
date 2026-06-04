@@ -84,7 +84,7 @@ export default function Profile() {
             setUser(parsedUser);
 
             try {
-                const response = await fetch(`${BASE_URL}/users/${parsedUser.id}`);
+const response = await fetch(`${BASE_URL}/api/auth/users/${parsedUser.id}`);
 
                 if (!response.ok) return;
 
@@ -272,8 +272,8 @@ export default function Profile() {
         try {
             setSaving(true);
 
-            const response = await fetch(`${BASE_URL}/users/${user.id}`, {
-                method: "PATCH",
+            const response = await fetch(`${BASE_URL}/api/auth/users/${user.id}`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -329,7 +329,7 @@ export default function Profile() {
         try {
             setDeleting(true);
 
-            const response = await fetch(`${BASE_URL}/users/${user.id}`, {
+            const response = await fetch(`${BASE_URL}/api/auth/users/${user.id}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
