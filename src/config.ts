@@ -17,13 +17,13 @@ export const API_URL = USE_LOCAL_SERVER
 // Configuração para BENEFITS (.NET)
 // ==============================
 
-export const USE_LOCAL_BENEFITS_API = true;
+export const USE_LOCAL_BENEFITS_API = false;
 
 // Backend .NET local
 export const LOCAL_BENEFITS_API_URL = "http://localhost:5254/api";
 
 // Backend remoto (caso publique depois)
-export const REMOTE_BENEFITS_API_URL = "https://database-save-app.onrender.com/api";
+export const REMOTE_BENEFITS_API_URL = "https://database-save-app.onrender.com/";
 
 export const BENEFITS_API_URL = USE_LOCAL_BENEFITS_API
     ? LOCAL_BENEFITS_API_URL
