@@ -7,11 +7,15 @@ export const USE_LOCAL_SERVER = false;
 // false → usa servidor remoto
 
 export const BASE_URL = "https://save-project.onrender.com";
+export const URL_DATABASE= "https://database-save-app.onrender.com/"; 
 export const LOCAL_SERVER_URL = "http://localhost:3001";
 
 export const API_URL = USE_LOCAL_SERVER
     ? LOCAL_SERVER_URL
     : BASE_URL;
+
+// URL de autenticação usada quando a aplicação deve chamar o backend API
+export const AUTH_URL = `${API_URL}/api`;
 
 // ==============================
 // Configuração para BENEFITS (.NET)

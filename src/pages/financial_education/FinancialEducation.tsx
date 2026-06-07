@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
+import MobileCarousel from "../../components/generic_components/MobileCarousel";
+import PopupToast from "../../components/generic_components/PopupToast";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import { financialEducationLessons } from "../../data/financialEducationContent";
 
@@ -35,6 +37,11 @@ export default function FinancialEducation() {
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState("Todos");
     const [selectedModule, setSelectedModule] = useState(modules[0] || null);
+    const [toast, setToast] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: "success" | "warning" | "danger" | "info";
+    } | null>(null);
 
     const storedUser = localStorage.getItem("loggedUser");
     const user: User | null = storedUser ? JSON.parse(storedUser) : null;
@@ -155,13 +162,20 @@ export default function FinancialEducation() {
                             </div>
                         </div>
 
-                        <div className="education-recommended-grid">
+                        <MobileCarousel className="education-recommended-carousel">
                             {recommendedModules.map((module) => (
                                 <button
                                     type="button"
                                     key={module.id}
                                     className="education-recommended-card"
-                                    onClick={() => setSelectedModule(module)}
+                                    onClick={() => {
+                                    setSelectedModule(module);
+                                    setToast({
+                                        isOpen: true,
+                                        message: `Trilha selecionada: ${module.title}`,
+                                        type: "success",
+                                    });
+                                }}
                                 >
                                     <div
                                         className="education-module-icon"
@@ -179,7 +193,7 @@ export default function FinancialEducation() {
                                     </div>
                                 </button>
                             ))}
-                        </div>
+                        </MobileCarousel>
                     </section>
 
                     <section
@@ -232,9 +246,14 @@ export default function FinancialEducation() {
                                                 ? "active"
                                                 : ""
                                         }`}
-                                        onClick={() =>
-                                            setSelectedModule(module)
-                                        }
+                                        onClick={() => {
+                                            setSelectedModule(module);
+                                            setToast({
+                                                isOpen: true,
+                                                message: `Trilha selecionada: ${module.title}`,
+                                                type: "success",
+                                            });
+                                        }}
                                     >
                                         <div className="education-module-top">
                                             <div
@@ -347,6 +366,15 @@ export default function FinancialEducation() {
                             )}
                         </aside>
                     </section>
+
+                    {toast && (
+                        <PopupToast
+                            isOpen={toast.isOpen}
+                            message={toast.message}
+                            type={toast.type}
+                            onClose={() => setToast(null)}
+                        />
+                    )}
                 </motion.div>
             </Container>
         </main>

@@ -68,13 +68,14 @@
     display: grid;
     place-items: center;
     text-align: center;
+    gap: 6px;
 }
 
 .save-score-number strong {
     display: block;
-    font-size: 2.15rem;
-    line-height: 1;
-    letter-spacing: -0.05em;
+    font-size: 2rem;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
 }
 
 .save-score-number span {

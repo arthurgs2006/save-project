@@ -878,6 +878,136 @@ button.btn-primary {
     font-size: 0.85rem;
 }
 
+/* =========================
+   MOBILE CAROUSEL
+========================= */
+
+.mobile-carousel {
+    margin: 1.85rem 0;
+}
+
+.mobile-carousel-title {
+    margin-bottom: 0.95rem;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.mobile-carousel-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.mobile-carousel-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(240px, min(320px, 100%));
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+}
+
+.mobile-carousel-track > * {
+    scroll-snap-align: start;
+    min-width: min(260px, 100%);
+}
+
+.mobile-carousel-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    pointer-events: auto;
+    opacity: 0.96;
+    transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+    border-radius: 999px;
+    border: none;
+    background: rgba(15, 23, 42, 0.9);
+    color: #ffffff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.mobile-carousel-control:hover {
+    transform: translateY(-50%) scale(1.05);
+    background: rgba(56, 189, 248, 0.95);
+}
+
+.mobile-carousel-control.left {
+    left: -8px;
+}
+
+.mobile-carousel-control.right {
+    right: -8px;
+}
+
+.popup-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    max-width: min(92vw, 420px);
+    width: 100%;
+    border: 1px solid;
+    border-radius: 18px;
+    background: rgba(10, 18, 35, 0.95);
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(20px);
+    padding: 16px 18px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 1050;
+}
+
+.popup-toast-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.popup-toast p {
+    margin: 0;
+    color: #eef2ff;
+    line-height: 1.4;
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+.popup-toast button {
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0;
+}
+
+.responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+@media (max-width: 768px) {
+    .mobile-carousel-control {
+        display: none;
+    }
+
+    .mobile-carousel-track {
+        grid-auto-columns: minmax(220px, 85vw);
+    }
+}
+
 .home-item-meta {
     color: rgba(255, 255, 255, 0.42) !important;
     font-size: 0.78rem;

@@ -251,12 +251,7 @@ export default function GraphicCard({
                     1
                 );
 
-                const firstOfCurrentMonth = new Date(
-                    hoje.getFullYear(),
-                    hoje.getMonth(),
-                    1
-                );
-                if (monthDate >= firstOfCurrentMonth) {
+                if (isRecurringValidForMonth(item, key)) {
                     recurringMap[key] =
                         (recurringMap[key] || 0) +
                         (
@@ -264,7 +259,6 @@ export default function GraphicCard({
                                 ? monthlyValue
                                 : -monthlyValue
                         );
-
                 }
             });
         });

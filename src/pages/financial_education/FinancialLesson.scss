@@ -215,15 +215,18 @@
 .lesson-example-list div,
 .lesson-list-card div {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     gap: 10px;
     align-items: flex-start;
     padding: 12px 14px;
     border-radius: 16px;
     background: rgba(8, 15, 30, 0.72);
     border: 1px solid rgba(148, 163, 184, 0.08);
-}
 
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
 .lesson-example-list i,
 .lesson-list-card.checklist i {
     color: #4ade80;
@@ -237,6 +240,10 @@
 .lesson-list-card span {
     color: #e2e8f0;
     line-height: 1.45;
+
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .lesson-two-columns {
@@ -244,10 +251,10 @@
     grid-template-columns: 1fr 1fr;
     gap: 18px;
 }
-
 .lesson-list-card {
     display: grid;
     gap: 10px;
+    min-width: 0;
 }
 
 .lesson-next-section {
@@ -460,5 +467,19 @@
 
     .lesson-sidebar-meta {
         grid-template-columns: 1fr;
+    }
+
+    .lesson-list-card div,
+    .lesson-example-list div {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .lesson-list-card span,
+    .lesson-example-list span {
+        min-width: 0;
+        overflow-wrap: break-word;
+        word-break: break-word;
     }
 }

@@ -7,6 +7,7 @@ import { BASE_URL, BENEFITS_API_URL } from "../../config";
 import AccountHeader from "../../components/generic_components/accountHeader";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import AlertModal from "../../components/generic_components/AlertModal";
+import PopupToast from "../../components/generic_components/PopupToast";
 
 import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
 import {
@@ -122,8 +123,10 @@ export default function RecurringDebtsMenu() {
 
     const [educationRecommendation, setEducationRecommendation] =
         useState<EducationRecommendation | null>(null);
+    const [confirmItem, setConfirmItem] =
+        useState<RecurringTransaction | null>(null);
 
-    const [alert, setAlert] = useState<{
+    const [toast, setToast] = useState<{
         isOpen: boolean;
         message: string;
         type: "success" | "danger" | "warning" | "info";
@@ -369,22 +372,18 @@ export default function RecurringDebtsMenu() {
         navigate(`/registerCredit/newRecurringCredit?editId=${id}`);
     }
 
-    async function removeRecurring(id: number | string) {
+    function confirmRemoveRecurring(item: RecurringTransaction) {
+        setConfirmItem(item);
+    }
+
+    async function removeRecurring(item: RecurringTransaction) {
         if (!user) return;
-
-        const confirmed = window.confirm(
-            `Tem certeza que deseja excluir este ${
-                activeTab === "credits" ? "crédito" : "débito"
-            } recorrente?`
-        );
-
-        if (!confirmed) return;
 
         setLoading(true);
 
         try {
             const response = await fetch(
-                `${getApiRoot()}/recurring-transactions/${id}`,
+                `${getApiRoot()}/recurring-transactions/${item.id}`,
                 {
                     method: "DELETE",
                 }
@@ -405,32 +404,38 @@ export default function RecurringDebtsMenu() {
                 ...user,
                 recurringDebts:
                     activeTab === "debits"
-                        ? recurringDebts.filter((item) => String(item.id) !== String(id))
+                        ? recurringDebts.filter((entry) => String(entry.id) !== String(item.id))
                         : recurringDebts,
                 recurringCredits:
                     activeTab === "credits"
-                        ? recurringCredits.filter((item) => String(item.id) !== String(id))
+                        ? recurringCredits.filter((entry) => String(entry.id) !== String(item.id))
                         : recurringCredits,
             };
 
             setUser(updatedUser);
             localStorage.setItem("loggedUser", JSON.stringify(updatedUser));
 
-            setAlert({
+            setToast({
                 isOpen: true,
-                message: "Item recorrente excluído com sucesso.",
+                message: `"${item.name}" removido com sucesso.`,
                 type: "success",
             });
         } catch {
-            setAlert({
+            setToast({
                 isOpen: true,
                 message:
                     "Erro ao excluir item recorrente. Confira se a API .NET está rodando.",
                 type: "danger",
             });
         } finally {
+            setConfirmItem(null);
             setLoading(false);
         }
+    }
+
+    function handleDeleteConfirmed() {
+        if (!confirmItem) return;
+        removeRecurring(confirmItem);
     }
 
     if (!user) {
@@ -628,7 +633,7 @@ export default function RecurringDebtsMenu() {
                                                     type="button"
                                                     className="danger"
                                                     onClick={() =>
-                                                        removeRecurring(item.id)
+                                                        confirmRemoveRecurring(item)
                                                     }
                                                     disabled={loading}
                                                 >
@@ -645,12 +650,27 @@ export default function RecurringDebtsMenu() {
                 </motion.div>
             </Container>
 
-            {alert && (
+            {confirmItem && (
                 <AlertModal
-                    isOpen={alert.isOpen}
-                    message={alert.message}
-                    type={alert.type}
-                    onClose={() => setAlert(null)}
+                    isOpen={!!confirmItem}
+                    title={`Excluir ${activeTab === "credits" ? "crédito" : "débito"} recorrente`}
+                    message={`Deseja remover "${confirmItem.name}"${
+                        confirmItem.category ? ` em ${confirmItem.category}` : ""
+                    }? Essa ação não pode ser desfeita.`}
+                    type="warning"
+                    onClose={() => setConfirmItem(null)}
+                    onConfirm={handleDeleteConfirmed}
+                    confirmText="Excluir"
+                    cancelText="Manter"
+                />
+            )}
+
+            {toast && (
+                <PopupToast
+                    isOpen={toast.isOpen}
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
                 />
             )}
         </main>

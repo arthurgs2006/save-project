@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react";
 import { Container } from "reactstrap";
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
+import MobileCarousel from "../../components/generic_components/MobileCarousel";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
+import PopupToast from "../../components/generic_components/PopupToast";
 import TitleHeader from "../../components/generic_components/titleHeader";
 import {
     getLessonBySlug,
@@ -26,6 +29,21 @@ export default function FinancialLesson() {
 
     const lesson = getLessonBySlug(slug);
     const nextLessons = lesson ? getRecommendedLessons(lesson.nextLessons) : [];
+    const [toast, setToast] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: "success" | "warning" | "danger" | "info";
+    } | null>(null);
+
+    useEffect(() => {
+        if (!lesson) return;
+
+        setToast({
+            isOpen: true,
+            message: `Aula carregada: ${lesson.title}`,
+            type: "info",
+        });
+    }, [lesson]);
 
     function getUserName() {
         return user?.nome || user?.name || "Usuário";
@@ -195,7 +213,7 @@ export default function FinancialLesson() {
                                         <h2>Continue aprendendo</h2>
                                     </div>
 
-                                    <div className="lesson-next-grid">
+                                    <MobileCarousel className="lesson-next-carousel">
                                         {nextLessons.map((item) => (
                                             <button
                                                 key={item.slug}
@@ -221,7 +239,7 @@ export default function FinancialLesson() {
                                                 </div>
                                             </button>
                                         ))}
-                                    </div>
+                                    </MobileCarousel>
                                 </section>
                             )}
                         </article>
@@ -274,6 +292,15 @@ export default function FinancialLesson() {
                             </div>
                         </aside>
                     </section>
+
+                    {toast && (
+                        <PopupToast
+                            isOpen={toast.isOpen}
+                            message={toast.message}
+                            type={toast.type}
+                            onClose={() => setToast(null)}
+                        />
+                    )}
                 </motion.div>
             </Container>
         </main>

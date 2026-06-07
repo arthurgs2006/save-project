@@ -14,7 +14,7 @@ import Terms from "./signIn/steps/Terms";
 
 import OpenFinanceConnect from "../../components/OpenFinanceConnect";
 import { hashPassword } from "../../utils/hashPassword";
-import { API_URL } from "../../config";
+import { AUTH_URL } from "../../config";
 import AlertModal from "../../components/generic_components/AlertModal";
 
 type SignUpData = {
@@ -95,7 +95,7 @@ export default function SignIn() {
                 twoFactorEnabled: false
             };
 
-            const res = await fetch(`${API_URL}/api/auth/register`, {
+            const res = await fetch(`${AUTH_URL}/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newUser)

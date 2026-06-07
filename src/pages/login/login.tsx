@@ -12,7 +12,7 @@ import { useNavigate } from "react-router-dom";
 import emailjs from "@emailjs/browser";
 
 import { hashPassword } from "../../utils/hashPassword";
-import { BASE_URL } from "../../config";
+import { AUTH_URL } from "../../config";
 import AlertModal from "../../components/generic_components/AlertModal";
 
 // --- ESTADOS DAS TELAS ---
@@ -80,7 +80,7 @@ export default function LoginPage() {
 
         try {
             const res = await fetch(
-                `${BASE_URL}/api/auth/users`
+                `${AUTH_URL}/auth/users`
             );
 
             if (!res.ok) {
@@ -223,7 +223,7 @@ export default function LoginPage() {
 
         try {
             const res = await fetch(
-                `${BASE_URL}/api/auth/users`
+                `${AUTH_URL}/auth/users`
             );
 
             const users = await res.json();
@@ -374,7 +374,7 @@ export default function LoginPage() {
                 );
 
             const res = await fetch(
-                `${BASE_URL}/api/auth/users/${resetUserId}`,
+                `${AUTH_URL}/auth/users/${resetUserId}`,
                 {
                     method: "PUT",
                     headers: {
