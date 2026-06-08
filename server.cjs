@@ -1,6 +1,7 @@
 const express = require("express")
 const fs = require("fs")
 const cors = require("cors")
+const crypto = require("crypto")
 const { PluggyClient } = require("pluggy-sdk")
 
 const app = express()
@@ -8,6 +9,11 @@ app.use(cors())
 app.use(express.json())
 
 const USERS_FILE = "./database/users.json"
+
+// Função para fazer hash SHA-256 (compatível com frontend)
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(password).digest("hex")
+}
 
 function readUsers() {
   if (!fs.existsSync(USERS_FILE)) return []
@@ -107,6 +113,104 @@ app.put("/users/:id", (req, res) => {
   users[index] = { ...users[index], ...req.body }
   writeUsers(users)
   res.json(users[index])
+})
+
+// ENDPOINT DE LIMPEZA DO BANCO DE DADOS
+// POST /cleanup - Remove duplicatas, normaliza senhas e campos
+app.post("/cleanup", (req, res) => {
+  try {
+    const users = readUsers()
+    console.log(`[CLEANUP] Iniciando limpeza com ${users.length} usuários...`)
+
+    const emailMap = {}
+    const removed = []
+    const cleaned = []
+    const processedEmails = new Set()
+
+    // Iterar de trás para frente para manter o último registro (mais completo)
+    for (let i = users.length - 1; i >= 0; i--) {
+      const user = users[i]
+
+      if (!processedEmails.has(user.email)) {
+        // Garantir que a senha está hasheada
+        if (user.password && user.password.length < 32) {
+          console.log(`[CLEANUP] Hasheando senha para ${user.email}`)
+          user.password = hashPassword(user.password)
+        }
+
+        // Normalizar campos de nome
+        if (!user.name && user.nome) {
+          user.name = user.nome
+        }
+        delete user.nome
+
+        cleaned.unshift(user)
+        processedEmails.add(user.email)
+      } else {
+        removed.push(user)
+        console.log(`[CLEANUP] Removendo duplicado: ${user.email} (ID: ${user.id})`)
+      }
+    }
+
+    writeUsers(cleaned)
+
+    res.json({
+      success: true,
+      message: "Banco de dados limpo com sucesso",
+      summary: {
+        antes: users.length,
+        depois: cleaned.length,
+        removidos: removed.length,
+        duplicatasRemovidas: removed.map(u => ({ email: u.email, id: u.id })),
+        statusSenhas: {
+          hasheadas: cleaned.filter(u => u.password && u.password.length === 64).length,
+          textoplano: cleaned.filter(u => u.password && u.password.length < 32).length
+        }
+      }
+    })
+  } catch (error) {
+    console.error("[CLEANUP] Erro:", error)
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    })
+  }
+})
+
+// GET /status - Status do banco de dados
+app.get("/status", (req, res) => {
+  try {
+    const users = readUsers()
+    
+    const emailMap = {}
+    users.forEach(u => {
+      if (!emailMap[u.email]) emailMap[u.email] = 0
+      emailMap[u.email]++
+    })
+
+    const duplicates = Object.entries(emailMap).filter(([_, count]) => count > 1)
+    const plainPasswords = users.filter(u => u.password && u.password.length < 32)
+    const hashedPasswords = users.filter(u => u.password && u.password.length === 64)
+
+    res.json({
+      totalUsuarios: users.length,
+      problemas: {
+        emailsDuplicados: duplicates.length,
+        detalhes: duplicates.map(([email, count]) => ({ email, quantidade: count })),
+        senhasTextoplano: plainPasswords.length,
+        senhasHasheadas: hashedPasswords.length,
+        usuariosProblematicos: [
+          ...plainPasswords.map(u => ({ email: u.email, problema: "Senha em texto plano" })),
+          ...duplicates.flatMap(([email]) => {
+            const dupes = users.filter(u => u.email === email)
+            return dupes.slice(0, -1).map(u => ({ email: u.email, id: u.id, problema: "Duplicado" }))
+          })
+        ]
+      }
+    })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
 })
 
 async function handleItemCreated(itemId) {

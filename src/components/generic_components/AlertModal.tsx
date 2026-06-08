@@ -21,7 +21,7 @@ const AlertModal: React.FC<AlertModalProps> = ({
   onClose,
   onConfirm,
   confirmText = 'Confirmar',
-  cancelText = 'Cancelar',
+  cancelText = 'Certo! Tentarei novamente ➔',
 }) => {
   const getIcon = () => {
     switch (type) {
@@ -54,7 +54,13 @@ const AlertModal: React.FC<AlertModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <Modal isOpen={isOpen} toggle={onClose} centered fade={false} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <Modal
+          isOpen={isOpen}
+          toggle={onClose}
+          centered
+          fade={false}
+          contentClassName="custom-alert-modal-content"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -62,29 +68,63 @@ const AlertModal: React.FC<AlertModalProps> = ({
             transition={{ duration: 0.3 }}
             style={{
               background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-              borderRadius: '15px',
-              border: 'none',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              borderRadius: '5px',
               color: '#fff',
+              overflow: 'hidden',
+              boxShadow: '0 15px 40px rgba(0,0,0,0.4)',
             }}
           >
-            <ModalBody style={{ textAlign: 'center', padding: '30px' }}>
-              <div style={{ fontSize: '4rem', color: getColor(), marginBottom: '20px' }}>
-                <i className={`bi ${getIcon()}`}></i>
+            <ModalBody
+              style={{
+                textAlign: 'center',
+                padding: '30px',
+                background: 'transparent',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '4rem',
+                  color: getColor(),
+                  marginBottom: '20px',
+                }}
+              >
+                <i className={`bi ${getIcon()}`} />
               </div>
+
               {title && (
-                <h4 style={{ color: '#fff', marginBottom: '15px', fontWeight: 'bold' }}>
+                <h4
+                  style={{
+                    color: '#fff',
+                    marginBottom: '15px',
+                    fontWeight: 'bold',
+                  }}
+                >
                   {title}
                 </h4>
               )}
-              <p style={{ color: '#ccc', fontSize: '1.1rem', lineHeight: '1.5' }}>
+
+              <p
+                style={{
+                  color: '#ccc',
+                  fontSize: '1.1rem',
+                  lineHeight: '1.5',
+                  marginBottom: 0,
+                }}
+              >
                 {message}
               </p>
             </ModalBody>
-            <ModalFooter style={{ borderTop: 'none', justifyContent: 'center', padding: '20px' }}>
+
+            <ModalFooter
+              style={{
+                borderTop: 'none',
+                justifyContent: 'center',
+                padding: '20px',
+                background: 'transparent',
+              }}
+            >
               {onConfirm && (
                 <Button
-                  color="primary"
                   onClick={onConfirm}
                   style={{
                     backgroundColor: getColor(),
@@ -94,12 +134,18 @@ const AlertModal: React.FC<AlertModalProps> = ({
                     fontWeight: 'bold',
                     marginRight: '10px',
                   }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '0.9';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                  }}
                 >
                   {confirmText}
                 </Button>
               )}
+
               <Button
-                color="secondary"
                 onClick={onClose}
                 style={{
                   backgroundColor: '#6c757d',

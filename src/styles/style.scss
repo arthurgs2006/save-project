@@ -1136,6 +1136,10 @@ button.btn-primary {
     -webkit-backdrop-filter: blur(16px);
 }
 
+.alert-confirm-btn:hover {
+  opacity: 0.9;
+}
+
 @media (max-width: 991px) {
     .home-balance-value {
         font-size: clamp(2.8rem, 8vw, 4.1rem);

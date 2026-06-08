@@ -79,23 +79,43 @@ export default function LoginPage() {
         ).value;
 
         try {
-            const res = await fetch(
-                `${AUTH_URL}/auth/users`
+            const authEndpoints = Array.from(
+                new Set([
+                    "https://save-project.onrender.com/api/auth/users",
+                    `${AUTH_URL}/auth/users`
+                ])
             );
 
-            if (!res.ok) {
+            let users: any[] | null = null;
+            let lastErrorMessage = "";
+
+            for (const endpoint of authEndpoints) {
+                try {
+                    const res = await fetch(endpoint);
+
+                    if (!res.ok) {
+                        lastErrorMessage = `Falha no servidor ${endpoint}`;
+                        continue;
+                    }
+
+                    users = await res.json();
+                    break;
+                } catch (fetchError) {
+                    lastErrorMessage = String(fetchError);
+                }
+            }
+
+            if (!users) {
                 setAlert({
                     isOpen: true,
                     message:
-                        "Erro ao acessar servidor",
+                        "Não foi possível conectar a nenhum servidor de autenticação.",
                     type: "danger"
                 });
 
                 setLoading(false);
                 return;
             }
-
-            const users = await res.json();
 
             const hashedPassword =
                 await hashPassword(password);
@@ -111,7 +131,7 @@ export default function LoginPage() {
                 setAlert({
                     isOpen: true,
                     message:
-                        "Credenciais inválidas",
+                        "As credenciais são inválidas."+'\n'+'E-mail ou senha incorretos.',
                     type: "danger"
                 });
 
