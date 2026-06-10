@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface PopupToastProps {
@@ -23,12 +24,11 @@ export default function PopupToast({
 }: PopupToastProps) {
   useEffect(() => {
     if (!isOpen) return;
-
     const timer = setTimeout(onClose, 3600);
     return () => clearTimeout(timer);
   }, [isOpen, onClose]);
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -46,6 +46,7 @@ export default function PopupToast({
           </button>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

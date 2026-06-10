@@ -736,57 +736,51 @@ const response = await fetch(`${BASE_URL}/api/auth/users/${parsedUser.id}`);
                                         </p>
                                     </div>
 
-                                    <div className="profile-form-grid">
-                                        <label>
-                                            Tema preferido
-                                            <select
-                                                value={themePreference}
-                                                onChange={(event) =>
-                                                    setThemePreference(
-                                                        event.target.value as ThemePreference
-                                                    )
-                                                }
-                                            >
-                                                <option value="dark">Escuro</option>
-                                                <option value="light">Claro</option>
-                                            </select>
-                                        </label>
+                                    <div style={{ position: "relative" }}>
+                                        {/* tudo bloqueado dentro deste div */}
+                                        <div style={{ opacity: 0.4, pointerEvents: "none", userSelect: "none" }}>
+                                            <div className="profile-form-grid">
+                                                <label>
+                                                    Tema preferido
+                                                    <select value="dark" onChange={() => {}}>
+                                                        <option value="dark">Escuro</option>
+                                                    </select>
+                                                </label>
+                                                <label>
+                                                    Moeda principal
+                                                    <select value="BRL" onChange={() => {}}>
+                                                        <option value="BRL">Real brasileiro</option>
+                                                    </select>
+                                                </label>
+                                            </div>
 
-                                        <label>
-                                            Moeda principal
-                                            <select
-                                                value={currencyPreference}
-                                                onChange={(event) =>
-                                                    setCurrencyPreference(
-                                                        event.target.value as CurrencyPreference
-                                                    )
-                                                }
-                                            >
-                                                <option value="BRL">Real brasileiro</option>
-                                                <option value="USD">Dólar</option>
-                                                <option value="EUR">Euro</option>
-                                            </select>
-                                        </label>
-                                    </div>
-
-                                    <div className="profile-toggle-row">
-                                        <div>
-                                            <strong>Notificações financeiras</strong>
-                                            <p>
-                                                Receber lembretes sobre metas, recorrentes e
-                                                movimentações importantes.
-                                            </p>
+                                            <div className="profile-toggle-row">
+                                                <div>
+                                                    <strong>Notificações financeiras</strong>
+                                                    <p>Receber lembretes sobre metas, recorrentes e movimentações importantes.</p>
+                                                </div>
+                                                <button type="button" className="active">
+                                                    <span />
+                                                </button>
+                                            </div>
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            className={notificationsEnabled ? "active" : ""}
-                                            onClick={() =>
-                                                setNotificationsEnabled((current) => !current)
-                                            }
-                                        >
-                                            <span />
-                                        </button>
+                                        {/* overlay */}
+                                        <div style={{
+                                            position: "absolute",
+                                            inset: 0,
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            gap: "8px",
+                                            color: "#94a3b8",
+                                            fontWeight: 800,
+                                            fontSize: "0.9rem",
+                                            pointerEvents: "none",
+                                        }}>
+                                            <i className="bi bi-lock-fill" style={{ fontSize: "1.1rem" }}></i>
+                                            Disponível em breve
+                                        </div>
                                     </div>
                                 </div>
                             )}

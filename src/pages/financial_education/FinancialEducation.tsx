@@ -85,6 +85,15 @@ export default function FinancialEducation() {
         return user?.nome || user?.name || "Usuário";
     }
 
+    function handleSelectModule(module: typeof modules[0]) {
+        setSelectedModule(module);
+        setToast({
+            isOpen: true,
+            message: `Trilha selecionada: ${module.title}`,
+            type: "success",
+        });
+    }
+
     return (
         <main className="education-page">
             <Container className="education-container">
@@ -119,14 +128,9 @@ export default function FinancialEducation() {
                                     type="button"
                                     className="education-main-btn"
                                     onClick={() => {
-                                        const element =
-                                            document.getElementById(
-                                                "education-modules"
-                                            );
-
-                                        element?.scrollIntoView({
-                                            behavior: "smooth",
-                                        });
+                                        document
+                                            .getElementById("education-modules")
+                                            ?.scrollIntoView({ behavior: "smooth" });
                                     }}
                                 >
                                     Começar agora
@@ -168,20 +172,11 @@ export default function FinancialEducation() {
                                     type="button"
                                     key={module.id}
                                     className="education-recommended-card"
-                                    onClick={() => {
-                                    setSelectedModule(module);
-                                    setToast({
-                                        isOpen: true,
-                                        message: `Trilha selecionada: ${module.title}`,
-                                        type: "success",
-                                    });
-                                }}
+                                    onClick={() => handleSelectModule(module)}
                                 >
                                     <div
                                         className="education-module-icon"
-                                        style={{
-                                            backgroundColor: module.color,
-                                        }}
+                                        style={{ backgroundColor: module.color }}
                                     >
                                         <i className={`bi ${module.icon}`}></i>
                                     </div>
@@ -196,17 +191,12 @@ export default function FinancialEducation() {
                         </MobileCarousel>
                     </section>
 
-                    <section
-                        className="education-toolbar"
-                        id="education-modules"
-                    >
+                    <section className="education-toolbar" id="education-modules">
                         <div className="education-search">
                             <i className="bi bi-search"></i>
                             <input
                                 value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
+                                onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Buscar por metas, reserva, recorrentes, investimentos..."
                             />
                         </div>
@@ -216,9 +206,7 @@ export default function FinancialEducation() {
                                 <button
                                     key={option}
                                     type="button"
-                                    className={
-                                        category === option ? "active" : ""
-                                    }
+                                    className={category === option ? "active" : ""}
                                     onClick={() => setCategory(option)}
                                 >
                                     {option}
@@ -233,38 +221,23 @@ export default function FinancialEducation() {
                                 <div className="education-empty">
                                     <i className="bi bi-search"></i>
                                     <h3>Nenhum conteúdo encontrado</h3>
-                                    <p>
-                                        Tente buscar por outro termo ou categoria.
-                                    </p>
+                                    <p>Tente buscar por outro termo ou categoria.</p>
                                 </div>
                             ) : (
                                 filteredModules.map((module) => (
                                     <article
                                         key={module.id}
                                         className={`education-module-card ${
-                                            selectedModule?.id === module.id
-                                                ? "active"
-                                                : ""
+                                            selectedModule?.id === module.id ? "active" : ""
                                         }`}
-                                        onClick={() => {
-                                            setSelectedModule(module);
-                                            setToast({
-                                                isOpen: true,
-                                                message: `Trilha selecionada: ${module.title}`,
-                                                type: "success",
-                                            });
-                                        }}
+                                        onClick={() => handleSelectModule(module)}
                                     >
                                         <div className="education-module-top">
                                             <div
                                                 className="education-module-icon"
-                                                style={{
-                                                    backgroundColor: module.color,
-                                                }}
+                                                style={{ backgroundColor: module.color }}
                                             >
-                                                <i
-                                                    className={`bi ${module.icon}`}
-                                                ></i>
+                                                <i className={`bi ${module.icon}`}></i>
                                             </div>
 
                                             <div>
@@ -284,19 +257,22 @@ export default function FinancialEducation() {
                             )}
                         </div>
 
-                        <aside className="education-detail-card">
+                        {/* Overlay — fecha o painel ao clicar fora no mobile */}
+                        {selectedModule && (
+                            <div
+                                className="education-detail-overlay"
+                                onClick={() => setSelectedModule(null)}
+                            />
+                        )}
+
+                        <aside className={`education-detail-card ${selectedModule ? "active" : ""}`}>
                             {selectedModule ? (
                                 <>
                                     <div
                                         className="education-detail-icon"
-                                        style={{
-                                            backgroundColor:
-                                                selectedModule.color,
-                                        }}
+                                        style={{ backgroundColor: selectedModule.color }}
                                     >
-                                        <i
-                                            className={`bi ${selectedModule.icon}`}
-                                        ></i>
+                                        <i className={`bi ${selectedModule.icon}`}></i>
                                     </div>
 
                                     <span className="education-badge secondary">
@@ -312,16 +288,11 @@ export default function FinancialEducation() {
                                     <div className="education-detail-meta">
                                         <div>
                                             <span>Nível</span>
-                                            <strong>
-                                                {selectedModule.level}
-                                            </strong>
+                                            <strong>{selectedModule.level}</strong>
                                         </div>
-
                                         <div>
                                             <span>Leitura</span>
-                                            <strong>
-                                                {selectedModule.readingTime}
-                                            </strong>
+                                            <strong>{selectedModule.readingTime}</strong>
                                         </div>
                                     </div>
 
@@ -331,9 +302,7 @@ export default function FinancialEducation() {
                                     </div>
 
                                     <div className="education-concept-box practical">
-                                        <strong>
-                                            Como isso se aplica no SaveApp
-                                        </strong>
+                                        <strong>Como isso se aplica no SaveApp</strong>
                                         <p>{selectedModule.practicalUse}</p>
                                     </div>
 
@@ -347,9 +316,7 @@ export default function FinancialEducation() {
                                         type="button"
                                         className="education-main-btn full"
                                         onClick={() =>
-                                            navigate(
-                                                `/financial-education/${selectedModule.slug}`
-                                            )
+                                            navigate(`/financial-education/${selectedModule.slug}`)
                                         }
                                     >
                                         Abrir aula completa
@@ -359,9 +326,7 @@ export default function FinancialEducation() {
                                 <div className="education-empty">
                                     <i className="bi bi-journal-text"></i>
                                     <h3>Selecione um módulo</h3>
-                                    <p>
-                                        Escolha um conteúdo para ver os detalhes.
-                                    </p>
+                                    <p>Escolha um conteúdo para ver os detalhes.</p>
                                 </div>
                             )}
                         </aside>

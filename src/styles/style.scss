@@ -999,6 +999,16 @@ button.btn-primary {
 }
 
 @media (max-width: 768px) {
+    .popup-toast {
+        bottom: 90px; 
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: calc(100vw - 32px);
+        width: calc(100vw - 32px);
+    }
+}
+
+@media (max-width: 768px) {
     .mobile-carousel-control {
         display: none;
     }

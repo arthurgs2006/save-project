@@ -43,6 +43,7 @@
     color: #d8b4fe;
 }
 
+// ── Hero ──────────────────────────────────────
 .education-hero {
     display: grid;
     grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
@@ -75,6 +76,7 @@
     margin-top: 22px;
 }
 
+// ── Buttons ───────────────────────────────────
 .education-main-btn,
 .education-secondary-btn {
     border: 0;
@@ -83,6 +85,7 @@
     font-weight: 900;
     cursor: pointer;
     transition: 0.2s ease;
+    white-space: nowrap;
 }
 
 .education-main-btn {
@@ -107,6 +110,7 @@
     margin-top: 18px;
 }
 
+// ── Hero card ─────────────────────────────────
 .education-hero-card {
     border-radius: 24px;
     padding: 22px;
@@ -123,12 +127,14 @@
     font-size: 0.86rem;
     font-weight: 800;
     margin-bottom: 8px;
+    display: block;
 }
 
 .education-hero-card strong {
     font-size: 1.8rem;
     line-height: 1.1;
     margin-bottom: 10px;
+    display: block;
 }
 
 .education-hero-card p {
@@ -137,6 +143,7 @@
     line-height: 1.5;
 }
 
+// ── Recommended ───────────────────────────────
 .education-recommended {
     border-radius: 30px;
     padding: 24px;
@@ -171,6 +178,7 @@
     color: #f8fafc;
     cursor: pointer;
     transition: 0.2s ease;
+    min-width: 220px; // garante largura mínima no carrossel mobile
 }
 
 .education-recommended-card:hover {
@@ -195,6 +203,7 @@
     color: #cbd5e1;
 }
 
+// ── Toolbar ───────────────────────────────────
 .education-toolbar {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -249,6 +258,7 @@
     cursor: pointer;
     font-weight: 900;
     transition: 0.2s ease;
+    white-space: nowrap;
 }
 
 .education-category-list button:hover,
@@ -258,6 +268,7 @@
     border-color: transparent;
 }
 
+// ── Layout ────────────────────────────────────
 .education-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(330px, 0.55fr);
@@ -265,6 +276,7 @@
     align-items: start;
 }
 
+// ── Module cards ──────────────────────────────
 .education-modules-list {
     display: grid;
     gap: 14px;
@@ -285,6 +297,7 @@
 
 .education-module-top {
     display: flex;
+    flex-direction: row;
     gap: 14px;
     align-items: flex-start;
     margin-bottom: 12px;
@@ -292,6 +305,7 @@
 
 .education-module-icon,
 .education-detail-icon {
+    flex-shrink: 0;
     min-width: 54px;
     width: 54px;
     height: 54px;
@@ -338,6 +352,7 @@
     font-weight: 900;
 }
 
+// ── Detail card ───────────────────────────────
 .education-detail-card {
     position: sticky;
     top: 18px;
@@ -438,6 +453,7 @@
     text-align: center;
 }
 
+// ── Empty ─────────────────────────────────────
 .education-empty {
     border-radius: 26px;
     padding: 38px 20px;
@@ -460,6 +476,25 @@
     color: #cbd5e1;
 }
 
+// ── Carrossel mobile ──────────────────────────
+.education-recommended-carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+
+    .education-recommended-card {
+        flex: 0 0 auto;
+        width: 260px;
+    }
+}
+
+// ── Responsive ────────────────────────────────
 @media (max-width: 1024px) {
     .education-hero,
     .education-layout {
@@ -485,39 +520,116 @@
     .education-toolbar,
     .education-detail-card,
     .education-module-card {
-        border-radius: 24px;
-        padding: 18px;
+        border-radius: 20px;
+        padding: 16px;
     }
 
     .education-hero h1 {
-        font-size: 2.1rem;
+        font-size: 1.9rem;
+        letter-spacing: -0.03em;
     }
 
+    // botões lado a lado no mobile
     .education-hero-actions {
         display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
     }
 
-    .education-hero-actions button,
-    .education-main-btn,
-    .education-secondary-btn {
-        width: 100%;
-    }
-
+    // categorias rolam horizontalmente no mobile
     .education-category-list {
-        display: grid;
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 8px;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+
+        button {
+            flex: 0 0 auto;
+            width: auto;
+        }
     }
 
-    .education-category-list button {
-        width: 100%;
+    // module card: ícone + texto sempre em linha
+    .education-module-top {
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .education-module-icon,
+    .education-detail-icon {
+        min-width: 46px;
+        width: 46px;
+        height: 46px;
+        font-size: 1.15rem;
+        border-radius: 14px;
     }
 
     .education-detail-meta {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    // detail card vira modal deslizante no mobile
+    .education-detail-card {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        border-radius: 28px 28px 0 0;
+        max-height: 80vh;
+        overflow-y: auto;
+        z-index: 100;
+        padding: 20px 18px 32px;
+        border-bottom: none;
+    }
+
+    // esconde o aside por padrão no mobile — só aparece quando selecionado
+    .education-layout {
+        grid-template-columns: 1fr;
+
+        aside.education-detail-card {
+            display: none;
+        }
+
+        aside.education-detail-card.active {
+            display: block;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .education-hero h1 {
+        font-size: 1.65rem;
+    }
+
+    .education-hero-actions {
         grid-template-columns: 1fr;
     }
 
-    .education-recommended-card,
-    .education-module-top {
-        display: grid;
+    .education-recommended-card {
+        width: 220px;
     }
+
+    .education-detail-overlay {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .education-detail-overlay {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            backdrop-filter: blur(2px);
+        }
+}
 }
