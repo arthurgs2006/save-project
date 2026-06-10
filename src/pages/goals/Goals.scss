@@ -725,10 +725,12 @@
     display: grid;
   }
 
-  .goals-form-actions,
-  .goal-movement-actions,
-  .goal-movement-type {
-    display: grid;
+  .goals-form-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+
+      button { width: 100%; }
   }
 
   .goals-form-actions button,
@@ -753,5 +755,61 @@
 
   .goals-page .education-recommendation-card {
     margin: 0 0 18px;
+  }
+
+    .goals-page {
+      padding: 16px 12px 100px;
+  }
+
+  .goals-hero {
+      border-radius: 20px;
+      padding: 16px;
+  }
+
+  .goals-hero h1 {
+      font-size: 1.8rem;
+  }
+
+  .goals-form-card,
+  .goal-card,
+  .goals-toolbar {
+      border-radius: 20px;
+      padding: 16px;
+  }
+
+  .goal-icon {
+      min-width: 46px;
+      width: 46px;
+      height: 46px;
+      font-size: 1.15rem;
+      border-radius: 14px;
+  }
+
+  .goals-summary-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+  }
+
+  .goals-summary-grid > div {
+      border-radius: 16px;
+      padding: 14px;
+  }
+
+  .goal-money-row {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+  }
+
+  .goal-money-row div {
+      padding: 12px;
+      border-radius: 13px;
+  }
+
+  .goal-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+
+      button { width: 100%; }
   }
 }
