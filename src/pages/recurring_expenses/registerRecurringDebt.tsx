@@ -682,7 +682,7 @@ export default function RegisterRecurringDebt() {
 
                                 <button
                                     type="submit"
-                                    className="recurring-main-btn"
+                                    className="recurring-danger-btn"
                                     disabled={saving}
                                 >
                                     {saving

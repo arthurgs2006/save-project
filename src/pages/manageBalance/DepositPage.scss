@@ -482,9 +482,49 @@
 
     .deposit-actions {
         display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
 
         button {
             width: 100%;
         }
+    }
+
+    .deposit-hero {
+    border-radius: 20px;
+    padding: 16px;
+    }
+
+    .deposit-hero h1 {
+        font-size: 1.9rem;
+    }
+
+    .deposit-hero-grid div {
+        padding: 12px;
+    }
+
+    .deposit-form-card,
+    .deposit-preview-card,
+    .deposit-history {
+        border-radius: 20px;
+        padding: 16px;
+    }
+
+    .deposit-preview-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 1.4rem;
+        margin: 14px auto 10px;
+    }
+
+    .deposit-preview-card h2 {
+        font-size: 1.4rem;
+    }
+
+    .deposit-history-icon {
+        min-width: 42px;
+        height: 42px;
+        font-size: 1rem;
+        border-radius: 14px;
     }
 }

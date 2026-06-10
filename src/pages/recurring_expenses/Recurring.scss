@@ -1,6 +1,6 @@
 .recurring-page {
     min-height: 100vh;
-    padding: 28px 20px 110px;
+    padding: 24px 16px 100px;
     background:
         radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 28%),
         radial-gradient(circle at top right, rgba(34, 197, 94, 0.12), transparent 28%),
@@ -20,6 +20,7 @@
     font-weight: 800;
 }
 
+// ── Shared card styles ────────────────────────
 .recurring-hero,
 .recurring-toolbar,
 .recurring-card,
@@ -29,42 +30,44 @@
 .recurring-empty-state {
     background: rgba(11, 18, 32, 0.84);
     border: 1px solid rgba(148, 163, 184, 0.14);
-    box-shadow: 0 18px 40px rgba(2, 6, 23, 0.34);
+    box-shadow: 0 12px 30px rgba(2, 6, 23, 0.28);
     backdrop-filter: blur(12px);
 }
 
+// ── Hero ──────────────────────────────────────
 .recurring-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
-    gap: 18px;
+    grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+    gap: 16px;
     align-items: stretch;
-    border-radius: 30px;
-    padding: 24px;
-    margin-bottom: 18px;
+    border-radius: 26px;
+    padding: 20px;
+    margin-bottom: 14px;
 
     h1 {
-        margin: 12px 0 10px;
-        font-size: clamp(2rem, 4vw, 3.4rem);
+        margin: 10px 0 8px;
+        font-size: clamp(1.8rem, 4vw, 3rem);
         line-height: 1;
-        letter-spacing: -0.05em;
+        letter-spacing: -0.04em;
     }
 
     p {
         margin: 0;
         color: #cbd5e1;
-        line-height: 1.6;
-        max-width: 720px;
+        line-height: 1.5;
+        font-size: 0.92rem;
     }
 }
 
+// ── Badge ─────────────────────────────────────
 .recurring-badge {
     display: inline-flex;
     width: fit-content;
-    padding: 6px 12px;
+    padding: 5px 10px;
     border-radius: 999px;
     background: rgba(59, 130, 246, 0.14);
     color: #93c5fd;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -81,15 +84,16 @@
     color: #fca5a5;
 }
 
+// ── Hero grid ─────────────────────────────────
 .recurring-hero-grid {
     display: grid;
-    gap: 12px;
+    gap: 8px;
 
     div {
-        padding: 16px;
-        border-radius: 20px;
+        padding: 12px 14px;
+        border-radius: 16px;
         background:
-            linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015)),
+            linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
             rgba(15, 23, 42, 0.9);
         border: 1px solid rgba(148, 163, 184, 0.1);
     }
@@ -97,30 +101,27 @@
     span {
         display: block;
         color: #94a3b8;
-        font-size: 0.86rem;
-        margin-bottom: 6px;
+        font-size: 0.78rem;
+        margin-bottom: 4px;
     }
 
     strong {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 }
 
-.positive {
-    color: #4ade80;
-}
+.positive { color: #4ade80; }
+.negative { color: #f87171; }
 
-.negative {
-    color: #f87171;
-}
-
+// ── Menu actions ──────────────────────────────
 .recurring-menu-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin: 18px 0;
+    gap: 10px;
+    margin: 14px 0;
 }
 
+// ── Buttons ───────────────────────────────────
 .recurring-main-btn,
 .recurring-secondary-btn,
 .recurring-danger-btn,
@@ -128,27 +129,28 @@
 .recurring-item-actions button {
     border: 0;
     border-radius: 999px;
-    padding: 12px 18px;
+    padding: 11px 16px;
     font-weight: 900;
     cursor: pointer;
     transition: 0.2s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 7px;
+    font-size: 0.9rem;
     text-decoration: none;
 }
 
 .recurring-main-btn {
     background: linear-gradient(135deg, #22c55e, #0ea5e9);
     color: #fff;
-    box-shadow: 0 14px 28px rgba(14, 165, 233, 0.22);
+    box-shadow: 0 10px 22px rgba(14, 165, 233, 0.2);
 }
 
 .recurring-danger-btn {
     background: linear-gradient(135deg, #ef4444, #f97316);
     color: #fff;
-    box-shadow: 0 14px 28px rgba(239, 68, 68, 0.2);
+    box-shadow: 0 10px 22px rgba(239, 68, 68, 0.18);
 }
 
 .recurring-secondary-btn {
@@ -173,60 +175,58 @@
     transform: none;
 }
 
+// ── Toolbar ───────────────────────────────────
 .recurring-toolbar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
-    border-radius: 26px;
-    padding: 18px;
-    margin-bottom: 18px;
+    border-radius: 22px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
 }
 
 .recurring-search {
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
     border: 1px solid rgba(148, 163, 184, 0.18);
     background: rgba(15, 23, 42, 0.92);
     color: #f8fafc;
-    border-radius: 16px;
-    padding: 0 16px;
+    border-radius: 14px;
+    padding: 0 14px;
 
-    i {
-        color: #94a3b8;
-    }
+    i { color: #94a3b8; }
 
     input {
         width: 100%;
         border: 0;
         background: transparent;
         color: #f8fafc;
-        padding: 14px 0;
+        padding: 12px 0;
         outline: none;
-        font-size: 0.98rem;
+        font-size: 0.94rem;
     }
 
-    input::placeholder {
-        color: #64748b;
-    }
+    input::placeholder { color: #64748b; }
 }
 
 .recurring-tabs {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
 
     button {
-        min-width: 120px;
+        min-width: 100px;
         border: 1px solid rgba(148, 163, 184, 0.14);
         background: rgba(15, 23, 42, 0.9);
         color: #cbd5e1;
-        padding: 12px 16px;
+        padding: 10px 14px;
         border-radius: 999px;
         cursor: pointer;
         font-weight: 900;
+        font-size: 0.88rem;
         transition: 0.2s ease;
     }
 
@@ -242,71 +242,57 @@
     }
 }
 
+// ── List ──────────────────────────────────────
 .recurring-list {
     display: grid;
-    gap: 14px;
+    gap: 10px;
 }
 
 .recurring-item-card {
-    border-radius: 28px;
-    padding: 20px;
+    border-radius: 22px;
+    padding: 16px;
 }
 
 .recurring-item-top {
     display: flex;
     justify-content: space-between;
-    gap: 18px;
+    gap: 14px;
     align-items: flex-start;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 
     h3 {
-        margin: 8px 0 6px;
-        font-size: 1.25rem;
+        margin: 6px 0 4px;
+        font-size: 1.1rem;
         letter-spacing: -0.02em;
     }
 
-    p {
-        margin: 0;
-        color: #cbd5e1;
-        line-height: 1.5;
-    }
-
-    > strong {
-        white-space: nowrap;
-        font-size: 1.25rem;
-    }
+    p { margin: 0; color: #cbd5e1; line-height: 1.5; }
+    > strong { white-space: nowrap; font-size: 1.1rem; }
 }
 
 .recurring-type {
     display: inline-flex;
     width: fit-content;
-    padding: 6px 10px;
+    padding: 5px 9px;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
 
-.positive-type {
-    background: rgba(34, 197, 94, 0.14);
-    color: #86efac;
-}
-
-.negative-type {
-    background: rgba(239, 68, 68, 0.14);
-    color: #fca5a5;
-}
+.positive-type { background: rgba(34, 197, 94, 0.14); color: #86efac; }
+.negative-type { background: rgba(239, 68, 68, 0.14); color: #fca5a5; }
 
 .recurring-item-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: 8px;
+    margin-bottom: 12px;
 
     div {
-        padding: 14px;
-        border-radius: 16px;
+        padding: 10px 12px;
+        border-radius: 14px;
         background: rgba(8, 15, 30, 0.72);
         border: 1px solid rgba(148, 163, 184, 0.08);
     }
@@ -314,39 +300,23 @@
     span {
         display: block;
         color: #94a3b8;
-        font-size: 0.82rem;
-        margin-bottom: 5px;
-    }
-
-    strong {
-        color: #f8fafc;
-        font-size: 0.96rem;
-    }
-}
-
-.recurring-period-info {
-    padding: 14px 16px;
-    border-radius: 18px;
-    background: rgba(8, 15, 30, 0.72);
-    border: 1px solid rgba(148, 163, 184, 0.08);
-    margin-bottom: 14px;
-
-    span {
-        display: block;
-        color: #94a3b8;
-        font-size: 0.82rem;
-        margin-bottom: 6px;
-    }
-
-    strong {
-        display: block;
-        color: #f8fafc;
+        font-size: 0.76rem;
         margin-bottom: 4px;
     }
 
-    small {
-        color: #cbd5e1;
-    }
+    strong { color: #f8fafc; font-size: 0.88rem; }
+}
+
+.recurring-period-info {
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(8, 15, 30, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.08);
+    margin-bottom: 12px;
+
+    span { display: block; color: #94a3b8; font-size: 0.78rem; margin-bottom: 4px; }
+    strong { display: block; color: #f8fafc; margin-bottom: 3px; }
+    small { color: #cbd5e1; }
 }
 
 .recurring-item-actions {
@@ -354,15 +324,15 @@
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 8px;
-    padding-top: 14px;
+    padding-top: 12px;
     border-top: 1px solid rgba(148, 163, 184, 0.1);
 
     button {
         background: rgba(15, 23, 42, 0.92);
         color: #e2e8f0;
         border: 1px solid rgba(148, 163, 184, 0.12);
-        font-size: 0.86rem;
-        padding: 10px 14px;
+        font-size: 0.82rem;
+        padding: 8px 12px;
     }
 
     button.danger {
@@ -372,92 +342,75 @@
     }
 }
 
+// ── Card ──────────────────────────────────────
 .recurring-card {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: 18px;
+    gap: 14px;
     align-items: center;
-    border-radius: 28px;
-    padding: 20px;
+    border-radius: 22px;
+    padding: 16px;
 }
 
 .recurring-card-left {
     display: flex;
-    gap: 14px;
+    gap: 12px;
     align-items: flex-start;
 }
 
 .recurring-icon {
-    min-width: 58px;
-    height: 58px;
+    min-width: 44px;
+    width: 44px;
+    height: 44px;
     display: grid;
     place-items: center;
-    border-radius: 18px;
+    border-radius: 14px;
     background: rgba(15, 23, 42, 0.96);
     border: 1px solid rgba(148, 163, 184, 0.14);
     color: #93c5fd;
-    font-size: 1.45rem;
+    font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
 .recurring-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 6px;
 
     span {
-        padding: 6px 10px;
+        padding: 4px 8px;
         border-radius: 999px;
         background: rgba(59, 130, 246, 0.12);
         color: #93c5fd;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         font-weight: 900;
     }
 }
 
-.recurring-card h3 {
-    margin: 0 0 6px;
-    font-size: 1.16rem;
-}
-
-.recurring-card p {
-    margin: 0;
-    color: #cbd5e1;
-}
-
-.recurring-card small {
-    display: block;
-    margin-top: 4px;
-    color: #94a3b8;
-}
+.recurring-card h3 { margin: 0 0 4px; font-size: 1rem; }
+.recurring-card p  { margin: 0; color: #cbd5e1; font-size: 0.86rem; }
+.recurring-card small { display: block; margin-top: 3px; color: #94a3b8; font-size: 0.8rem; }
 
 .recurring-card-right {
     text-align: right;
 
-    > strong {
-        display: block;
-        font-size: 1.18rem;
-        margin-bottom: 4px;
-    }
-
-    > span {
-        color: #94a3b8;
-        font-size: 0.86rem;
-    }
+    > strong { display: block; font-size: 1.05rem; margin-bottom: 3px; }
+    > span   { color: #94a3b8; font-size: 0.8rem; }
 }
 
 .recurring-card-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 6px;
+    margin-top: 10px;
 
     button {
         background: rgba(15, 23, 42, 0.92);
         color: #e2e8f0;
         border: 1px solid rgba(148, 163, 184, 0.12);
-        font-size: 0.86rem;
-        padding: 10px 14px;
+        font-size: 0.8rem;
+        padding: 8px 12px;
     }
 
     button.danger {
@@ -467,113 +420,89 @@
     }
 }
 
+// ── Empty ─────────────────────────────────────
 .recurring-empty,
 .recurring-empty-state {
-    border-radius: 28px;
-    padding: 42px 20px;
+    border-radius: 22px;
+    padding: 32px 16px;
     text-align: center;
 
-    i {
-        display: block;
-        font-size: 2.2rem;
-        color: #93c5fd;
-        margin-bottom: 12px;
-    }
-
-    h3 {
-        margin: 0 0 8px;
-        font-size: 1.3rem;
-    }
-
-    p {
-        margin: 0;
-        color: #cbd5e1;
-        line-height: 1.5;
-    }
+    i { display: block; font-size: 1.8rem; color: #93c5fd; margin-bottom: 10px; }
+    h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    p  { margin: 0; color: #cbd5e1; line-height: 1.5; font-size: 0.9rem; }
 }
 
+// ── Form ──────────────────────────────────────
 .recurring-form-card {
-    border-radius: 30px;
-    padding: 24px;
+    border-radius: 26px;
+    padding: 20px;
 }
 
 .recurring-form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    margin-bottom: 14px;
+    gap: 12px;
+    margin-bottom: 12px;
 
     label {
         display: grid;
-        gap: 8px;
+        gap: 7px;
         color: #cbd5e1;
-        font-size: 0.94rem;
+        font-size: 0.9rem;
         font-weight: 800;
     }
 
-    input,
-    select {
+    input, select {
         width: 100%;
         border: 1px solid rgba(148, 163, 184, 0.18);
         background: rgba(15, 23, 42, 0.92);
         color: #f8fafc;
-        border-radius: 16px;
-        padding: 14px 16px;
-        font-size: 1rem;
+        border-radius: 14px;
+        padding: 12px 14px;
+        font-size: 0.96rem;
         outline: none;
         transition: 0.2s ease;
     }
 
-    input:focus,
-    select:focus {
+    input:focus, select:focus {
         border-color: rgba(56, 189, 248, 0.58);
-        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.08);
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.08);
     }
 
-    input:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-    }
+    input:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 
 .recurring-period-check {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 4px 0 16px;
+    margin: 4px 0 14px;
     color: #cbd5e1;
     font-weight: 800;
     cursor: pointer;
+    font-size: 0.9rem;
 
-    input {
-        width: 18px;
-        height: 18px;
-        accent-color: #22c55e;
-        cursor: pointer;
-    }
-
-    span {
-        line-height: 1.4;
-    }
+    input { width: 16px; height: 16px; accent-color: #22c55e; cursor: pointer; }
+    span  { line-height: 1.4; }
 }
 
 .recurring-textarea-label {
     display: grid;
-    gap: 8px;
+    gap: 7px;
     color: #cbd5e1;
-    font-size: 0.94rem;
+    font-size: 0.9rem;
     font-weight: 800;
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 
     textarea {
         width: 100%;
-        min-height: 130px;
+        min-height: 110px;
         border: 1px solid rgba(148, 163, 184, 0.18);
         background: rgba(15, 23, 42, 0.92);
         color: #f8fafc;
-        border-radius: 16px;
-        padding: 14px 16px;
-        font-size: 1rem;
+        border-radius: 14px;
+        padding: 12px 14px;
+        font-size: 0.96rem;
         outline: none;
         resize: vertical;
         transition: 0.2s ease;
@@ -581,7 +510,7 @@
 
     textarea:focus {
         border-color: rgba(56, 189, 248, 0.58);
-        box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.08);
+        box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.08);
     }
 }
 
@@ -591,6 +520,7 @@
     gap: 12px;
 }
 
+// ── Responsive 1024px ─────────────────────────
 @media (max-width: 1024px) {
     .recurring-hero,
     .recurring-toolbar,
@@ -598,13 +528,8 @@
         grid-template-columns: 1fr;
     }
 
-    .recurring-tabs {
-        justify-content: flex-start;
-    }
-
-    .recurring-card-right {
-        text-align: left;
-    }
+    .recurring-tabs { justify-content: flex-start; }
+    .recurring-card-right { text-align: left; }
 
     .recurring-card-actions,
     .recurring-item-actions {
@@ -616,83 +541,99 @@
     }
 }
 
+// ── Responsive 768px ──────────────────────────
 @media (max-width: 768px) {
     .recurring-page {
-        padding: 20px 14px 100px;
+        padding: 16px 12px 100px;
     }
 
-    .recurring-hero,
+    .recurring-hero {
+        grid-template-columns: 1fr;
+        border-radius: 20px;
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .recurring-hero h1 {
+        font-size: 1.9rem;
+        margin: 8px 0 6px;
+    }
+
+    // hero grid vira linha horizontal no mobile
+    .recurring-hero-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+
+        div { padding: 10px 12px; }
+        span { font-size: 0.72rem; }
+        strong { font-size: 0.88rem; }
+    }
+
     .recurring-toolbar,
     .recurring-card,
     .recurring-item-card,
     .recurring-form-card {
-        border-radius: 24px;
-        padding: 18px;
-    }
-
-    .recurring-hero h1 {
-        font-size: 2.2rem;
+        border-radius: 18px;
+        padding: 14px;
     }
 
     .recurring-menu-actions {
         display: grid;
-    }
-
-    .recurring-menu-actions button,
-    .recurring-main-btn,
-    .recurring-danger-btn,
-    .recurring-secondary-btn {
-        width: 100%;
+        grid-template-columns: 1fr 1fr;
+        margin: 12px 0;
     }
 
     .recurring-toolbar {
-        gap: 12px;
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 
     .recurring-tabs {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+
+        button { width: 100%; min-width: unset; }
     }
 
-    .recurring-tabs button {
-        width: 100%;
-    }
-
-    .recurring-item-top {
-        display: grid;
-    }
-
-    .recurring-item-top > strong {
-        white-space: normal;
-    }
+    .recurring-item-top { display: grid; }
+    .recurring-item-top > strong { white-space: normal; }
 
     .recurring-item-grid,
     .recurring-form-grid {
         grid-template-columns: 1fr;
     }
 
-    .recurring-card-left {
-        display: grid;
+    .recurring-card {
+        grid-template-columns: 1fr;
     }
+
+    .recurring-card-left {
+        align-items: center;
+    }
+
+    .recurring-card-right { text-align: left; }
 
     .recurring-card-actions,
     .recurring-item-actions {
         display: grid;
+        grid-template-columns: 1fr 1fr;
 
-        button {
-            width: 100%;
-        }
+        button { width: 100%; }
     }
 
     .recurring-form-actions {
         display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
 
-        button {
-            width: 100%;
-        }
+        button { width: 100%; }
     }
 
-    .recurring-page .education-recommendation-card {
-        margin: 0 0 18px;
+    .recurring-icon {
+        min-width: 38px;
+        width: 38px;
+        height: 38px;
+        font-size: 0.95rem;
+        border-radius: 12px;
     }
 }

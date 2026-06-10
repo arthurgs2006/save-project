@@ -460,15 +460,27 @@
 
 @media (max-width: 768px) {
     .withdraw-page {
-        padding: 20px 14px 100px;
+        padding: 16px 12px 100px;
     }
 
-    .withdraw-hero,
+    .withdraw-hero {
+        border-radius: 20px;
+        padding: 16px;
+    }
+
+    .withdraw-hero h1 {
+        font-size: 1.9rem;
+    }
+
+    .withdraw-hero-grid div {
+        padding: 12px;
+    }
+
     .withdraw-form-card,
     .withdraw-preview-card,
     .withdraw-history {
-        border-radius: 24px;
-        padding: 18px;
+        border-radius: 20px;
+        padding: 16px;
     }
 
     .withdraw-form-grid,
@@ -478,6 +490,24 @@
 
     .withdraw-history-value {
         text-align: left;
+    }
+
+    .withdraw-preview-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 1.4rem;
+        margin: 14px auto 10px;
+    }
+
+    .withdraw-preview-card h2 {
+        font-size: 1.4rem;
+    }
+
+    .withdraw-history-icon {
+        min-width: 42px;
+        height: 42px;
+        font-size: 1rem;
+        border-radius: 14px;
     }
 
     .withdraw-actions {
