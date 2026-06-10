@@ -8,18 +8,10 @@ import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
-
 import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
-import {
-    getEducationRecommendation,
-    type EducationRecommendation,
-} from "../../services/educationApi";
-
+import { getEducationRecommendation, type EducationRecommendation } from "../../services/educationApi";
 import SaveScoreCard from "../../components/financial_health/SaveScoreCard";
-import {
-    analyzeFinancialHealth,
-    type FinancialScoreResponse,
-} from "../../services/financialHealthApi";
+import { analyzeFinancialHealth, type FinancialScoreResponse } from "../../services/financialHealthApi";
 
 import "./Home.scss";
 
@@ -84,7 +76,6 @@ interface User {
 
 type QuickAction = {
     title: string;
-    description: string;
     icon: string;
     route: string;
     variant: "deposit" | "withdraw" | "goals" | "recurring";
@@ -92,103 +83,43 @@ type QuickAction = {
 
 type ToolAction = {
     title: string;
-    description: string;
     icon: string;
     route: string;
 };
 
 const mainActions: QuickAction[] = [
-    {
-        title: "Depósito",
-        description: "Adicionar saldo ou guardar em uma meta.",
-        icon: "bi-arrow-down-left",
-        route: "/deposit",
-        variant: "deposit",
-    },
-    {
-        title: "Saque",
-        description: "Registrar saída e atualizar o saldo.",
-        icon: "bi-arrow-up-right",
-        route: "/withdraw",
-        variant: "withdraw",
-    },
-    {
-        title: "Metas",
-        description: "Acompanhar objetivos e progresso.",
-        icon: "bi-bullseye",
-        route: "/goals",
-        variant: "goals",
-    },
-    {
-        title: "Recorrentes",
-        description: "Controlar entradas e custos fixos.",
-        icon: "bi-repeat",
-        route: "/registerDebt",
-        variant: "recurring",
-    },
+    { title: "Depósito",    icon: "bi-arrow-down-left",       route: "/deposit",      variant: "deposit"   },
+    { title: "Saque",       icon: "bi-arrow-up-right",        route: "/withdraw",     variant: "withdraw"  },
+    { title: "Metas",       icon: "bi-bullseye",              route: "/goals",        variant: "goals"     },
+    { title: "Recorrentes", icon: "bi-repeat",                route: "/registerDebt", variant: "recurring" },
 ];
 
 const secondaryActions: ToolAction[] = [
-    {
-        title: "Moedas",
-        description: "Câmbio e conversões.",
-        icon: "bi-currency-exchange",
-        route: "/currency",
-    },
-    {
-        title: "Investimentos",
-        description: "Simulações e educação financeira.",
-        icon: "bi-graph-up-arrow",
-        route: "/investments",
-    },
-    {
-        title: "Cartões e Bancos",
-        description: "Compare contas, cartões, taxas e benefícios.",
-        icon: "bi-credit-card-2-front",
-        route: "/cards-banks",
-    },
-    {
-        title: "Educação Financeira",
-        description: "Aprenda a tomar decisões melhores com seu dinheiro.",
-        icon: "bi-mortarboard-fill",
-        route: "/financial-education",
-    },
+    { title: "Moedas",               icon: "bi-currency-exchange",    route: "/currency"           },
+    { title: "Investimentos",        icon: "bi-graph-up-arrow",       route: "/investments"        },
+    { title: "Cartões e Bancos",     icon: "bi-credit-card-2-front",  route: "/cards-banks"        },
+    { title: "Educação Financeira",  icon: "bi-mortarboard-fill",     route: "/financial-education"},
 ];
 
-function getBenefitsApiRoot() {
-    return BENEFITS_API_URL;
-}
+function getBenefitsApiRoot() { return BENEFITS_API_URL; }
 
 function normalizeRecurringItem(item: any): RecurringItem {
     const rawType = String(item.type ?? item.Type ?? "").toLowerCase();
-
     return {
         id: item.id ?? item.Id ?? Date.now(),
         userId: String(item.userId ?? item.UserId ?? ""),
         name: item.name ?? item.Name ?? "",
         value: Number(item.value ?? item.Value ?? 0),
         type: rawType === "credit" ? "credit" : "debit",
-        billingDate:
-            item.billingDate ??
-            item.BillingDate ??
-            item.billingDay ??
-            item.BillingDay ??
-            1,
-        billingDay:
-            item.billingDay ??
-            item.BillingDay ??
-            item.billingDate ??
-            item.BillingDate ??
-            1,
+        billingDate: item.billingDate ?? item.BillingDate ?? item.billingDay ?? item.BillingDay ?? 1,
+        billingDay:  item.billingDay  ?? item.BillingDay  ?? item.billingDate ?? item.BillingDate ?? 1,
         frequency: item.frequency ?? item.Frequency ?? "monthly",
         category: item.category ?? item.Category ?? "",
         description: item.description ?? item.Description ?? "",
         startDate: item.startDate ?? item.StartDate ?? null,
-        endDate: item.endDate ?? item.EndDate ?? null,
+        endDate:   item.endDate   ?? item.EndDate   ?? null,
         isActive: item.isActive ?? item.IsActive ?? true,
-        monthlyEquivalent: Number(
-            item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0
-        ),
+        monthlyEquivalent: Number(item.monthlyEquivalent ?? item.MonthlyEquivalent ?? 0),
         periodLabel: item.periodLabel ?? item.PeriodLabel ?? "",
         statusLabel: item.statusLabel ?? item.StatusLabel ?? "",
         createdAt: item.createdAt ?? item.CreatedAt ?? "",
@@ -214,28 +145,16 @@ function normalizeBalanceStatement(item: any): Extrato {
     };
 }
 
-function mergeStatements(
-    localStatements: Extrato[] = [],
-    apiStatements: Extrato[] = []
-) {
+function mergeStatements(local: Extrato[] = [], api: Extrato[] = []) {
     const map = new Map<string, Extrato>();
-
-    [...localStatements, ...apiStatements].forEach((item) => {
-        const key = String(item.transactionId || item.id);
-        map.set(key, item);
-    });
-
+    [...local, ...api].forEach((item) => map.set(String(item.transactionId || item.id), item));
     return Array.from(map.values());
 }
 
 function getDateFromValue(value?: string | null) {
     if (!value) return null;
-
     const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) return null;
-
-    return date;
+    return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function getMonthKeyFromDate(date: Date) {
@@ -243,85 +162,58 @@ function getMonthKeyFromDate(date: Date) {
 }
 
 function getMonthStart(monthKey: string) {
-    const [year, month] = monthKey.split("-");
-
-    return new Date(Number(year), Number(month) - 1, 1);
+    const [y, m] = monthKey.split("-");
+    return new Date(Number(y), Number(m) - 1, 1);
 }
 
 function getMonthEnd(monthKey: string) {
-    const [year, month] = monthKey.split("-");
-
-    return new Date(Number(year), Number(month), 0);
+    const [y, m] = monthKey.split("-");
+    return new Date(Number(y), Number(m), 0);
 }
 
 function getRecurringType(item: RecurringItem) {
-    if (item.type === "credit" || item.tipo === "credito") return "credit";
-
-    return "debit";
+    return item.type === "credit" || item.tipo === "credito" ? "credit" : "debit";
 }
 
 function isRecurringValidForMonth(item: RecurringItem, monthKey: string) {
     if (item.isActive === false) return false;
-
     const monthStart = getMonthStart(monthKey);
-    const monthEnd = getMonthEnd(monthKey);
-
-    const startDate = getDateFromValue(item.startDate || item.createdAt || null);
-    const endDate = getDateFromValue(item.endDate || null);
-
-    if (startDate && startDate > monthEnd) return false;
-    if (endDate && endDate < monthStart) return false;
-
+    const monthEnd   = getMonthEnd(monthKey);
+    const startDate  = getDateFromValue(item.startDate || item.createdAt || null);
+    const endDate    = getDateFromValue(item.endDate || null);
+    if (startDate && startDate > monthEnd)   return false;
+    if (endDate   && endDate   < monthStart) return false;
     return true;
 }
 
 function getRecurringMonthlyEquivalent(item: RecurringItem) {
-    if (item.monthlyEquivalent && item.monthlyEquivalent > 0) {
-        return item.monthlyEquivalent;
-    }
-
+    if (item.monthlyEquivalent && item.monthlyEquivalent > 0) return item.monthlyEquivalent;
     const value = Number(item.value || 0);
-
-    if (item.frequency === "daily") return value * 30;
+    if (item.frequency === "daily")  return value * 30;
     if (item.frequency === "weekly") return value * 4.33;
     if (item.frequency === "yearly") return value / 12;
-
     return value;
 }
 
 export default function HomeScreen() {
     const [user, setUser] = useState<User | null>(null);
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
-    const [activityTab, setActivityTab] = useState<"movements" | "recurring">(
-        "movements"
-    );
-
-    const [educationRecommendation, setEducationRecommendation] =
-        useState<EducationRecommendation | null>(null);
-
-    const [financialScore, setFinancialScore] =
-        useState<FinancialScoreResponse | null>(null);
+    const [activityTab, setActivityTab] = useState<"movements" | "recurring">("movements");
+    const [educationRecommendation, setEducationRecommendation] = useState<EducationRecommendation | null>(null);
+    const [financialScore, setFinancialScore] = useState<FinancialScoreResponse | null>(null);
 
     const navigate = useNavigate();
 
     const freqMap: Record<string, string> = {
-        daily: "Diária",
-        weekly: "Semanal",
-        monthly: "Mensal",
-        yearly: "Anual",
+        daily: "Diária", weekly: "Semanal", monthly: "Mensal", yearly: "Anual",
     };
 
     useEffect(() => {
         async function loadUser() {
             const storedUser = localStorage.getItem("loggedUser");
-
-            if (!storedUser) {
-                navigate("/login");
-                return;
-            }
+            if (!storedUser) { navigate("/login"); return; }
 
             const parsedUser: User = JSON.parse(storedUser);
-
             let baseUser: User = {
                 ...parsedUser,
                 saldo_final: Number(parsedUser.saldo_final || 0),
@@ -330,181 +222,88 @@ export default function HomeScreen() {
                 recurringDebts: parsedUser.recurringDebts || [],
                 recurringCredits: parsedUser.recurringCredits || [],
             };
-
             setUser(baseUser);
 
             try {
-                const response = await fetch(`${BASE_URL}/api/auth/users/${parsedUser.id}`);
-
-                if (response.ok) {
-                    const serverUser = await response.json();
-
+                const res = await fetch(`${BASE_URL}/api/auth/users/${parsedUser.id}`);
+                if (res.ok) {
+                    const serverUser = await res.json();
                     baseUser = {
                         ...serverUser,
-                        saldo_final: Number(
-                            parsedUser.saldo_final ?? serverUser.saldo_final ?? 0
-                        ),
-                        extratos: mergeStatements(
-                            serverUser.extratos || [],
-                            parsedUser.extratos || []
-                        ),
+                        saldo_final: Number(parsedUser.saldo_final ?? serverUser.saldo_final ?? 0),
+                        extratos: mergeStatements(serverUser.extratos || [], parsedUser.extratos || []),
                         goals: parsedUser.goals || serverUser.goals || [],
-                        recurringDebts:
-                            parsedUser.recurringDebts ||
-                            serverUser.recurringDebts ||
-                            [],
-                        recurringCredits:
-                            parsedUser.recurringCredits ||
-                            serverUser.recurringCredits ||
-                            [],
+                        recurringDebts:  parsedUser.recurringDebts  || serverUser.recurringDebts  || [],
+                        recurringCredits: parsedUser.recurringCredits || serverUser.recurringCredits || [],
                     };
                 }
-            } catch {
-                console.warn("Servidor principal indisponível. Usando usuário local.");
-            }
+            } catch { console.warn("Servidor principal indisponível."); }
 
             try {
-                const balanceUrl = `${getBenefitsApiRoot()}/balance/user/${
-                    parsedUser.id
-                }/statements`;
-
-                console.log("URL EXTRATOS BALANCE HOME:", balanceUrl);
-
-                const balanceResponse = await fetch(balanceUrl);
-                const rawBalance = await balanceResponse.text();
-
-                if (balanceResponse.ok) {
-                    const balanceData = JSON.parse(rawBalance);
-
-                    const apiStatements = Array.isArray(balanceData)
-                        ? balanceData.map(normalizeBalanceStatement)
-                        : [];
-
-                    baseUser = {
-                        ...baseUser,
-                        extratos: mergeStatements(
-                            baseUser.extratos || [],
-                            apiStatements
-                        ),
-                    };
-                } else {
-                    console.warn("Não foi possível buscar extratos do BalanceService:", {
-                        status: balanceResponse.status,
-                        body: rawBalance,
-                    });
+                const res = await fetch(`${getBenefitsApiRoot()}/balance/user/${parsedUser.id}/statements`);
+                if (res.ok) {
+                    const data = JSON.parse(await res.text());
+                    baseUser = { ...baseUser, extratos: mergeStatements(baseUser.extratos || [], Array.isArray(data) ? data.map(normalizeBalanceStatement) : []) };
                 }
-            } catch (error) {
-                console.warn("Não foi possível carregar extratos da API .NET na Home.", error);
-            }
+            } catch { console.warn("Erro ao buscar extratos."); }
 
             try {
-                const recurringUrl = `${getBenefitsApiRoot()}/recurring-transactions/user/${
-                    parsedUser.id
-                }`;
-
-                console.log("URL RECORRENTES HOME:", recurringUrl);
-
-                const recurringResponse = await fetch(recurringUrl);
-                const raw = await recurringResponse.text();
-
-                if (recurringResponse.ok) {
-                    const recurringData = JSON.parse(raw);
-
-                    const normalizedRecurrings = Array.isArray(recurringData)
-                        ? recurringData.map(normalizeRecurringItem)
-                        : [];
-
+                const res = await fetch(`${getBenefitsApiRoot()}/recurring-transactions/user/${parsedUser.id}`);
+                if (res.ok) {
+                    const data = JSON.parse(await res.text());
+                    const normalized = Array.isArray(data) ? data.map(normalizeRecurringItem) : [];
                     baseUser = {
                         ...baseUser,
-                        recurringDebts: normalizedRecurrings.filter(
-                            (item) => getRecurringType(item) === "debit"
-                        ),
-                        recurringCredits: normalizedRecurrings.filter(
-                            (item) => getRecurringType(item) === "credit"
-                        ),
+                        recurringDebts:   normalized.filter((i) => getRecurringType(i) === "debit"),
+                        recurringCredits: normalized.filter((i) => getRecurringType(i) === "credit"),
                     };
-                } else {
-                    console.error("Erro ao buscar recorrentes na Home:", {
-                        status: recurringResponse.status,
-                        body: raw,
-                    });
                 }
-            } catch (error) {
-                console.warn("Não foi possível carregar recorrentes da API .NET na Home.", error);
-            }
+            } catch { console.warn("Erro ao buscar recorrentes."); }
 
             setUser(baseUser);
             localStorage.setItem("loggedUser", JSON.stringify(baseUser));
         }
-
         loadUser();
     }, [navigate]);
 
     function formatCurrency(value: number) {
-        return value.toLocaleString("pt-BR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
+        return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function getCurrentMonthKey() {
-        return getMonthKeyFromDate(new Date());
-    }
+    function getCurrentMonthKey() { return getMonthKeyFromDate(new Date()); }
 
     function getMonthKey(dateStr?: string) {
         if (!dateStr) return "";
-
         const parts = dateStr.split("/");
-
         if (parts.length === 3) {
             const [, month, year] = parts;
             return `${year}-${String(Number(month)).padStart(2, "0")}`;
         }
-
         const parsed = new Date(dateStr);
-
-        if (Number.isNaN(parsed.getTime())) return "";
-
-        return getMonthKeyFromDate(parsed);
+        return Number.isNaN(parsed.getTime()) ? "" : getMonthKeyFromDate(parsed);
     }
 
-    function getDaysInMonth(year: number, month: number) {
-        return new Date(year, month + 1, 0).getDate();
-    }
+    function getDaysInMonth(year: number, month: number) { return new Date(year, month + 1, 0).getDate(); }
 
     function calculateTotalForMonth(recurring: RecurringItem, monthKey: string) {
         if (!isRecurringValidForMonth(recurring, monthKey)) return 0;
-
-        if (recurring.monthlyEquivalent && recurring.monthlyEquivalent > 0) {
-            return recurring.monthlyEquivalent;
-        }
-
+        if (recurring.monthlyEquivalent && recurring.monthlyEquivalent > 0) return recurring.monthlyEquivalent;
         const [year, monthStr] = monthKey.split("-");
-        const yearNumber = Number(year);
-        const monthNumber = Number(monthStr) - 1;
-        const daysInMonth = getDaysInMonth(yearNumber, monthNumber);
-
+        const daysInMonth = getDaysInMonth(Number(year), Number(monthStr) - 1);
         switch (recurring.frequency) {
-            case "daily":
-                return Number(recurring.value || 0) * daysInMonth;
-            case "weekly":
-                return Number(recurring.value || 0) * Math.ceil(daysInMonth / 7);
-            case "yearly":
-                return Number(recurring.value || 0) / 12;
-            case "monthly":
-            default:
-                return Number(recurring.value || 0);
+            case "daily":   return Number(recurring.value || 0) * daysInMonth;
+            case "weekly":  return Number(recurring.value || 0) * Math.ceil(daysInMonth / 7);
+            case "yearly":  return Number(recurring.value || 0) / 12;
+            default:        return Number(recurring.value || 0);
         }
     }
 
     function getUserFirstName() {
-        const name = user?.nome || user?.name || "usuário";
-        return name.split(" ")[0];
+        return (user?.nome || user?.name || "usuário").split(" ")[0];
     }
 
     function getTransactionTitle(item: Extrato) {
-        if (item.descricao) return item.descricao;
-        return item.tipo === "credito" ? "Depósito" : "Saque";
+        return item.descricao || (item.tipo === "credito" ? "Depósito" : "Saque");
     }
 
     function getTransactionSubtitle(item: Extrato) {
@@ -515,15 +314,8 @@ export default function HomeScreen() {
 
     function getSafeExtraInfo(item: Extrato) {
         const parts: string[] = [];
-
-        if (item.status) {
-            parts.push(item.status);
-        }
-
-        if (item.transactionId) {
-            parts.push(`ID: ${item.transactionId}`);
-        }
-
+        if (item.status) parts.push(item.status);
+        if (item.transactionId) parts.push(`ID: ${item.transactionId}`);
         return parts.join(" • ");
     }
 
@@ -531,470 +323,184 @@ export default function HomeScreen() {
 
     const selectedMonthLabel = useMemo(() => {
         if (!selectedMonth) return null;
-
         const [year, month] = selectedMonth.split("-");
-        const date = new Date(Number(year), Number(month) - 1, 1);
-
-        return date.toLocaleString("pt-BR", {
-            month: "long",
-            year: "numeric",
-        });
+        return new Date(Number(year), Number(month) - 1, 1).toLocaleString("pt-BR", { month: "long", year: "numeric" });
     }, [selectedMonth]);
 
-    const statementMonthKey = selectedMonth || currentMonthKey;
+    const statementMonthKey   = selectedMonth || currentMonthKey;
+    const statementMonthLabel = selectedMonthLabel || new Date().toLocaleString("pt-BR", { month: "long", year: "numeric" });
+    const statementMode       = selectedMonth ? (selectedMonth < currentMonthKey ? "past" : selectedMonth === currentMonthKey ? "current" : "future") : "current";
 
-    const statementMonthLabel =
-        selectedMonthLabel ||
-        new Date().toLocaleString("pt-BR", {
-            month: "long",
-            year: "numeric",
-        });
-
-    const statementMode = selectedMonth
-        ? selectedMonth < currentMonthKey
-            ? "past"
-            : selectedMonth === currentMonthKey
-              ? "current"
-              : "future"
-        : "current";
-
-    const recurringDebts = user?.recurringDebts || [];
+    const recurringDebts   = user?.recurringDebts   || [];
     const recurringCredits = user?.recurringCredits || [];
 
     const recurringSummary = useMemo(() => {
-        const totalCredits = recurringCredits
-            .filter((item) => isRecurringValidForMonth(item, currentMonthKey))
-            .reduce((sum, item) => sum + getRecurringMonthlyEquivalent(item), 0);
-
-        const totalDebts = recurringDebts
-            .filter((item) => isRecurringValidForMonth(item, currentMonthKey))
-            .reduce((sum, item) => sum + getRecurringMonthlyEquivalent(item), 0);
-
-        return {
-            totalCredits,
-            totalDebts,
-            balance: totalCredits - totalDebts,
-        };
+        const totalCredits = recurringCredits.filter((i) => isRecurringValidForMonth(i, currentMonthKey)).reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
+        const totalDebts   = recurringDebts.filter((i)   => isRecurringValidForMonth(i, currentMonthKey)).reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
+        return { totalCredits, totalDebts, balance: totalCredits - totalDebts };
     }, [recurringCredits, recurringDebts, currentMonthKey]);
 
     useEffect(() => {
-        async function loadEducationRecommendation() {
+        async function loadEducation() {
             if (!user?.id) return;
-
-            const recommendation = await getEducationRecommendation(user.id, "home", {
+            const rec = await getEducationRecommendation(user.id, "home", {
                 balance: Number(user.saldo_final || 0),
                 recurringCredits: recurringSummary.totalCredits,
-                recurringDebits: recurringSummary.totalDebts,
+                recurringDebits:  recurringSummary.totalDebts,
             });
-
-            setEducationRecommendation(recommendation);
+            setEducationRecommendation(rec);
         }
-
-        loadEducationRecommendation();
-    }, [
-        user?.id,
-        user?.saldo_final,
-        recurringSummary.totalCredits,
-        recurringSummary.totalDebts,
-    ]);
+        loadEducation();
+    }, [user?.id, user?.saldo_final, recurringSummary.totalCredits, recurringSummary.totalDebts]);
 
     const projectedBalance = useMemo(() => {
         if (!user) return 0;
-
-        if (!selectedMonth) {
-            return Number(user.saldo_final || 0) + recurringSummary.balance;
-        }
-
-        if (selectedMonth < currentMonthKey) {
-            return Number(user.saldo_final || 0);
-        }
-
+        if (!selectedMonth) return Number(user.saldo_final || 0) + recurringSummary.balance;
+        if (selectedMonth < currentMonthKey) return Number(user.saldo_final || 0);
         let sum = 0;
-        let monthCursor = currentMonthKey;
-
-        while (monthCursor <= selectedMonth) {
-            for (const debt of user.recurringDebts || []) {
-                sum -= calculateTotalForMonth(debt, monthCursor);
-            }
-
-            for (const credit of user.recurringCredits || []) {
-                sum += calculateTotalForMonth(credit, monthCursor);
-            }
-
-            const [year, month] = monthCursor.split("-");
-            const next = new Date(Number(year), Number(month), 1);
-
-            monthCursor = `${next.getFullYear()}-${String(
-                next.getMonth() + 1
-            ).padStart(2, "0")}`;
+        let cursor = currentMonthKey;
+        while (cursor <= selectedMonth) {
+            for (const d of user.recurringDebts   || []) sum -= calculateTotalForMonth(d, cursor);
+            for (const c of user.recurringCredits || []) sum += calculateTotalForMonth(c, cursor);
+            const [y, m] = cursor.split("-");
+            const next = new Date(Number(y), Number(m), 1);
+            cursor = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
         }
-
         return Number(user.saldo_final || 0) + sum;
     }, [user, selectedMonth, currentMonthKey, recurringSummary.balance]);
 
     const statementItems = useMemo(() => {
         if (!user) return [];
-
-        const actualItems = [...(user.extratos || [])].filter(
-            (item) => getMonthKey(item.data || item.createdAt) === statementMonthKey
-        );
-
-        const showRecurringInMonth = statementMonthKey >= currentMonthKey;
-
-        const recurringPreview: Extrato[] = showRecurringInMonth
-            ? [
-                  ...(user.recurringDebts || [])
-                      .filter((debt) =>
-                          isRecurringValidForMonth(debt, statementMonthKey)
-                      )
-                      .map((debt) => ({
-                          id: `recurring-debit-${debt.id}-${statementMonthKey}`,
-                          data: `${statementMonthKey.split("-")[1]}/${
-                              statementMonthKey.split("-")[0]
-                          }`,
-                          descricao: `Débito recorrente: ${debt.name}`,
-                          valor: calculateTotalForMonth(debt, statementMonthKey),
-                          tipo: "debito" as const,
-                          status:
-                              statementMode === "future" ? "Previsto" : "Recorrente",
-                      })),
-                  ...(user.recurringCredits || [])
-                      .filter((credit) =>
-                          isRecurringValidForMonth(credit, statementMonthKey)
-                      )
-                      .map((credit) => ({
-                          id: `recurring-credit-${credit.id}-${statementMonthKey}`,
-                          data: `${statementMonthKey.split("-")[1]}/${
-                              statementMonthKey.split("-")[0]
-                          }`,
-                          descricao: `Crédito recorrente: ${credit.name}`,
-                          valor: calculateTotalForMonth(credit, statementMonthKey),
-                          tipo: "credito" as const,
-                          status:
-                              statementMode === "future" ? "Previsto" : "Recorrente",
-                      })),
-              ]
-            : [];
-
-        return [...actualItems, ...recurringPreview];
+        const actual = [...(user.extratos || [])].filter((i) => getMonthKey(i.data || i.createdAt) === statementMonthKey);
+        const showRecurring = statementMonthKey >= currentMonthKey;
+        const recurringPreview: Extrato[] = showRecurring ? [
+            ...(user.recurringDebts   || []).filter((d) => isRecurringValidForMonth(d, statementMonthKey)).map((d) => ({
+                id: `recurring-debit-${d.id}-${statementMonthKey}`,
+                data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                descricao: `Débito recorrente: ${d.name}`,
+                valor: calculateTotalForMonth(d, statementMonthKey),
+                tipo: "debito" as const,
+                status: statementMode === "future" ? "Previsto" : "Recorrente",
+            })),
+            ...(user.recurringCredits || []).filter((c) => isRecurringValidForMonth(c, statementMonthKey)).map((c) => ({
+                id: `recurring-credit-${c.id}-${statementMonthKey}`,
+                data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
+                descricao: `Crédito recorrente: ${c.name}`,
+                valor: calculateTotalForMonth(c, statementMonthKey),
+                tipo: "credito" as const,
+                status: statementMode === "future" ? "Previsto" : "Recorrente",
+            })),
+        ] : [];
+        return [...actual, ...recurringPreview];
     }, [user, statementMonthKey, currentMonthKey, statementMode]);
 
     const displayExtratos = useMemo(() => {
         if (!user) return [];
-
-        if (!selectedMonth) {
-            return [...(user.extratos || [])].reverse().slice(0, 5);
-        }
-
+        if (!selectedMonth) return [...(user.extratos || [])].reverse().slice(0, 5);
         return statementItems;
     }, [user, selectedMonth, statementItems]);
 
     const statementOverview = useMemo(() => {
         if (!statementItems.length) return null;
-
-        const totalCredit = statementItems
-            .filter((item) => item.tipo === "credito")
-            .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-
-        const totalDebit = statementItems
-            .filter((item) => item.tipo === "debito")
-            .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-
-        const balance = totalCredit - totalDebit;
-
-        const biggestMovement = statementItems.reduce((current, item) => {
-            return Math.abs(Number(item.valor)) > Math.abs(Number(current.valor))
-                ? item
-                : current;
-        }, statementItems[0]);
-
-        return {
-            totalCredit,
-            totalDebit,
-            balance,
-            count: statementItems.length,
-            biggestMovement,
-            statusText: balance < 0 ? "Atenção" : "Adequado",
-            note:
-                statementMode === "future"
-                    ? "Projeção com base nos seus recorrentes."
-                    : statementMode === "past"
-                      ? "Extrato histórico do mês selecionado."
-                      : "Movimentações do mês atual.",
-        };
+        const totalCredit = statementItems.filter((i) => i.tipo === "credito").reduce((s, i) => s + Number(i.valor || 0), 0);
+        const totalDebit  = statementItems.filter((i) => i.tipo === "debito").reduce((s,  i) => s + Number(i.valor || 0), 0);
+        return { totalCredit, totalDebit, balance: totalCredit - totalDebit, count: statementItems.length };
     }, [statementItems, statementMode]);
 
     const currentMonthOverview = useMemo(() => {
-        if (!user) {
-            return {
-                totalCredit: 0,
-                totalDebit: 0,
-                balance: 0,
-            };
-        }
-
-        const currentItems = (user.extratos || []).filter((item) => {
-            return getMonthKey(item.data || item.createdAt) === currentMonthKey;
-        });
-
-        const totalCredit = currentItems
-            .filter((item) => item.tipo === "credito")
-            .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-
-        const totalDebit = currentItems
-            .filter((item) => item.tipo === "debito")
-            .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-
-        return {
-            totalCredit,
-            totalDebit,
-            balance: totalCredit - totalDebit,
-        };
+        if (!user) return { totalCredit: 0, totalDebit: 0, balance: 0 };
+        const items = (user.extratos || []).filter((i) => getMonthKey(i.data || i.createdAt) === currentMonthKey);
+        const totalCredit = items.filter((i) => i.tipo === "credito").reduce((s, i) => s + Number(i.valor || 0), 0);
+        const totalDebit  = items.filter((i) => i.tipo === "debito").reduce((s,  i) => s + Number(i.valor || 0), 0);
+        return { totalCredit, totalDebit, balance: totalCredit - totalDebit };
     }, [user, currentMonthKey]);
 
     const goalsOverview = useMemo(() => {
         const goals = user?.goals || [];
-
-        const activeGoals = goals.filter(
-            (goal) => goal.status !== "completed"
-        ).length;
-
-        const completedGoals = goals.filter(
-            (goal) => goal.status === "completed"
-        ).length;
-
-        const totalTarget = goals.reduce(
-            (sum, goal) => sum + Number(goal.targetAmount || 0),
-            0
-        );
-
-        const totalCurrent = goals.reduce(
-            (sum, goal) => sum + Number(goal.currentAmount || 0),
-            0
-        );
-
-        const progress =
-            totalTarget > 0 ? Math.min((totalCurrent / totalTarget) * 100, 100) : 0;
-
+        const totalTarget  = goals.reduce((s, g) => s + Number(g.targetAmount  || 0), 0);
+        const totalCurrent = goals.reduce((s, g) => s + Number(g.currentAmount || 0), 0);
         return {
-            activeGoals,
-            completedGoals,
-            totalTarget,
-            totalCurrent,
-            progress,
+            activeGoals:    goals.filter((g) => g.status !== "completed").length,
+            completedGoals: goals.filter((g) => g.status === "completed").length,
+            progress: totalTarget > 0 ? Math.min((totalCurrent / totalTarget) * 100, 100) : 0,
         };
     }, [user]);
 
     useEffect(() => {
-        async function loadFinancialHealth() {
+        async function loadScore() {
             if (!user?.id) return;
-
-            const goals = user.goals || [];
+            const goals   = user.goals   || [];
             const extratos = user.extratos || [];
-
-            const currentItems = extratos.filter((item) => {
-                return getMonthKey(item.data || item.createdAt) === currentMonthKey;
-            });
-
-            const monthlyCredits = currentItems
-                .filter((item) => item.tipo === "credito")
-                .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-
-            const monthlyDebits = currentItems
-                .filter((item) => item.tipo === "debito")
-                .reduce((sum, item) => sum + Number(item.valor || 0), 0);
-
-            const goalsTargetTotal = goals.reduce(
-                (sum, goal) => sum + Number(goal.targetAmount || 0),
-                0
-            );
-
-            const goalsCurrentTotal = goals.reduce(
-                (sum, goal) => sum + Number(goal.currentAmount || 0),
-                0
-            );
-
-            const hasEmergencyReserve = goals.some((goal) => {
-                const text = `${goal.title || ""} ${goal.name || ""}`.toLowerCase();
-
-                return (
-                    text.includes("reserva") ||
-                    text.includes("emergência") ||
-                    text.includes("emergencia")
-                );
-            });
-
-            const response = await analyzeFinancialHealth({
+            const currentItems = extratos.filter((i) => getMonthKey(i.data || i.createdAt) === currentMonthKey);
+            const monthlyCredits = currentItems.filter((i) => i.tipo === "credito").reduce((s, i) => s + Number(i.valor || 0), 0);
+            const monthlyDebits  = currentItems.filter((i) => i.tipo === "debito").reduce((s,  i) => s + Number(i.valor || 0), 0);
+            const goalsTargetTotal  = goals.reduce((s, g) => s + Number(g.targetAmount  || 0), 0);
+            const goalsCurrentTotal = goals.reduce((s, g) => s + Number(g.currentAmount || 0), 0);
+            const hasEmergencyReserve = goals.some((g) => `${g.title || ""} ${g.name || ""}`.toLowerCase().match(/reserva|emergência|emergencia/));
+            const res = await analyzeFinancialHealth({
                 userId: user.id,
-
                 balance: Number(user.saldo_final || 0),
                 monthlyIncome: recurringSummary.totalCredits || monthlyCredits,
-
                 monthlyRecurringCredits: recurringSummary.totalCredits,
-                monthlyRecurringDebits: recurringSummary.totalDebts,
-
-                monthlyCredits,
-                monthlyDebits,
-
+                monthlyRecurringDebits:  recurringSummary.totalDebts,
+                monthlyCredits, monthlyDebits,
                 transactionsCount: extratos.length,
-
                 goalsCount: goals.length,
-                activeGoalsCount: goals.filter(
-                    (goal) => goal.status !== "completed"
-                ).length,
-                completedGoalsCount: goals.filter(
-                    (goal) => goal.status === "completed"
-                ).length,
-
-                goalsTargetTotal,
-                goalsCurrentTotal,
-
-                hasEmergencyReserve,
-
-                lessonsOpened: Number(localStorage.getItem("lessonsOpened") || 0),
-                lessonsCompleted: Number(
-                    localStorage.getItem("lessonsCompleted") || 0
-                ),
+                activeGoalsCount:    goals.filter((g) => g.status !== "completed").length,
+                completedGoalsCount: goals.filter((g) => g.status === "completed").length,
+                goalsTargetTotal, goalsCurrentTotal, hasEmergencyReserve,
+                lessonsOpened:    Number(localStorage.getItem("lessonsOpened")    || 0),
+                lessonsCompleted: Number(localStorage.getItem("lessonsCompleted") || 0),
             });
-
-            setFinancialScore(response);
+            setFinancialScore(res);
         }
-
-        loadFinancialHealth();
-    }, [
-        user?.id,
-        user?.saldo_final,
-        user?.extratos,
-        user?.goals,
-        recurringSummary.totalCredits,
-        recurringSummary.totalDebts,
-        currentMonthKey,
-    ]);
-
-    const homeInsight = useMemo(() => {
-        if (recurringSummary.balance < 0) {
-            return "Seus custos recorrentes estão pesando no saldo projetado.";
-        }
-
-        if (recurringSummary.balance > 0) {
-            return "Suas entradas recorrentes estão ajudando o saldo projetado.";
-        }
-
-        if (currentMonthOverview.balance > 0) {
-            return "Você está com resultado positivo neste mês.";
-        }
-
-        if (currentMonthOverview.balance < 0) {
-            return "Suas saídas passaram das entradas neste mês.";
-        }
-
-        return "Acompanhe seus gastos, metas e recorrentes em um só lugar.";
-    }, [currentMonthOverview.balance, recurringSummary.balance]);
+        loadScore();
+    }, [user?.id, user?.saldo_final, user?.extratos, user?.goals, recurringSummary.totalCredits, recurringSummary.totalDebts, currentMonthKey]);
 
     const recurringPreview = useMemo(() => {
-        const credits = recurringCredits.map((item) => ({
-            ...item,
-            type: "credit" as const,
-        }));
-
-        const debts = recurringDebts.map((item) => ({
-            ...item,
-            type: "debit" as const,
-        }));
-
-        return [...credits, ...debts].slice(0, 6);
+        return [...recurringCredits.map((i) => ({ ...i, type: "credit" as const })), ...recurringDebts.map((i) => ({ ...i, type: "debit" as const }))].slice(0, 6);
     }, [recurringCredits, recurringDebts]);
 
     function handleExportPdf() {
         if (!user) return;
-
-        const rows = statementItems.map((item) => ({
-            data: item.data,
-            hora: item.hora || "",
-            descricao:
-                item.descricao || (item.tipo === "credito" ? "Crédito" : "Débito"),
-            tipo: item.tipo === "credito" ? "Crédito" : "Débito",
-            valor: `R$ ${formatCurrency(Number(item.valor))}`,
+        const rows = statementItems.map((i) => ({
+            data: i.data, hora: i.hora || "",
+            descricao: i.descricao || (i.tipo === "credito" ? "Crédito" : "Débito"),
+            tipo: i.tipo === "credito" ? "Crédito" : "Débito",
+            valor: `R$ ${formatCurrency(Number(i.valor))}`,
         }));
-
-        const totalCredit = statementItems
-            .filter((item) => item.tipo === "credito")
-            .reduce((sum, item) => sum + Number(item.valor), 0);
-
-        const totalDebit = statementItems
-            .filter((item) => item.tipo === "debito")
-            .reduce((sum, item) => sum + Number(item.valor), 0);
-
-        const balance = totalCredit - totalDebit;
-
-        const footers = [
-            { label: "Total crédito", value: `R$ ${formatCurrency(totalCredit)}` },
-            { label: "Total débito", value: `R$ ${formatCurrency(totalDebit)}` },
-            { label: "Saldo do período", value: `R$ ${formatCurrency(balance)}` },
-            { label: "Panorama", value: balance < 0 ? "Atenção" : "Adequado" },
-        ];
-
-        const fileName = selectedMonth
-            ? `extrato_${selectedMonth}.pdf`
-            : `extrato_atual_${currentMonthKey}.pdf`;
-
+        const totalCredit = statementItems.filter((i) => i.tipo === "credito").reduce((s, i) => s + Number(i.valor), 0);
+        const totalDebit  = statementItems.filter((i) => i.tipo === "debito").reduce((s,  i) => s + Number(i.valor), 0);
         exportStatementPdf({
             title: `Extrato de ${statementMonthLabel}`,
             subtitle: `Usuário: ${user.nome}`,
             logoText: "SAVE PROJECT",
             rows,
-            footers,
-            fileName,
+            footers: [
+                { label: "Total crédito",   value: `R$ ${formatCurrency(totalCredit)}` },
+                { label: "Total débito",    value: `R$ ${formatCurrency(totalDebit)}`  },
+                { label: "Saldo do período", value: `R$ ${formatCurrency(totalCredit - totalDebit)}` },
+            ],
+            fileName: selectedMonth ? `extrato_${selectedMonth}.pdf` : `extrato_atual_${currentMonthKey}.pdf`,
         });
     }
 
     function renderExtratoItem(item: Extrato) {
         return (
-            <ListGroupItem
-                key={item.id}
-                className={`home-list-item home-list-item-${item.tipo}`}
-                onClick={() => {
-                    if (String(item.id).includes("recurring")) return;
-                    navigate(`/transaction/${item.id}`);
-                }}
-            >
+            <ListGroupItem key={item.id} className={`home-list-item home-list-item-${item.tipo}`}
+                onClick={() => { if (String(item.id).includes("recurring")) return; navigate(`/transaction/${item.id}`); }}>
                 <div className="home-list-left">
                     <div className="home-list-icon">
-                        <i
-                            className={`bi ${
-                                item.tipo === "credito"
-                                    ? "bi-arrow-down-left"
-                                    : "bi-arrow-up-right"
-                            }`}
-                        ></i>
+                        <i className={`bi ${item.tipo === "credito" ? "bi-arrow-down-left" : "bi-arrow-up-right"}`}></i>
                     </div>
-
                     <div className="home-item-copy">
-                        <p className="home-item-title mb-1">
-                            {getTransactionTitle(item)}
-                        </p>
-
-                        <small className="home-item-subtitle d-block">
-                            {getTransactionSubtitle(item)}
-                        </small>
-
-                        {getSafeExtraInfo(item) && (
-                            <small className="home-item-meta">
-                                {getSafeExtraInfo(item)}
-                            </small>
-                        )}
+                        <p className="home-item-title mb-1">{getTransactionTitle(item)}</p>
+                        <small className="home-item-subtitle d-block">{getTransactionSubtitle(item)}</small>
+                        {getSafeExtraInfo(item) && <small className="home-item-meta">{getSafeExtraInfo(item)}</small>}
                     </div>
                 </div>
-
-                <span
-                    className={`home-item-value ${
-                        item.tipo === "credito"
-                            ? "home-item-value-credit"
-                            : "home-item-value-debit"
-                    }`}
-                >
-                    {item.tipo === "credito" ? "+" : "-"}R${" "}
-                    {formatCurrency(Number(item.valor))}
+                <span className={`home-item-value ${item.tipo === "credito" ? "home-item-value-credit" : "home-item-value-debit"}`}>
+                    {item.tipo === "credito" ? "+" : "-"}R$ {formatCurrency(Number(item.valor))}
                 </span>
             </ListGroupItem>
         );
@@ -1017,237 +523,122 @@ export default function HomeScreen() {
             <Container className="home-shell py-4 py-md-5">
                 <AccountHeader name={getUserFirstName()} />
 
-                <motion.main
-                    className="home-main"
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45 }}
-                >
-                    <section className="home-hero-panel">
-                        <div className="home-hero-copy">
-                            <span className="home-kicker">Resumo financeiro</span>
-                            {/* <h1>Olá, {getUserFirstName()}</h1> */}
-                            <h1>Já sabe dos seus gastos?</h1>
-                            <p>{homeInsight}</p>
-                        </div>
+                <motion.main className="home-main" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
 
-                        <div className="home-balance-wrap">
+                    {/* 1 ── SALDO ───────────────────────────────── */}
+                    <section className="home-balance-panel">
+                        <div className="home-balance-inner">
                             <p className="home-balance-label">
                                 {selectedMonth ? "Saldo projetado" : "Saldo bancário"}
                             </p>
-
-                            <motion.h2
-                                className="home-balance-value"
-                                key={projectedBalance}
-                                initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                transition={{ duration: 0.3 }}
-                            >
+                            <motion.h2 className="home-balance-value" key={projectedBalance}
+                                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
                                 R$ {formatCurrency(Number(projectedBalance))}
                             </motion.h2>
-
                             <span className="home-balance-note">
                                 Recorrentes/mês:{" "}
-                                <strong
-                                    className={
-                                        recurringSummary.balance >= 0
-                                            ? "home-item-value-credit"
-                                            : "home-item-value-debit"
-                                    }
-                                >
-                                    {recurringSummary.balance >= 0 ? "+" : "-"}R${" "}
-                                    {formatCurrency(Math.abs(recurringSummary.balance))}
+                                <strong className={recurringSummary.balance >= 0 ? "home-item-value-credit" : "home-item-value-debit"}>
+                                    {recurringSummary.balance >= 0 ? "+" : "-"}R$ {formatCurrency(Math.abs(recurringSummary.balance))}
                                 </strong>
                             </span>
                         </div>
-                    </section>
 
-                    <SaveScoreCard score={financialScore} />
-
-                    <section className="home-graph-panel">
-                        <GraphicCard
-                            user={user}
-                            selectedMonth={selectedMonth}
-                            onSelectMonth={(monthKey) => {
-                                if (monthKey === currentMonthKey) {
-                                    setSelectedMonth(null);
-                                    return;
-                                }
-
-                                setSelectedMonth((current) =>
-                                    current === monthKey ? null : monthKey
-                                );
-                            }}
-                        />
-                    </section>
-
-                    <section className="home-education-section">
-                        <div className="home-section-header">
+                        <div className="home-balance-stats">
                             <div>
-                                <span className="home-kicker home-kicker-muted">
-                                    Aprenda com seus dados
-                                </span>
-                                <h5 className="home-section-title">
-                                    Interpretação financeira do mês
-                                </h5>
+                                <span>Entradas</span>
+                                <strong className="home-item-value-credit">R$ {formatCurrency(currentMonthOverview.totalCredit)}</strong>
+                            </div>
+                            <div>
+                                <span>Saídas</span>
+                                <strong className="home-item-value-debit">R$ {formatCurrency(currentMonthOverview.totalDebit)}</strong>
+                            </div>
+                            <div>
+                                <span>Resultado</span>
+                                <strong className={currentMonthOverview.balance >= 0 ? "home-item-value-credit" : "home-item-value-debit"}>
+                                    R$ {formatCurrency(currentMonthOverview.balance)}
+                                </strong>
+                            </div>
+                            <div>
+                                <span>Metas</span>
+                                <strong>{goalsOverview.progress.toFixed(0)}%</strong>
+                                <small>{goalsOverview.activeGoals} ativas</small>
                             </div>
                         </div>
-
-                        <EducationRecommendationCard
-                            recommendation={educationRecommendation}
-                        />
                     </section>
 
-                    <section className="home-actions-section home-actions-section-main">
-                        <div className="home-section-header">
-                            <div>
-                                <span className="home-kicker">Ações principais</span>
-                                <h5 className="home-section-title">
-                                    O que você quer fazer agora?
-                                </h5>
-                            </div>
-                        </div>
-
-                        <nav className="home-actions-grid home-actions-grid-main">
-                            {mainActions.map((action, index) => (
-                                <motion.button
-                                    key={action.title}
-                                    type="button"
+                    {/* 2 ── AÇÕES PRINCIPAIS ───────────────────── */}
+                    <section className="home-actions-section">
+                        <nav className="home-actions-grid-main">
+                            {mainActions.map((action, i) => (
+                                <motion.button key={action.title} type="button"
                                     className={`home-action-card home-action-card-${action.variant}`}
                                     onClick={() => navigate(action.route)}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.04, duration: 0.25 }}
-                                >
+                                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.04, duration: 0.25 }}>
                                     <div className="home-action-icon">
                                         <i className={`bi ${action.icon}`}></i>
                                     </div>
-
-                                    <div className="home-action-content">
-                                        <strong>{action.title}</strong>
-                                        <small>{action.description}</small>
-                                    </div>
-
+                                    <strong>{action.title}</strong>
                                     <i className="bi bi-chevron-right home-action-chevron"></i>
                                 </motion.button>
                             ))}
                         </nav>
                     </section>
 
-                    <section className="home-mini-overview">
-                        <div className="home-mini-card">
-                            <span>Entradas do mês</span>
-                            <strong className="home-item-value-credit">
-                                R$ {formatCurrency(currentMonthOverview.totalCredit)}
-                            </strong>
-                        </div>
+                    {/* 3 ── SAVESCORE ──────────────────────────── */}
+                    <SaveScoreCard score={financialScore} />
 
-                        <div className="home-mini-card">
-                            <span>Saídas do mês</span>
-                            <strong className="home-item-value-debit">
-                                R$ {formatCurrency(currentMonthOverview.totalDebit)}
-                            </strong>
-                        </div>
-
-                        <div className="home-mini-card">
-                            <span>Resultado</span>
-                            <strong
-                                className={
-                                    currentMonthOverview.balance >= 0
-                                        ? "home-item-value-credit"
-                                        : "home-item-value-debit"
-                                }
-                            >
-                                R$ {formatCurrency(currentMonthOverview.balance)}
-                            </strong>
-                        </div>
-
-                        <div className="home-mini-card">
-                            <span>Metas</span>
-                            <strong>{goalsOverview.progress.toFixed(0)}%</strong>
-                            <small>
-                                {goalsOverview.activeGoals} ativas •{" "}
-                                {goalsOverview.completedGoals} concluídas
-                            </small>
-                        </div>
+                    {/* 4 ── GRÁFICO ────────────────────────────── */}
+                    <section className="home-graph-panel">
+                        <GraphicCard user={user} selectedMonth={selectedMonth}
+                            onSelectMonth={(monthKey) => {
+                                if (monthKey === currentMonthKey) { setSelectedMonth(null); return; }
+                                setSelectedMonth((cur) => cur === monthKey ? null : monthKey);
+                            }} />
                     </section>
 
+                    {/* 5 ── RECOMENDAÇÃO EDUCACIONAL ───────────── */}
+                    <section className="home-education-section">
+                        <EducationRecommendationCard recommendation={educationRecommendation} />
+                    </section>
+
+                    {/* 6 ── FERRAMENTAS ────────────────────────── */}
                     <section className="home-actions-section home-tools-section">
                         <div className="home-section-header">
-                            <div>
-                                <span className="home-kicker home-kicker-muted">
-                                    Outras ferramentas
-                                </span>
-                                <h5 className="home-section-title">Explorar recursos</h5>
-                            </div>
+                            <span className="home-kicker home-kicker-muted">Explorar</span>
+                            <h5 className="home-section-title">Outras ferramentas</h5>
                         </div>
-
                         <nav className="home-tools-grid">
                             {secondaryActions.map((action) => (
-                                <button
-                                    key={action.title}
-                                    type="button"
-                                    className="home-tool-card"
-                                    onClick={() => navigate(action.route)}
-                                >
+                                <button key={action.title} type="button" className="home-tool-card" onClick={() => navigate(action.route)}>
                                     <div className="home-tool-icon">
                                         <i className={`bi ${action.icon}`}></i>
                                     </div>
-
-                                    <div>
-                                        <strong>{action.title}</strong>
-                                        <small>{action.description}</small>
-                                    </div>
+                                    <strong>{action.title}</strong>
                                 </button>
                             ))}
                         </nav>
                     </section>
 
+                    {/* 7 ── ATIVIDADE ──────────────────────────── */}
                     <section className="home-section">
                         <div className="home-section-header home-section-header-actions">
                             <div>
                                 <span className="home-kicker">Atividade</span>
                                 <h5 className="home-section-title">
-                                    {selectedMonthLabel
-                                        ? `Movimentações de ${selectedMonthLabel}`
-                                        : "Últimas atividades"}
+                                    {selectedMonthLabel ? `Movimentações de ${selectedMonthLabel}` : "Últimas atividades"}
                                 </h5>
                             </div>
-
                             <div className="home-header-actions">
                                 <div className="home-activity-tabs">
-                                    <button
-                                        className={activityTab === "movements" ? "active" : ""}
-                                        onClick={() => setActivityTab("movements")}
-                                    >
-                                        Movimentações
-                                    </button>
-
-                                    <button
-                                        className={activityTab === "recurring" ? "active" : ""}
-                                        onClick={() => setActivityTab("recurring")}
-                                    >
-                                        Recorrentes
-                                    </button>
+                                    <button className={activityTab === "movements" ? "active" : ""} onClick={() => setActivityTab("movements")}>Movimentações</button>
+                                    <button className={activityTab === "recurring"  ? "active" : ""} onClick={() => setActivityTab("recurring")}>Recorrentes</button>
                                 </div>
-
-                                <Button
-                                    color="primary"
-                                    size="sm"
-                                    className="home-export-btn"
-                                    onClick={handleExportPdf}
-                                >
-                                    <i className="bi bi-file-earmark-text"></i>
-                                    PDF
+                                <Button color="primary" size="sm" className="home-export-btn" onClick={handleExportPdf}>
+                                    <i className="bi bi-file-earmark-text"></i> PDF
                                 </Button>
-
                                 {!selectedMonth && (
-                                    <Button
-                                        color="primary"
-                                        size="sm"
-                                        className="home-export-btn"
-                                        onClick={() => navigate("/transaction-history")}
-                                    >
+                                    <Button color="primary" size="sm" className="home-export-btn" onClick={() => navigate("/transaction-history")}>
                                         Ver tudo
                                     </Button>
                                 )}
@@ -1256,29 +647,11 @@ export default function HomeScreen() {
 
                         {statementOverview && activityTab === "movements" && (
                             <div className="home-section-summary">
+                                <div><span>Créditos</span><strong className="home-item-value-credit">R$ {formatCurrency(statementOverview.totalCredit)}</strong></div>
+                                <div><span>Débitos</span><strong className="home-item-value-debit">R$ {formatCurrency(statementOverview.totalDebit)}</strong></div>
                                 <div>
-                                    <span>Créditos</span>
-                                    <strong className="home-item-value-credit">
-                                        R$ {formatCurrency(statementOverview.totalCredit)}
-                                    </strong>
-                                </div>
-
-                                <div>
-                                    <span>Débitos</span>
-                                    <strong className="home-item-value-debit">
-                                        R$ {formatCurrency(statementOverview.totalDebit)}
-                                    </strong>
-                                </div>
-
-                                <div>
-                                    <span>Saldo do período</span>
-                                    <strong
-                                        className={
-                                            statementOverview.balance >= 0
-                                                ? "home-item-value-credit"
-                                                : "home-item-value-debit"
-                                        }
-                                    >
+                                    <span>Saldo</span>
+                                    <strong className={statementOverview.balance >= 0 ? "home-item-value-credit" : "home-item-value-debit"}>
                                         R$ {formatCurrency(statementOverview.balance)}
                                     </strong>
                                 </div>
@@ -1286,107 +659,53 @@ export default function HomeScreen() {
                         )}
 
                         {activityTab === "movements" ? (
-                            displayExtratos.length > 0 ? (
-                                <ListGroup flush className="home-list">
-                                    {displayExtratos.map(renderExtratoItem)}
-                                </ListGroup>
-                            ) : (
-                                <div className="home-empty-state">
-                                    Nenhuma movimentação recente.
-                                </div>
-                            )
+                            displayExtratos.length > 0
+                                ? <ListGroup flush className="home-list">{displayExtratos.map(renderExtratoItem)}</ListGroup>
+                                : <div className="home-empty-state">Nenhuma movimentação recente.</div>
                         ) : recurringPreview.length > 0 ? (
                             <ListGroup flush className="home-list">
                                 {recurringPreview.map((item) => (
-                                    <ListGroupItem
-                                        key={`${item.type}-${item.id}`}
-                                        className={`home-list-item ${
-                                            item.type === "credit"
-                                                ? "home-list-item-credito"
-                                                : "home-list-item-debito"
-                                        }`}
-                                    >
+                                    <ListGroupItem key={`${item.type}-${item.id}`}
+                                        className={`home-list-item ${item.type === "credit" ? "home-list-item-credito" : "home-list-item-debito"}`}>
                                         <div className="home-list-left">
-                                            <div className="home-list-icon">
-                                                <i className="bi bi-repeat"></i>
-                                            </div>
-
+                                            <div className="home-list-icon"><i className="bi bi-repeat"></i></div>
                                             <div className="home-item-copy">
-                                                <p className="home-item-title mb-1">
-                                                    {item.name}
-                                                </p>
-
+                                                <p className="home-item-title mb-1">{item.name}</p>
                                                 <small className="home-item-subtitle d-block">
-                                                    Todo dia{" "}
-                                                    {item.billingDate || item.billingDay} —{" "}
-                                                    {freqMap[item.frequency] ||
-                                                        item.frequency}
+                                                    Todo dia {item.billingDate || item.billingDay} — {freqMap[item.frequency] || item.frequency}
                                                 </small>
-
-                                                {item.category && (
-                                                    <small className="home-item-meta">
-                                                        {item.category}
-                                                    </small>
-                                                )}
+                                                {item.category && <small className="home-item-meta">{item.category}</small>}
                                             </div>
                                         </div>
-
-                                        <span
-                                            className={`home-item-value ${
-                                                item.type === "credit"
-                                                    ? "home-item-value-credit"
-                                                    : "home-item-value-debit"
-                                            }`}
-                                        >
-                                            {item.type === "credit" ? "+" : "-"}R${" "}
-                                            {formatCurrency(Number(item.value))}
+                                        <span className={`home-item-value ${item.type === "credit" ? "home-item-value-credit" : "home-item-value-debit"}`}>
+                                            {item.type === "credit" ? "+" : "-"}R$ {formatCurrency(Number(item.value))}
                                         </span>
                                     </ListGroupItem>
                                 ))}
                             </ListGroup>
-                        ) : (
-                            <div className="home-empty-state">
-                                Nenhum recorrente cadastrado.
-                            </div>
-                        )}
+                        ) : <div className="home-empty-state">Nenhum recorrente cadastrado.</div>}
                     </section>
 
+                    {/* 8 ── BENEFÍCIOS ─────────────────────────── */}
                     {!selectedMonth && (
-                        <section id="benefits" className="home-section home-benefits-section">
+                        <section className="home-section home-benefits-section">
                             <div className="home-section-header">
-                                <div>
-                                    <span className="home-kicker home-kicker-muted">
-                                        Benefícios
-                                    </span>
-                                    <h5 className="home-section-title">
-                                        Programas e oportunidades
-                                    </h5>
-                                </div>
+                                <span className="home-kicker home-kicker-muted">Benefícios</span>
+                                <h5 className="home-section-title">Programas e oportunidades</h5>
                             </div>
-
-                            <div
-                                className="home-benefit-card"
-                                onClick={() => navigate("/benefits")}
-                            >
+                            <div className="home-benefit-card" onClick={() => navigate("/benefits")}>
                                 <div className="home-benefit-content">
-                                    <div className="home-benefit-icon">
-                                        <i className="bi bi-stars"></i>
-                                    </div>
-
+                                    <div className="home-benefit-icon"><i className="bi bi-stars"></i></div>
                                     <div className="home-item-copy">
-                                        <p className="home-item-title mb-1">
-                                            Benefícios para estudantes de baixa renda
-                                        </p>
-                                        <small className="home-item-subtitle">
-                                            Descubra auxílios, bolsas e programas de crédito estudantil.
-                                        </small>
+                                        <p className="home-item-title mb-1">Benefícios para estudantes de baixa renda</p>
+                                        <small className="home-item-subtitle">Descubra auxílios, bolsas e programas de crédito estudantil.</small>
                                     </div>
                                 </div>
-
                                 <i className="bi bi-chevron-right home-benefit-arrow"></i>
                             </div>
                         </section>
                     )}
+
                 </motion.main>
             </Container>
         </div>
