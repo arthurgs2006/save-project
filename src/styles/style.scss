@@ -1364,112 +1364,246 @@ button.btn-primary {
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.4);
 }
-.wallet-pill-chart {
-    display: flex;
-    justify-content: center;
-    align-items: flex-end;
-    gap: 1rem;
+.wallet-line-chart {
     margin-top: 1rem;
-    min-height: 150px;
-    overflow: hidden;
 }
 
-.wallet-pill-chart-col {
-    width: 42px;
+.wallet-line-chart-svg {
+    width: 100%;
+    height: 160px;
+    overflow: visible;
+}
+
+.wallet-line-zero {
+    stroke: rgba(255,255,255,0.08);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+}
+
+.wallet-line-area {
+    transition: d 0.4s ease;
+}
+
+.wallet-line-stroke {
+    stroke: #5f90ff;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 6px rgba(95,144,255,0.35));
+    transition: d 0.4s ease;
+}
+
+.wallet-line-dot {
+    fill: #0c1424;
+    stroke: rgba(255,255,255,0.25);
+    stroke-width: 1.5;
+    transition: r 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+}
+
+.wallet-line-dot.active {
+    fill: #5f90ff;
+    stroke: #5f90ff;
+}
+
+.wallet-line-dot.selected {
+    fill: #7ea8ff;
+    stroke: #ffffff;
+}
+
+.wallet-line-labels {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.wallet-line-label {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
-    gap: 0.7rem;
-    padding: 0.45rem 0.4rem;
-    border-radius: 18px;
-    transition:
-        background 0.22s ease,
-        box-shadow 0.22s ease;
+    gap: 0.25rem;
+    padding: 0.4rem 0.25rem;
+    border: none;
+    background: transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
-.wallet-pill-chart-col.selected-month {
-    background: rgba(255, 255, 255, 0.04);
+.wallet-line-label:hover {
+    background: rgba(255,255,255,0.04);
+}
+
+.wallet-line-label.selected {
+    background: rgba(255,255,255,0.06);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
 }
 
-.wallet-pill-chart-col.selected-month .wallet-pill-bar {
-    background: linear-gradient(
-        180deg,
-        #7ea8ff 0%,
-        #5a86ff 100%
-    );
-
-    opacity: 1;
-}
-
-.wallet-pill-chart-col.selected-month .wallet-pill-label {
-    color: rgba(255,255,255,0.96);
-    font-weight: 600;
-}
-
-.wallet-pill-bar {
-    width: 36px;
-    border-radius: 999px;
-    transition:
-        height 0.35s ease,
-        opacity 0.25s ease,
-        background 0.25s ease;
-
-    will-change: height;
-}
-
-.wallet-pill-bar.past {
-    background: rgba(255,255,255,0.07);
-    opacity: 0.28;
-}
-
-.wallet-pill-bar.future {
-    background: rgba(255,255,255,0.09);
-    opacity: 0.38;
-}
-
-.wallet-pill-bar.active {
-    background: linear-gradient(
-        180deg,
-        #5f90ff 0%,
-        #4477ff 55%,
-        #3470ff 100%
-    );
-
-    box-shadow:
-        0 0 18px rgba(73,121,255,0.18),
-        0 0 40px rgba(73,121,255,0.08);
-
-    opacity: 1;
-}
-
-.wallet-pill-label {
-    font-size: 0.84rem;
-    color: rgba(255,255,255,0.3);
-    line-height: 1;
-    text-align: center;
-    transition:
-        color 0.22s ease,
-        opacity 0.22s ease;
-}
-
-.wallet-pill-label.active {
-    color: rgba(240,246,255,0.95);
-    font-weight: 500;
-}
-
-.wallet-pill-value {
+.wallet-line-value {
     font-size: 0.7rem;
     color: rgba(255,255,255,0.35);
     line-height: 1;
     white-space: nowrap;
-    transition: color 0.22s ease;
 }
 
-.wallet-pill-chart-col.selected-month .wallet-pill-value {
+.wallet-line-month {
+    font-size: 0.84rem;
+    color: rgba(255,255,255,0.3);
+    line-height: 1;
+}
+
+.wallet-line-label.active .wallet-line-value,
+.wallet-line-label.selected .wallet-line-value {
     color: rgba(240,246,255,0.85);
     font-weight: 600;
+}
+
+.wallet-line-label.active .wallet-line-month,
+.wallet-line-label.selected .wallet-line-month {
+    color: rgba(240,246,255,0.95);
+    font-weight: 500;
+}
+
+@media (max-width: 576px) {
+    .wallet-line-chart-svg {
+        height: 130px;
+    }
+
+    .wallet-line-value {
+        font-size: 0.62rem;
+    }
+
+    .wallet-line-month {
+        font-size: 0.74rem;
+    }
+}
+
+.category-donut {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.category-donut-chart {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
+}
+
+.category-donut-chart svg {
+    width: 100%;
+    height: 100%;
+}
+
+.category-donut-chart circle {
+    transition: stroke-dasharray 0.5s ease;
+}
+
+.category-donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.15rem;
+}
+
+.category-donut-center span {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.45);
+}
+
+.category-donut-center strong {
+    font-size: 1rem;
+    color: rgba(240,246,255,0.95);
+}
+
+.category-donut-center small {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.35);
+    text-transform: capitalize;
+}
+
+.category-donut-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    flex: 1;
+    min-width: 160px;
+}
+
+.category-donut-legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.75);
+}
+
+.category-donut-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.category-donut-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.category-donut-percent {
+    font-weight: 600;
+    color: rgba(240,246,255,0.9);
+}
+
+.category-donut-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.4rem;
+    padding: 1.5rem 1rem;
+    width: 100%;
+    color: rgba(255,255,255,0.4);
+}
+
+.category-donut-empty i {
+    font-size: 1.8rem;
+    color: rgba(255,255,255,0.25);
+}
+
+.category-donut-empty p {
+    margin: 0;
+    color: rgba(255,255,255,0.55);
+    font-size: 0.9rem;
+}
+
+.category-donut-empty small {
+    font-size: 0.78rem;
+}
+
+@media (max-width: 576px) {
+    .category-donut {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .category-donut-chart {
+        margin: 0 auto;
+    }
 }
 
 @media (max-width: 576px) {

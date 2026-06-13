@@ -181,7 +181,6 @@ export default function GraphicCard({
         if (!user) return [];
 
         const map: Record<string, number> = {};
-        const gastosPorMes: Record<string, number> = {};
 
         const extratos = Array.isArray(user.extratos) ? user.extratos : [];
 
@@ -216,11 +215,6 @@ export default function GraphicCard({
                     : -valor;
 
             map[key] = (map[key] || 0) + real;
-
-            if (item.tipo === "debito") {
-                gastosPorMes[key] =
-                    (gastosPorMes[key] || 0) + valor;
-            }
         });
 
         const hoje = new Date();
@@ -282,17 +276,6 @@ export default function GraphicCard({
             });
         });
 
-        const valoresGastosMensais =
-            Object.values(gastosPorMes);
-
-        const mediaGastos =
-            valoresGastosMensais.length > 0
-                ? valoresGastosMensais.reduce(
-                    (a, b) => a + b,
-                    0
-                ) / valoresGastosMensais.length
-                : 0;
-
         const meses: MesHistorico[] = [];
 
         let saldoAtual = 0;
@@ -341,10 +324,7 @@ export default function GraphicCard({
 
             // FUTURO
             else {
-                saldoAtual =
-                    saldoAtual +
-                    recorrencia -
-                    mediaGastos;
+                saldoAtual = saldoAtual + recorrencia;
 
                 valorMes = saldoAtual;
             }
@@ -368,85 +348,103 @@ export default function GraphicCard({
 
     if (history.length === 0) return null;
 
-    // NORMALIZAÇÃO REAL DAS BARRAS
+    // NORMALIZAÇÃO DO TRAÇADO
     const values = history.map((item) => item.valor);
 
-    const max = Math.max(...values);
+    const max = Math.max(...values, 0);
 
-    const min = Math.min(...values);
+    const min = Math.min(...values, 0);
 
     const range = Math.max(max - min, 1);
 
-    function getBarHeight(valor: number) {
-        const normalized =
-            (valor - min) / range;
+    const width = 1200;
+    const height = 160;
+    const paddingX = 28;
+    const paddingTop = 26;
+    const paddingBottom = 34;
+    const plotHeight = height - paddingTop - paddingBottom;
 
-        return 70 + normalized * 35;
+    const step = (width - paddingX * 2) / (history.length - 1);
+
+    function getX(index: number) {
+        return paddingX + index * step;
     }
 
+    function getY(valor: number) {
+        const normalized = (valor - min) / range;
+        return paddingTop + (1 - normalized) * plotHeight;
+    }
+
+    const zeroY = getY(0);
+
+    const points = history.map((item, index) => ({ x: getX(index), y: getY(item.valor) }));
+
+    function buildSmoothPath(pts: { x: number; y: number }[]) {
+        if (pts.length < 2) return `M${pts[0]?.x ?? 0},${pts[0]?.y ?? 0}`;
+
+        let path = `M${pts[0].x},${pts[0].y}`;
+
+        for (let i = 0; i < pts.length - 1; i++) {
+            const current = pts[i];
+            const next = pts[i + 1];
+            const midX = (current.x + next.x) / 2;
+
+            path += ` C${midX},${current.y} ${midX},${next.y} ${next.x},${next.y}`;
+        }
+
+        return path;
+    }
+
+    const linePath = buildSmoothPath(points);
+    const areaPath = `${linePath} L${getX(history.length - 1)},${zeroY} L${getX(0)},${zeroY} Z`;
+
     return (
-        <div className="wallet-pill-chart">
-            {history.map((item) => (
-                <div
-                    key={item.key}
-                    className={`wallet-pill-chart-col ${
-                        item.key === selectedMonth
-                            ? "selected-month"
-                            : ""
-                    }`}
-                    style={{
-                        cursor: onSelectMonth
-                            ? "pointer"
-                            : "default",
+        <div className="wallet-line-chart">
+            <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" className="wallet-line-chart-svg">
+                <defs>
+                    <linearGradient id="walletLineFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#5f90ff" stopOpacity="0.35" />
+                        <stop offset="100%" stopColor="#5f90ff" stopOpacity="0" />
+                    </linearGradient>
+                </defs>
 
-                        outline:
-                            item.key === selectedMonth
-                                ? "2px solid rgba(255, 255, 255, 0.6)"
-                                : undefined,
+                <line x1={paddingX} y1={zeroY} x2={width - paddingX} y2={zeroY} className="wallet-line-zero" />
 
-                        borderRadius:
-                            item.key === selectedMonth
-                                ? "18px"
-                                : undefined,
-                    }}
-                    onClick={() =>
-                        onSelectMonth?.(item.key)
-                    }
-                >
-                    <span className="wallet-pill-value">
-                        {item.valor.toLocaleString("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                            maximumFractionDigits: 0,
-                        })}
-                    </span>
+                <path d={areaPath} className="wallet-line-area" fill="url(#walletLineFill)" />
+                <path d={linePath} className="wallet-line-stroke" fill="none" />
 
-                    <div
-                        className={`wallet-pill-bar ${
-                            item.atual
-                                ? "active"
-                                : item.futuro
-                                ? "future"
-                                : "past"
-                        }`}
-                        style={{
-                            height: `${getBarHeight(
-                                item.valor
-                            )}px`,
-                        }}
+                {history.map((item, index) => (
+                    <circle
+                        key={item.key}
+                        cx={getX(index)}
+                        cy={getY(item.valor)}
+                        r={item.key === selectedMonth ? 6 : item.atual ? 5 : 4}
+                        className={`wallet-line-dot ${item.atual ? "active" : ""} ${item.key === selectedMonth ? "selected" : ""}`}
+                        style={{ cursor: onSelectMonth ? "pointer" : "default" }}
+                        onClick={() => onSelectMonth?.(item.key)}
                     />
+                ))}
+            </svg>
 
-                    <span
-                        className={`wallet-pill-label ${
-                            item.atual
-                                ? "active"
-                                : ""
-                        }`}
+            <div className="wallet-line-labels">
+                {history.map((item) => (
+                    <button
+                        key={item.key}
+                        type="button"
+                        className={`wallet-line-label ${item.atual ? "active" : ""} ${item.key === selectedMonth ? "selected" : ""}`}
+                        onClick={() => onSelectMonth?.(item.key)}
                     >
-                        {item.mes}
-                    </span>
-                </div>
-            ))}
+                        <span className="wallet-line-value">
+                            {item.valor.toLocaleString("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                                maximumFractionDigits: 0,
+                            })}
+                        </span>
+                        <span className="wallet-line-month">{item.mes}</span>
+                    </button>
+                ))}
+            </div>
         </div>
     );
 }

@@ -8,6 +8,7 @@ import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
+import CategoryDonutChart from "../../components/graphic_components/CategoryDonutChart";
 import SaveScoreCard from "../../components/financial_health/SaveScoreCard";
 import { analyzeFinancialHealth, type FinancialScoreResponse } from "../../services/financialHealthApi";
 
@@ -26,6 +27,7 @@ interface Extrato {
     status?: string;
     metodo?: string;
     origem?: string;
+    category?: string;
     goalId?: number | null;
     goalName?: string | null;
 }
@@ -138,6 +140,7 @@ function normalizeBalanceStatement(item: any): Extrato {
         status: item.status ?? item.Status ?? "",
         metodo: item.metodo ?? item.Metodo ?? "",
         origem: item.origem ?? item.Origem ?? "",
+        category: item.category ?? item.Category ?? "",
         goalId: item.goalId ?? item.GoalId ?? null,
         goalName: item.goalName ?? item.GoalName ?? null,
     };
@@ -428,6 +431,16 @@ export default function HomeScreen() {
         return { totalCredit, totalDebit, balance: totalCredit - totalDebit };
     }, [user, currentMonthKey, recurringSummary.totalCredits, recurringSummary.totalDebts]);
 
+    const categoryBreakdown = useMemo(() => {
+        const debits = statementItems.filter((i) => i.tipo === "debito");
+        const map: Record<string, number> = {};
+        debits.forEach((item) => {
+            const label = item.category?.trim() || "Outros";
+            map[label] = (map[label] || 0) + Number(item.valor || 0);
+        });
+        return Object.entries(map).map(([label, value]) => ({ label, value }));
+    }, [statementItems]);
+
     const goalsOverview = useMemo(() => {
         const goals = user?.goals || [];
         const goalProgresses = goals.map((g) => {
@@ -614,6 +627,12 @@ export default function HomeScreen() {
                                 if (monthKey === currentMonthKey) { setSelectedMonth(null); return; }
                                 setSelectedMonth((cur) => cur === monthKey ? null : monthKey);
                             }} />
+
+                        <div className="home-section-header">
+                            <span className="home-kicker home-kicker-muted">Gastos</span>
+                            <h5 className="home-section-title">Gastos por categoria</h5>
+                        </div>
+                        <CategoryDonutChart items={categoryBreakdown} monthLabel={statementMonthLabel} />
                     </section>
 
                     {/* 6 ── FERRAMENTAS ────────────────────────── */}
