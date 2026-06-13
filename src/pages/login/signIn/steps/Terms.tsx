@@ -1,4 +1,6 @@
 import { useState } from "react";
+import AlertModal from "../../../../components/generic_components/AlertModal";
+import "./signInSteps.scss";
 
 type TermsProps = {
     data: Record<string, unknown>;
@@ -10,9 +12,23 @@ export default function Terms({ onFinish }: TermsProps) {
     const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
     const [acceptedConsent, setAcceptedConsent] = useState(false);
 
+    const [modalInfo, setModalInfo] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: "success" | "danger" | "warning" | "info";
+    }>({
+        isOpen: false,
+        message: "",
+        type: "info",
+    });
+
     function handleFinish() {
         if (!acceptedTerms || !acceptedPrivacy || !acceptedConsent) {
-            alert("É necessário aceitar todos os termos para continuar.");
+            setModalInfo({
+                isOpen: true,
+                message: "É necessário aceitar todos os termos para continuar.",
+                type: "warning",
+            });
             return;
         }
 
@@ -28,7 +44,7 @@ export default function Terms({ onFinish }: TermsProps) {
                 </p>
             </div>
 
-            <div className="text-start mb-4">
+            <div className="signin-terms-block text-start mb-4">
                 <h5 className="fw-semibold text-white mb-2">Termos de Uso</h5>
                 <p className="home-item-subtitle">
                     Ao utilizar esta aplicação, o usuário concorda em fornecer
@@ -53,7 +69,7 @@ export default function Terms({ onFinish }: TermsProps) {
                 </div>
             </div>
 
-            <div className="text-start mb-4">
+            <div className="signin-terms-block text-start mb-4">
                 <h5 className="fw-semibold text-white mb-2">Política de Privacidade</h5>
                 <p className="home-item-subtitle">
                     Esta aplicação coleta dados como nome, email, telefone, CPF
@@ -78,7 +94,7 @@ export default function Terms({ onFinish }: TermsProps) {
                 </div>
             </div>
 
-            <div className="text-start mb-4">
+            <div className="signin-terms-block text-start mb-4">
                 <h5 className="fw-semibold text-white mb-2">
                     Consentimento de Uso de Dados
                 </h5>
@@ -105,12 +121,19 @@ export default function Terms({ onFinish }: TermsProps) {
 
             <button
                 type="button"
-                className="btn btn-primary w-100 fw-semibold py-3"
-                style={{ borderRadius: "999px", fontSize: "0.98rem" }}
+                className="signin-step-cta"
                 onClick={handleFinish}
             >
                 Finalizar cadastro
             </button>
+
+            <AlertModal
+                isOpen={modalInfo.isOpen}
+                message={modalInfo.message}
+                type={modalInfo.type}
+                cancelText="OK"
+                onClose={() => setModalInfo({ ...modalInfo, isOpen: false })}
+            />
         </div>
     );
 }

@@ -1,3 +1,5 @@
+import "./signInSteps.scss";
+
 type WelcomeProps = {
     onNext: () => void;
 };
@@ -14,8 +16,7 @@ export default function Welcome({ onNext }: WelcomeProps) {
 
             <button
                 type="button"
-                className="btn btn-primary w-100 fw-semibold py-3"
-                style={{ borderRadius: "999px", fontSize: "0.98rem" }}
+                className="signin-step-cta"
                 onClick={onNext}
             >
                 Criar uma conta

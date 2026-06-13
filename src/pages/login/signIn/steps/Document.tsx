@@ -1,4 +1,6 @@
 import { useState } from "react";
+import AlertModal from "../../../../components/generic_components/AlertModal";
+import "./signInSteps.scss";
 
 type DocumentProps = {
     onNext: (data: { cpf: string }) => void;
@@ -7,9 +9,23 @@ type DocumentProps = {
 export default function Document({ onNext }: DocumentProps) {
     const [cpf, setCpf] = useState("");
 
+    const [modalInfo, setModalInfo] = useState<{
+        isOpen: boolean;
+        message: string;
+        type: "success" | "danger" | "warning" | "info";
+    }>({
+        isOpen: false,
+        message: "",
+        type: "info",
+    });
+
     function handleContinue() {
         if (!cpf.trim()) {
-            alert("Informe seu CPF.");
+            setModalInfo({
+                isOpen: true,
+                message: "Informe seu CPF.",
+                type: "warning",
+            });
             return;
         }
 
@@ -40,12 +56,19 @@ export default function Document({ onNext }: DocumentProps) {
 
             <button
                 type="button"
-                className="btn btn-primary w-100 fw-semibold py-3"
-                style={{ borderRadius: "999px", fontSize: "0.98rem" }}
+                className="signin-step-cta"
                 onClick={handleContinue}
             >
                 Continuar
             </button>
+
+            <AlertModal
+                isOpen={modalInfo.isOpen}
+                message={modalInfo.message}
+                type={modalInfo.type}
+                cancelText="OK"
+                onClose={() => setModalInfo({ ...modalInfo, isOpen: false })}
+            />
         </div>
     );
 }

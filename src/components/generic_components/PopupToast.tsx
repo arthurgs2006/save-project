@@ -33,9 +33,9 @@ export default function PopupToast({
       {isOpen && (
         <motion.div
           className="popup-toast"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 30, x: "-50%" }}
+          animate={{ opacity: 1, y: 0, x: "-50%" }}
+          exit={{ opacity: 0, y: 30, x: "-50%" }}
           transition={{ duration: 0.25 }}
           style={{ borderColor: typeColors[type] }}
         >

@@ -433,32 +433,9 @@ export default function RegisterRecurringCredit() {
               )
             : [...(user.recurringCredits || []), normalizedCredit];
 
-        const newStatement = {
-            id: Date.now(),
-            data: now.toLocaleDateString("pt-BR"),
-            hora: now.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-            dataHora: `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString(
-                "pt-BR",
-                {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }
-            )}`,
-            descricao: isEditing
-                ? `Crédito recorrente editado: ${normalizedCredit.name}`
-                : `Crédito recorrente cadastrado: ${normalizedCredit.name}`,
-            valor: Number(normalizedCredit.value),
-            tipo: "credito" as const,
-            status: "Recorrente",
-        };
-
         const updatedUser: User = {
             ...user,
             recurringCredits: updatedCredits,
-            extratos: [...(user.extratos || []), newStatement],
         };
 
         setUser(updatedUser);

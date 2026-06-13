@@ -19,6 +19,7 @@ export default function SaveScoreCard({ score, compact = false }: Props) {
         if (score.score >= 85) return "excellent";
         if (score.score >= 70) return "good";
         if (score.score >= 50) return "medium";
+        if (score.score >= 30) return "warning";
         return "danger";
     }
 

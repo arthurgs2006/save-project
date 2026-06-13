@@ -68,6 +68,21 @@ interface Goal {
     updatedAt?: string;
 }
 
+interface RecurringItem {
+    id: number | string;
+    value: number;
+    type?: "credit" | "debit";
+    tipo?: "credito" | "debito";
+    billingDate?: string | number;
+    billingDay?: string | number;
+    frequency: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    isActive?: boolean;
+    monthlyEquivalent?: number;
+    createdAt?: string;
+}
+
 interface User {
     id: number | string;
     nome?: string;
@@ -75,6 +90,80 @@ interface User {
     saldo_final: number;
     extratos: DepositStatement[];
     goals?: Goal[];
+    recurringDebts?: RecurringItem[];
+    recurringCredits?: RecurringItem[];
+}
+
+function getDateFromValue(value?: string | null) {
+    if (!value) return null;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getMonthKeyFromDate(date: Date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getMonthStart(monthKey: string) {
+    const [y, m] = monthKey.split("-");
+    return new Date(Number(y), Number(m) - 1, 1);
+}
+
+function getMonthEnd(monthKey: string) {
+    const [y, m] = monthKey.split("-");
+    return new Date(Number(y), Number(m), 0);
+}
+
+function isRecurringValidForMonth(item: RecurringItem, monthKey: string) {
+    if (item.isActive === false) return false;
+    const monthStart = getMonthStart(monthKey);
+    const monthEnd   = getMonthEnd(monthKey);
+    const startDate  = getDateFromValue(item.startDate || item.createdAt || null);
+    const endDate    = getDateFromValue(item.endDate || null);
+    if (startDate && startDate > monthEnd)   return false;
+    if (endDate   && endDate   < monthStart) return false;
+    return true;
+}
+
+function hasRecurringOccurredThisMonth(item: RecurringItem, monthKey: string, today: Date) {
+    if (!isRecurringValidForMonth(item, monthKey)) return false;
+
+    const todayKey = getMonthKeyFromDate(today);
+    if (monthKey < todayKey) return true;
+    if (monthKey > todayKey) return false;
+
+    const startDate = getDateFromValue(item.startDate || item.createdAt || null);
+    if (startDate && getMonthKeyFromDate(startDate) === monthKey && startDate > today) return false;
+
+    const billingDay = Number(item.billingDay ?? item.billingDate ?? 0);
+    if (billingDay > 0 && billingDay > today.getDate()) return false;
+
+    return true;
+}
+
+function getRecurringMonthlyEquivalent(item: RecurringItem) {
+    if (item.monthlyEquivalent && item.monthlyEquivalent > 0) return item.monthlyEquivalent;
+    const value = Number(item.value || 0);
+    if (item.frequency === "daily")  return value * 30;
+    if (item.frequency === "weekly") return value * 4.33;
+    if (item.frequency === "yearly") return value / 12;
+    return value;
+}
+
+function getRecurringBalanceAdjustment(user: User | null) {
+    if (!user) return 0;
+    const today = new Date();
+    const monthKey = getMonthKeyFromDate(today);
+
+    const totalCredits = (user.recurringCredits || [])
+        .filter((i) => hasRecurringOccurredThisMonth(i, monthKey, today))
+        .reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
+
+    const totalDebts = (user.recurringDebts || [])
+        .filter((i) => hasRecurringOccurredThisMonth(i, monthKey, today))
+        .reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
+
+    return totalCredits - totalDebts;
 }
 
 interface BalanceOperationResponse {
@@ -215,6 +304,8 @@ export default function DepositPage() {
                 saldo_final: Number(parsedUser.saldo_final || 0),
                 extratos: parsedUser.extratos || [],
                 goals: parsedUser.goals || [],
+                recurringDebts: parsedUser.recurringDebts || [],
+                recurringCredits: parsedUser.recurringCredits || [],
             };
 
             setUser(baseUser);
@@ -235,6 +326,8 @@ export default function DepositPage() {
                             parsedUser.extratos || []
                         ),
                         goals: parsedUser.goals || serverUser.goals || [],
+                        recurringDebts:   parsedUser.recurringDebts   || serverUser.recurringDebts   || [],
+                        recurringCredits: parsedUser.recurringCredits || serverUser.recurringCredits || [],
                     };
                 }
             } catch {
@@ -327,7 +420,7 @@ export default function DepositPage() {
     }, [user]);
 
     const preview = useMemo(() => {
-        const currentBalance = Number(user?.saldo_final || 0);
+        const currentBalance = Number(user?.saldo_final || 0) + getRecurringBalanceAdjustment(user);
         const nextBalance = currentBalance + numericDeposit;
 
         const goalCurrent = Number(selectedGoalData?.currentAmount || 0);

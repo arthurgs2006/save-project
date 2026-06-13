@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Container } from "reactstrap";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +36,8 @@ export default function FinancialEducation() {
 
     const [search, setSearch] = useState("");
     const [category, setCategory] = useState("Todos");
-    const [selectedModule, setSelectedModule] = useState(modules[0] || null);
+    const [selectedModule, setSelectedModule] = useState<typeof modules[number] | null>(null);
+    const detailCardRef = useRef<HTMLDivElement | null>(null);
     const [toast, setToast] = useState<{
         isOpen: boolean;
         message: string;
@@ -92,6 +93,12 @@ export default function FinancialEducation() {
             message: `Trilha selecionada: ${module.title}`,
             type: "success",
         });
+
+        if (window.innerWidth > 768) {
+            requestAnimationFrame(() => {
+                detailCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+        }
     }
 
     return (
@@ -265,7 +272,7 @@ export default function FinancialEducation() {
                             />
                         )}
 
-                        <aside className={`education-detail-card ${selectedModule ? "active" : ""}`}>
+                        <aside ref={detailCardRef} className={`education-detail-card ${selectedModule ? "active" : ""}`}>
                             {selectedModule ? (
                                 <>
                                     <div

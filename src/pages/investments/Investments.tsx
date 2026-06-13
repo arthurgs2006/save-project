@@ -336,23 +336,65 @@ export default function Investments() {
       const balance = Number(user?.saldo_final || 0);
       const income = Number(user?.receita || 0);
 
+      const reserveMonths = income > 0 ? balance / income : 0;
+
+      if (balance <= 0 || income <= 0) {
+        return {
+          balance,
+          income,
+          suggestedProfile: "conservador",
+          healthText:
+            "Ainda não há saldo ou renda suficientes registrados. Comece com opções conservadoras e de fácil resgate enquanto organiza seu orçamento."
+        };
+      }
+
       if (balance < 700 || income < 1800) {
         return {
           balance,
           income,
           suggestedProfile: "conservador",
           healthText:
-            "O cenário sugere começar com opções mais seguras e manter foco em reserva e consistência."
+            "O cenário sugere priorizar reserva de emergência e opções de baixo risco antes de buscar maior retorno."
         };
       }
 
-      if (balance >= 3000 && income >= 3500) {
+      if (reserveMonths < 1) {
+        return {
+          balance,
+          income,
+          suggestedProfile: "conservador",
+          healthText:
+            "Sua reserva atual ainda cobre menos de um mês de renda. Vale consolidá-la em opções seguras e líquidas antes de migrar para um perfil moderado."
+        };
+      }
+
+      if (balance < 3000 || income < 3500 || reserveMonths < 3) {
+        return {
+          balance,
+          income,
+          suggestedProfile: "moderado",
+          healthText:
+            "O cenário indica equilíbrio entre segurança, crescimento e previsibilidade, mantendo parte do saldo como reserva."
+        };
+      }
+
+      if (balance >= 8000 && income >= 6000 && reserveMonths >= 6) {
         return {
           balance,
           income,
           suggestedProfile: "agressivo",
           healthText:
-            "O cenário permite estudar opções com maior potencial de retorno, mantendo controle de risco."
+            "Sua reserva está bem consolidada, então o cenário permite estudar opções com maior potencial de retorno, mantendo controle de risco."
+        };
+      }
+
+      if (balance >= 3000 && income >= 3500 && reserveMonths >= 3) {
+        return {
+          balance,
+          income,
+          suggestedProfile: "agressivo",
+          healthText:
+            "O cenário permite estudar opções com maior potencial de retorno, desde que parte da reserva continue protegida em produtos de baixo risco."
         };
       }
 
@@ -361,7 +403,7 @@ export default function Investments() {
         income,
         suggestedProfile: "moderado",
         healthText:
-          "O cenário indica equilíbrio entre segurança, crescimento e previsibilidade."
+          "O cenário indica equilíbrio entre segurança, crescimento e previsibilidade. Reforçar a reserva amplia a margem para um perfil mais arrojado."
       };
     } catch {
       return {

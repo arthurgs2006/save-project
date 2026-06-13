@@ -256,7 +256,7 @@ function buildGoalPayload(form: GoalForm, userId: number | string) {
         targetAmount: Number(form.targetAmount || 0),
         currentAmount: Number(form.currentAmount || 0),
         monthlyContribution: Number(form.monthlyContribution || 0),
-        deadline: form.deadline || null,
+        deadline: form.deadline && form.deadline !== "sem-prazo" ? form.deadline : null,
         category: form.category,
         priority: form.priority,
         icon: form.icon,
@@ -880,10 +880,28 @@ export default function GoalsPage() {
                                     <input
                                         type="date"
                                         value={form.deadline}
+                                        disabled={form.deadline === "sem-prazo"}
                                         onChange={(event) =>
                                             updateForm("deadline", event.target.value)
                                         }
                                     />
+
+                                    <div className="goal-no-deadline-check">
+                                        <input
+                                            type="checkbox"
+                                            id="goal-no-deadline"
+                                            checked={form.deadline === "sem-prazo"}
+                                            onChange={(event) =>
+                                                updateForm(
+                                                    "deadline",
+                                                    event.target.checked ? "sem-prazo" : ""
+                                                )
+                                            }
+                                        />
+                                        <label htmlFor="goal-no-deadline">
+                                            Meta sem prazo definido
+                                        </label>
+                                    </div>
                                 </label>
 
                                 <label>

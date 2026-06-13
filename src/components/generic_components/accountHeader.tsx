@@ -39,7 +39,7 @@ export default function AccountHeader({
                     </h6>
 
                     <h5 className="fw-bold">
-                        {name || "Usuário"}
+                        {(name || "Usuário").split(" ")[0]}
                     </h5>
                 </Link>
             ) : (

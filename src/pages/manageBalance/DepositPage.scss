@@ -50,10 +50,9 @@
 }
 
 .deposit-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+    display: flex;
+    flex-direction: column;
     gap: 18px;
-    align-items: stretch;
     border-radius: 30px;
     padding: 24px;
     margin-bottom: 18px;
@@ -74,6 +73,7 @@
 
 .deposit-hero-grid {
     display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
 
     div {
@@ -102,10 +102,9 @@
 }
 
 .deposit-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+    display: flex;
+    flex-direction: column;
     gap: 18px;
-    align-items: start;
     margin-bottom: 18px;
 }
 
@@ -286,27 +285,28 @@
 }
 
 .deposit-preview-card {
-    position: sticky;
-    top: 18px;
-    text-align: center;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(220px, 0.8fr);
+    gap: 20px;
+    align-items: center;
+    text-align: left;
 }
 
 .deposit-preview-icon {
-    width: 78px;
-    height: 78px;
+    width: 64px;
+    height: 64px;
     display: grid;
     place-items: center;
-    margin: 22px auto 14px;
-    border-radius: 24px;
+    border-radius: 20px;
     background: rgba(15, 23, 42, 0.96);
     border: 1px solid rgba(148, 163, 184, 0.14);
     color: #86efac;
-    font-size: 2rem;
+    font-size: 1.7rem;
 }
 
 .deposit-preview-card h2 {
-    margin: 0 0 10px;
-    font-size: 1.8rem;
+    margin: 0 0 6px;
+    font-size: 1.6rem;
 }
 
 .deposit-preview-card p {
@@ -320,7 +320,6 @@
 }
 
 .deposit-goal-preview {
-    margin-top: 20px;
     padding: 16px;
     border-radius: 20px;
     background: rgba(8, 15, 30, 0.72);
@@ -448,13 +447,16 @@
 }
 
 @media (max-width: 1024px) {
-    .deposit-hero,
-    .deposit-layout {
+    .deposit-hero-grid {
         grid-template-columns: 1fr;
     }
 
     .deposit-preview-card {
-        position: static;
+        grid-template-columns: auto 1fr;
+    }
+
+    .deposit-goal-preview {
+        grid-column: 1 / -1;
     }
 }
 
@@ -491,8 +493,8 @@
     }
 
     .deposit-hero {
-    border-radius: 20px;
-    padding: 16px;
+        border-radius: 20px;
+        padding: 16px;
     }
 
     .deposit-hero h1 {
@@ -510,15 +512,23 @@
         padding: 16px;
     }
 
+    .deposit-preview-card {
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+    }
+
     .deposit-preview-icon {
-        width: 56px;
-        height: 56px;
-        font-size: 1.4rem;
-        margin: 14px auto 10px;
+        width: 52px;
+        height: 52px;
+        font-size: 1.3rem;
     }
 
     .deposit-preview-card h2 {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
+    }
+
+    .deposit-goal-preview {
+        grid-column: 1 / -1;
     }
 
     .deposit-history-icon {

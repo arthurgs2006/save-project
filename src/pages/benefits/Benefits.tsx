@@ -15,6 +15,7 @@ import IncomeSituation from "./steps/IncomeSituation";
 import HousingSituation from "./steps/HousingSituation";
 import DistanceSituation from "./steps/DistanceSituation";
 import BenefitsResult from "./steps/BenefitsResult";
+import "./Benefits.scss";
 
 interface User {
     id?: number | string;
@@ -434,19 +435,14 @@ export default function StudentBenefitsPage() {
 
                     <div className="home-graph-card mt-3 p-4">
                         <div className="d-flex flex-column gap-2 mb-4">
-                            <div className="d-flex justify-content-between align-items-center">
+            <div className="benefits-header">
                                 <div>
-                                    <h4
-                                        style={{
-                                            marginBottom: 4,
-                                            fontWeight: 800
-                                        }}
-                                    >
+                                    <h4 className="benefits-header__title">
                                         Mapeamento de
                                         benefícios
                                     </h4>
 
-                                    <span className="home-item-subtitle">
+                                    <span className="home-item-subtitle benefits-header__desc">
                                         Responda algumas
                                         perguntas para
                                         encontrarmos
@@ -458,8 +454,8 @@ export default function StudentBenefitsPage() {
                                     </span>
                                 </div>
 
-                                <div className="text-end">
-                                    <div className="home-item-subtitle">
+                                <div className="benefits-header__meta">
+                                    <div className="home-item-subtitle benefits-header__step">
                                         Etapa {step} de 7
                                     </div>
 
@@ -473,33 +469,16 @@ export default function StudentBenefitsPage() {
                                 </div>
                             </div>
 
-                            <div
-                                style={{
-                                    width: "100%",
-                                    height: 10,
-                                    borderRadius:
-                                        "999px",
-                                    background:
-                                        "rgba(255,255,255,0.08)",
-                                    overflow:
-                                        "hidden"
-                                }}
-                            >
+                            <div className="benefits-progress-track">
                                 <div
+                                    className="benefits-progress-fill"
                                     style={{
-                                        width: `${progress}%`,
-                                        height: "100%",
-                                        borderRadius:
-                                            "999px",
-                                        background:
-                                            "linear-gradient(90deg, rgba(117,225,255,0.98), rgba(58,124,255,0.98))",
-                                        transition:
-                                            "0.3s ease"
+                                        width: `${progress}%`
                                     }}
                                 />
                             </div>
 
-                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div className="benefits-autosave">
                                 <span className="home-item-subtitle">
                                     Suas respostas são
                                     salvas
@@ -518,7 +497,7 @@ export default function StudentBenefitsPage() {
                                 STORAGE_KEY
                             ) &&
                                 !formData.completed && (
-                                    <div className="d-flex gap-2 mt-2 flex-wrap">
+                                    <div className="benefits-resume-actions">
                                         <button
                                             type="button"
                                             className="btn btn-primary"

@@ -437,32 +437,9 @@ export default function RegisterRecurringDebt() {
               )
             : [...(user.recurringDebts || []), normalizedDebt];
 
-        const newStatement = {
-            id: Date.now(),
-            data: now.toLocaleDateString("pt-BR"),
-            hora: now.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-            }),
-            dataHora: `${now.toLocaleDateString("pt-BR")} ${now.toLocaleTimeString(
-                "pt-BR",
-                {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                }
-            )}`,
-            descricao: isEditing
-                ? `Débito recorrente editado: ${normalizedDebt.name}`
-                : `Débito recorrente cadastrado: ${normalizedDebt.name}`,
-            valor: Number(normalizedDebt.value),
-            tipo: "debito" as const,
-            status: "Recorrente",
-        };
-
         const updatedUser: User = {
             ...user,
             recurringDebts: updatedDebts,
-            extratos: [...(user.extratos || []), newStatement],
         };
 
         setUser(updatedUser);

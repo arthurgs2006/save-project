@@ -186,6 +186,22 @@ function isRecurringValidForMonth(item: RecurringItem, monthKey: string) {
     return true;
 }
 
+function hasRecurringOccurredThisMonth(item: RecurringItem, monthKey: string, today: Date) {
+    if (!isRecurringValidForMonth(item, monthKey)) return false;
+
+    const todayKey = getMonthKeyFromDate(today);
+    if (monthKey < todayKey) return true;
+    if (monthKey > todayKey) return false;
+
+    const startDate = getDateFromValue(item.startDate || item.createdAt || null);
+    if (startDate && getMonthKeyFromDate(startDate) === monthKey && startDate > today) return false;
+
+    const billingDay = Number(item.billingDay ?? item.billingDate ?? 0);
+    if (billingDay > 0 && billingDay > today.getDate()) return false;
+
+    return true;
+}
+
 function getRecurringMonthlyEquivalent(item: RecurringItem) {
     if (item.monthlyEquivalent && item.monthlyEquivalent > 0) return item.monthlyEquivalent;
     const value = Number(item.value || 0);
@@ -335,8 +351,9 @@ export default function HomeScreen() {
     const recurringCredits = user?.recurringCredits || [];
 
     const recurringSummary = useMemo(() => {
-        const totalCredits = recurringCredits.filter((i) => isRecurringValidForMonth(i, currentMonthKey)).reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
-        const totalDebts   = recurringDebts.filter((i)   => isRecurringValidForMonth(i, currentMonthKey)).reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
+        const today = new Date();
+        const totalCredits = recurringCredits.filter((i) => hasRecurringOccurredThisMonth(i, currentMonthKey, today)).reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
+        const totalDebts   = recurringDebts.filter((i)   => hasRecurringOccurredThisMonth(i, currentMonthKey, today)).reduce((s, i) => s + getRecurringMonthlyEquivalent(i), 0);
         return { totalCredits, totalDebts, balance: totalCredits - totalDebts };
     }, [recurringCredits, recurringDebts, currentMonthKey]);
 
@@ -371,10 +388,16 @@ export default function HomeScreen() {
 
     const statementItems = useMemo(() => {
         if (!user) return [];
-        const actual = [...(user.extratos || [])].filter((i) => getMonthKey(i.data || i.createdAt) === statementMonthKey);
+        const actual = [...(user.extratos || [])]
+            .filter((i) => getMonthKey(i.data || i.createdAt) === statementMonthKey)
+            .filter((i) => i.status !== "Recorrente");
         const showRecurring = statementMonthKey >= currentMonthKey;
+        const today = new Date();
+        const recurringFilter = statementMonthKey === currentMonthKey
+            ? (item: RecurringItem) => hasRecurringOccurredThisMonth(item, statementMonthKey, today)
+            : (item: RecurringItem) => isRecurringValidForMonth(item, statementMonthKey);
         const recurringPreview: Extrato[] = showRecurring ? [
-            ...(user.recurringDebts   || []).filter((d) => isRecurringValidForMonth(d, statementMonthKey)).map((d) => ({
+            ...(user.recurringDebts   || []).filter(recurringFilter).map((d) => ({
                 id: `recurring-debit-${d.id}-${statementMonthKey}`,
                 data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
                 descricao: `Débito recorrente: ${d.name}`,
@@ -382,7 +405,7 @@ export default function HomeScreen() {
                 tipo: "debito" as const,
                 status: statementMode === "future" ? "Previsto" : "Recorrente",
             })),
-            ...(user.recurringCredits || []).filter((c) => isRecurringValidForMonth(c, statementMonthKey)).map((c) => ({
+            ...(user.recurringCredits || []).filter(recurringFilter).map((c) => ({
                 id: `recurring-credit-${c.id}-${statementMonthKey}`,
                 data: `${statementMonthKey.split("-")[1]}/${statementMonthKey.split("-")[0]}`,
                 descricao: `Crédito recorrente: ${c.name}`,
@@ -396,8 +419,11 @@ export default function HomeScreen() {
 
     const displayExtratos = useMemo(() => {
         if (!user) return [];
-        if (!selectedMonth) return [...(user.extratos || [])].reverse().slice(0, 5);
-        return statementItems;
+        if (!selectedMonth) {
+            const actual = (user.extratos || []).filter((i) => i.status !== "Recorrente");
+            return [...actual].reverse().slice(0, 5);
+        }
+        return statementItems.filter((i) => !String(i.id).startsWith("recurring-"));
     }, [user, selectedMonth, statementItems]);
 
     const statementOverview = useMemo(() => {
@@ -409,20 +435,28 @@ export default function HomeScreen() {
 
     const currentMonthOverview = useMemo(() => {
         if (!user) return { totalCredit: 0, totalDebit: 0, balance: 0 };
-        const items = (user.extratos || []).filter((i) => getMonthKey(i.data || i.createdAt) === currentMonthKey);
-        const totalCredit = items.filter((i) => i.tipo === "credito").reduce((s, i) => s + Number(i.valor || 0), 0);
-        const totalDebit  = items.filter((i) => i.tipo === "debito").reduce((s,  i) => s + Number(i.valor || 0), 0);
+        const items = (user.extratos || [])
+            .filter((i) => getMonthKey(i.data || i.createdAt) === currentMonthKey)
+            .filter((i) => i.status !== "Recorrente");
+        const totalCredit = items.filter((i) => i.tipo === "credito").reduce((s, i) => s + Number(i.valor || 0), 0) + recurringSummary.totalCredits;
+        const totalDebit  = items.filter((i) => i.tipo === "debito").reduce((s,  i) => s + Number(i.valor || 0), 0) + recurringSummary.totalDebts;
         return { totalCredit, totalDebit, balance: totalCredit - totalDebit };
-    }, [user, currentMonthKey]);
+    }, [user, currentMonthKey, recurringSummary.totalCredits, recurringSummary.totalDebts]);
 
     const goalsOverview = useMemo(() => {
         const goals = user?.goals || [];
-        const totalTarget  = goals.reduce((s, g) => s + Number(g.targetAmount  || 0), 0);
-        const totalCurrent = goals.reduce((s, g) => s + Number(g.currentAmount || 0), 0);
+        const goalProgresses = goals.map((g) => {
+            const target = Number(g.targetAmount || 0);
+            const current = Number(g.currentAmount || 0);
+            return target > 0 ? Math.min((current / target) * 100, 100) : 0;
+        });
+        const averageProgress = goalProgresses.length > 0
+            ? goalProgresses.reduce((sum, p) => sum + p, 0) / goalProgresses.length
+            : 0;
         return {
             activeGoals:    goals.filter((g) => g.status !== "completed").length,
             completedGoals: goals.filter((g) => g.status === "completed").length,
-            progress: totalTarget > 0 ? Math.min((totalCurrent / totalTarget) * 100, 100) : 0,
+            progress: averageProgress,
         };
     }, [user]);
 

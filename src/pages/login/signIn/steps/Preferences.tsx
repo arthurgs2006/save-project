@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SelectGrid from "../../../../components/graphic_components/selectGrid";
+import "./signInSteps.scss";
 
 type PreferencesProps = {
     onNext: (data: { categories: string[] }) => void;
@@ -27,8 +28,7 @@ export default function Preferences({ onNext }: PreferencesProps) {
 
             <button
                 type="button"
-                className="btn btn-primary w-100 fw-semibold py-3"
-                style={{ borderRadius: "999px", fontSize: "0.98rem" }}
+                className="signin-step-cta"
                 onClick={handleContinue}
             >
                 Continuar

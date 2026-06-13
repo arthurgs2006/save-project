@@ -208,6 +208,25 @@
   font-weight: 800;
 }
 
+.goal-no-deadline-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.goal-no-deadline-check input[type="checkbox"] {
+  width: auto;
+  accent-color: #38bdf8;
+}
+
+.goal-no-deadline-check label {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .goals-form-card input,
 .goals-form-card select,
 .goals-form-card textarea,

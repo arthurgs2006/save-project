@@ -114,6 +114,18 @@ namespace SaveApp.Api.Services
             if (preferences.Any())
                 insights.Add($"Suas preferências indicam foco em: {string.Join(", ", preferences)}.");
 
+            if (balance < 0)
+                insights.Add("Seu saldo está negativo. Bancos como C6 Bank, Itaú e Bradesco oferecem linhas de cheque especial, mas o ideal é renegociar e evitar usá-lo recorrentemente.");
+
+            if (income > 0 && income < 1800)
+                insights.Add("Com sua faixa de renda, contas digitais como Nubank, PicPay, Mercado Pago e Will Bank tendem a oferecer cartões sem anuidade e sem exigência de renda mínima.");
+
+            if (income >= 6000 && balance >= 5000)
+                insights.Add("Sua renda e saldo permitem avaliar produtos com assessoria, como Itaú Personnalité, Santander Select, XP ou BTG Pactual, além de opções de investimento mais diversificadas.");
+
+            if (debits > 0 && expenseRate >= 60 && expenseRate < 80)
+                insights.Add($"Seus gastos representam {expenseRate}% da sua renda/entradas do mês. Bancos com bloqueio rápido pelo app, como Nubank e Inter, ajudam a manter esse percentual sob controle.");
+
             if (!insights.Any())
                 insights.Add("Seu perfil está equilibrado. Compare produtos por custo, praticidade, benefícios e facilidade de controle.");
 
@@ -150,6 +162,31 @@ namespace SaveApp.Api.Services
                     "Evite parcelamentos longos se o objetivo for controle."
                 }
             });
+
+            if (income < 1800 || balance < 200)
+            {
+                cards.Add(new RecommendationItemDto
+                {
+                    Name = "Cartão pré-pago ou de baixa exigência",
+                    Type = "Cartão",
+                    Risk = "Baixo",
+                    MatchScore = 90,
+                    MainBenefit = "Começar a usar cartão sem comprovar renda alta",
+                    BestFor = "Quem está organizando o orçamento ou ainda não tem renda fixa comprovada.",
+                    EstimatedCost = "Geralmente sem anuidade, com recarga prévia ou limite baixo.",
+                    RecommendedUsage = "Usar para gastos do dia a dia dentro de um valor já planejado.",
+                    ActionLabel = "Ver opções de baixa exigência",
+                    Reason = "Sua renda ou saldo atual indicam que produtos sem exigência de renda mínima tendem a ser mais acessíveis agora.",
+                    Tags = new List<string> { "Pré-pago", "Sem anuidade", "Baixa renda", "Iniciante" },
+                    InstitutionExamples = new List<string> { "Mercado Pago", "PicPay", "Will Bank", "Next" },
+                    AttentionPoints = new List<string>
+                    {
+                        "Limite costuma ser baixo no início.",
+                        "Pode exigir saldo prévio para uso.",
+                        "Bom para treinar controle antes de buscar limites maiores."
+                    }
+                });
+            }
 
             if (income >= 1800 && expenseRate < 85)
             {
@@ -197,6 +234,31 @@ namespace SaveApp.Api.Services
                         "Pode ter anuidade.",
                         "Benefícios variam bastante conforme o plano.",
                         "Não é ideal se a renda está muito comprometida."
+                    }
+                });
+            }
+
+            if (expenseRate >= 75 && expenseRate < 100)
+            {
+                cards.Add(new RecommendationItemDto
+                {
+                    Name = "Cartão com bloqueio rápido e alertas de gasto",
+                    Type = "Cartão",
+                    Risk = "Baixo",
+                    MatchScore = 89,
+                    MainBenefit = "Acompanhar e travar gastos em tempo real pelo app",
+                    BestFor = "Quem está com os gastos do mês próximos ou acima da renda.",
+                    EstimatedCost = "Geralmente sem anuidade.",
+                    RecommendedUsage = "Ativar notificações e usar o bloqueio temporário em momentos de aperto financeiro.",
+                    ActionLabel = "Ver cartões com controle por app",
+                    Reason = $"Seus gastos representam cerca de {expenseRate}% da sua renda/entradas, então recursos de controle ajudam a evitar surpresas na fatura.",
+                    Tags = new List<string> { "Controle", "Alertas", "Bloqueio", "App" },
+                    InstitutionExamples = new List<string> { "Nubank", "Inter", "Next", "C6 Bank" },
+                    AttentionPoints = new List<string>
+                    {
+                        "Controle pelo app não substitui revisar o orçamento.",
+                        "Configure limites de gasto por categoria, se disponível.",
+                        "Evite abrir novos cartões enquanto o orçamento está apertado."
                     }
                 });
             }
@@ -259,6 +321,31 @@ namespace SaveApp.Api.Services
                     "Verifique limites, saques e tarifas específicas."
                 }
             });
+
+            if (balance < 0)
+            {
+                banks.Add(new RecommendationItemDto
+                {
+                    Name = "Conta com cheque especial revisado ou linha de crédito mais barata",
+                    Type = "Banco",
+                    Risk = "Alto",
+                    MatchScore = 95,
+                    MainBenefit = "Reduzir o custo de ficar no negativo",
+                    BestFor = "Quem está com saldo negativo e precisa de uma saída com juros menores.",
+                    EstimatedCost = "Cheque especial costuma ter juros altos; linhas alternativas tendem a ser mais baratas.",
+                    RecommendedUsage = "Usar apenas como transição enquanto reorganiza o orçamento, evitando manter o saldo negativo por muito tempo.",
+                    ActionLabel = "Comparar linhas de crédito",
+                    Reason = "Seu saldo atual está negativo. Negociar a taxa ou migrar para uma linha mais barata reduz o custo desse período.",
+                    Tags = new List<string> { "Saldo negativo", "Cheque especial", "Renegociação", "Atenção" },
+                    InstitutionExamples = new List<string> { "C6 Bank", "Itaú", "Bradesco", "Banco do Brasil" },
+                    AttentionPoints = new List<string>
+                    {
+                        "Cheque especial tem um dos juros mais altos do mercado.",
+                        "Priorize sair do negativo o quanto antes.",
+                        "Avalie renegociar a dívida diretamente com o banco."
+                    }
+                });
+            }
 
             if (balance >= 500)
             {
@@ -331,6 +418,31 @@ namespace SaveApp.Api.Services
                         "Taxas e câmbio mudam com frequência.",
                         "Verifique IOF e spread.",
                         "Nem sempre é necessário para uso doméstico."
+                    }
+                });
+            }
+
+            if (income >= 6000 && balance >= 5000)
+            {
+                banks.Add(new RecommendationItemDto
+                {
+                    Name = "Conta com assessoria e investimentos integrados",
+                    Type = "Banco",
+                    Risk = "Médio",
+                    MatchScore = profile == "agressivo" ? 90 : 82,
+                    MainBenefit = "Acesso a assessoria e produtos de investimento mais amplos",
+                    BestFor = "Quem tem renda e saldo mais altos e quer ir além da conta digital básica.",
+                    EstimatedCost = "Pode exigir saldo médio mínimo ou taxas para serviços específicos.",
+                    RecommendedUsage = "Usar para concentrar investimentos e contar com suporte de assessoria.",
+                    ActionLabel = "Avaliar contas com assessoria",
+                    Reason = "Sua renda e saldo abrem espaço para considerar instituições com investimentos integrados e atendimento mais próximo.",
+                    Tags = new List<string> { "Assessoria", "Investimentos", "Alta renda", "Premium" },
+                    InstitutionExamples = new List<string> { "Itaú Personnalité", "Santander Select", "XP", "BTG Pactual" },
+                    AttentionPoints = new List<string>
+                    {
+                        "Pode exigir saldo médio mínimo.",
+                        "Compare taxas de administração e custódia.",
+                        "Avalie se realmente vai usar a assessoria oferecida."
                     }
                 });
             }

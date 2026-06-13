@@ -1,5 +1,6 @@
 import { useState } from "react";
 import AlertModal from "../../../../components/generic_components/AlertModal";
+import "./signInSteps.scss";
 
 type SecurityProps = {
     onNext: (data: { password: string }) => void;
@@ -78,8 +79,7 @@ export default function Security({ onNext }: SecurityProps) {
 
             <button
                 type="button"
-                className="btn btn-primary w-100 fw-semibold py-3"
-                style={{ borderRadius: "999px", fontSize: "0.98rem" }}
+                className="signin-step-cta"
                 onClick={handleContinue}
             >
                 Continuar

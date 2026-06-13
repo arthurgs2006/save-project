@@ -1,0 +1,44 @@
+.signin-steps {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.signin-step-segment {
+    height: 6px;
+    flex: 1;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+.signin-step-segment.active {
+    background: linear-gradient(90deg, rgba(117, 225, 255, 0.98), rgba(58, 124, 255, 0.98));
+    box-shadow: 0 0 14px rgba(80, 167, 255, 0.3);
+}
+
+.signin-step-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.78) !important;
+}
+
+.signin-footer {
+    text-align: center;
+    margin-top: 1.6rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.signin-footer-link {
+    background: transparent;
+    border: none;
+    color: #bfe7ff;
+    margin-left: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+}
+
+.signin-footer-link:hover {
+    color: #ffffff;
+}

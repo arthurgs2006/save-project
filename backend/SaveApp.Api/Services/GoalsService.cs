@@ -303,12 +303,34 @@ namespace SaveApp.Api.Services
                 };
             }
 
+            if (!monthsLeft.HasValue && goal.MonthlyContribution > 0 && missingAmount > 0)
+            {
+                var estimatedMonths = (int)Math.Ceiling(missingAmount / goal.MonthlyContribution);
+
+                return new GoalInsight
+                {
+                    Title = "Meta sem prazo definido",
+                    Message = $"Mantendo R$ {goal.MonthlyContribution:N2} por mês, faltam aproximadamente {estimatedMonths} mês(es) para alcançar essa meta, no seu ritmo.",
+                    Tone = "info"
+                };
+            }
+
             if (progress >= 50)
             {
                 return new GoalInsight
                 {
                     Title = "Boa evolução",
                     Message = "Você já passou da metade da meta. Continue acompanhando os aportes para manter o ritmo.",
+                    Tone = "info"
+                };
+            }
+
+            if (!monthsLeft.HasValue)
+            {
+                return new GoalInsight
+                {
+                    Title = "Meta sem prazo definido",
+                    Message = "Essa meta não tem data limite. Defina um aporte mensal para acompanhar sua evolução com mais previsibilidade.",
                     Tone = "info"
                 };
             }

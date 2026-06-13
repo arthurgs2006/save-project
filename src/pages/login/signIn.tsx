@@ -16,6 +16,7 @@ import OpenFinanceConnect from "../../components/OpenFinanceConnect";
 import { hashPassword } from "../../utils/hashPassword";
 import { AUTH_URL } from "../../config";
 import AlertModal from "../../components/generic_components/AlertModal";
+import "./signIn.scss";
 
 type SignUpData = {
     name?: string;
@@ -167,7 +168,7 @@ export default function SignIn() {
                         <div className="home-graph-card">
                             <div className="mb-4">
                                 <div className="d-flex justify-content-between align-items-center mb-2 px-1">
-                                    <span className="home-item-subtitle">
+                                    <span className="home-item-subtitle signin-step-label">
                                         Etapa {step} de 7
                                     </span>
 
@@ -176,24 +177,11 @@ export default function SignIn() {
                                     </span>
                                 </div>
 
-                                <div className="d-flex gap-2">
+                                <div className="signin-steps">
                                     {[1, 2, 3, 4, 5, 6, 7].map((item) => (
                                         <div
                                             key={item}
-                                            style={{
-                                                height: "8px",
-                                                flex: 1,
-                                                borderRadius: "999px",
-                                                background:
-                                                    step >= item
-                                                        ? "linear-gradient(90deg, rgba(117, 225, 255, 0.98), rgba(58, 124, 255, 0.98))"
-                                                        : "rgba(255,255,255,0.10)",
-                                                boxShadow:
-                                                    step >= item
-                                                        ? "0 0 14px rgba(80, 167, 255, 0.16)"
-                                                        : "none",
-                                                transition: "0.25s ease"
-                                            }}
+                                            className={`signin-step-segment ${step >= item ? "active" : ""}`}
                                         />
                                     ))}
                                 </div>
@@ -220,23 +208,15 @@ export default function SignIn() {
                             </motion.div>
 
 
-                            <div className="text-center mt-4">
+                            <div className="signin-footer">
                                 <span className="home-item-subtitle">
                                     Já tem uma conta?
                                 </span>
 
                                 <button
                                     type="button"
+                                    className="signin-footer-link"
                                     onClick={() => navigate("/login")}
-                                    style={{
-                                        background: "transparent",
-                                        border: "none",
-                                        color: "#bfe7ff",
-                                        marginLeft: "6px",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                        padding: 0
-                                    }}
                                 >
                                     Entrar
                                 </button>

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\gusta\\Desktop\\save-project\\backend\\SaveApp.Api\\SaveApp.Api.csproj": {}
+    "C:\\Users\\gusta\\Desktop\\save-project\\Backend\\SaveApp.Api\\SaveApp.Api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\gusta\\Desktop\\save-project\\backend\\SaveApp.Api\\SaveApp.Api.csproj": {
+    "C:\\Users\\gusta\\Desktop\\save-project\\Backend\\SaveApp.Api\\SaveApp.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\gusta\\Desktop\\save-project\\backend\\SaveApp.Api\\SaveApp.Api.csproj",
+        "projectUniqueName": "C:\\Users\\gusta\\Desktop\\save-project\\Backend\\SaveApp.Api\\SaveApp.Api.csproj",
         "projectName": "SaveApp.Api",
-        "projectPath": "C:\\Users\\gusta\\Desktop\\save-project\\backend\\SaveApp.Api\\SaveApp.Api.csproj",
+        "projectPath": "C:\\Users\\gusta\\Desktop\\save-project\\Backend\\SaveApp.Api\\SaveApp.Api.csproj",
         "packagesPath": "C:\\Users\\gusta\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\gusta\\Desktop\\save-project\\backend\\SaveApp.Api\\obj\\",
+        "outputPath": "C:\\Users\\gusta\\Desktop\\save-project\\Backend\\SaveApp.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\gusta\\AppData\\Roaming\\NuGet\\NuGet.Config"

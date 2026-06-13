@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Carousel, CarouselItem } from "reactstrap";
 import { motion } from "framer-motion";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "./welcome_page.scss";
 
 export default function WelcomePage() {
 
@@ -65,14 +66,10 @@ export default function WelcomePage() {
                             </p>
 
                             <motion.h1
-                                className="home-balance-value mb-2"
+                                className="home-balance-value welcome-brand mb-2"
                                 initial={{ opacity: 0, y: -12 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.45 }}
-                                style={{
-                                    fontSize: "clamp(2.4rem, 6vw, 4rem)",
-                                    textTransform: "lowercase",
-                                }}
                             >
                                 save
                             </motion.h1>
@@ -84,7 +81,7 @@ export default function WelcomePage() {
                         </div>
 
                         <motion.div
-                            className="home-graph-card text-center"
+                            className="home-graph-card welcome-card text-center"
                             initial={{ opacity: 0, y: 18 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5 }}
@@ -113,22 +110,10 @@ export default function WelcomePage() {
                                             <img
                                                 src={item.image}
                                                 alt="feature"
-                                                style={{
-                                                    width: "160px",
-                                                    marginBottom: "1.2rem"
-                                                }}
+                                                className="welcome-slide-image"
                                             />
 
-                                            <p
-                                                className="mb-0"
-                                                style={{
-                                                    fontSize: "1.08rem",
-                                                    lineHeight: 1.55,
-                                                    color: "rgba(255,255,255,0.88)",
-                                                    maxWidth: "420px",
-                                                    margin: "0 auto",
-                                                }}
-                                            >
+                                            <p className="welcome-slide-text mb-0">
                                                 {item.text}
                                             </p>
 
@@ -155,26 +140,11 @@ export default function WelcomePage() {
 
                             <div className="d-flex flex-column gap-3 mt-4">
 
-                                <a
-                                    href="/login"
-                                    className="btn btn-primary fw-semibold py-3"
-                                    style={{
-                                        borderRadius: "999px",
-                                        fontSize: "0.98rem",
-                                    }}
-                                >
+                                <a href="/login" className="welcome-cta">
                                     Entrar
                                 </a>
 
-                                <a
-                                    href="/signin"
-                                    className="text-decoration-none"
-                                    style={{
-                                        color: "#bfe7ff",
-                                        fontWeight: 500,
-                                        fontSize: "0.94rem",
-                                    }}
-                                >
+                                <a href="/signin" className="welcome-secondary-link">
                                     Ainda não tem uma conta? Criar conta
                                 </a>
 
