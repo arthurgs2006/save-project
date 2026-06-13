@@ -25,6 +25,7 @@ interface RecurringItem {
 
 interface User {
     id: number | string;
+    saldo_final?: number | string;
     extratos: Extrato[];
     recurringDebts?: RecurringItem[];
     recurringCredits?: RecurringItem[];
@@ -103,6 +104,24 @@ function isRecurringValidForMonth(item: RecurringItem, monthKey: string) {
     if (endDate && endDate < monthStart) return false;
 
     return true;
+}
+
+function hasRecurringOccurredThisMonth(item: RecurringItem, monthKey: string, today: Date) {
+    if (!isRecurringValidForMonth(item, monthKey)) return false;
+
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+
+    if (monthKey < todayKey) return true;
+    if (monthKey > todayKey) return false;
+
+    const startDate = getDateFromValue(item.startDate);
+    if (startDate) {
+        const startKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, "0")}`;
+        if (startKey === monthKey && startDate > today) return false;
+    }
+
+    const billingDay = Number(item.billingDay ?? item.billingDate ?? 1);
+    return billingDay <= today.getDate();
 }
 
 function getRecurringSign(item: RecurringItem) {
@@ -307,9 +326,15 @@ export default function GraphicCard({
 
             // MÊS ATUAL
             else if (i === 0) {
-                saldoAtual =
-                    (map[key] || 0) +
-                    recorrencia;
+                const ocorridos = recurringItems.reduce((acc, item) => {
+                    if (!hasRecurringOccurredThisMonth(item, key, hoje)) return acc;
+
+                    const valor = monthlyRecurringValue(item);
+
+                    return acc + (item.tipo === "credito" ? valor : -valor);
+                }, 0);
+
+                saldoAtual = Number(user.saldo_final || 0) + ocorridos;
 
                 valorMes = saldoAtual;
             }
@@ -388,6 +413,14 @@ export default function GraphicCard({
                         onSelectMonth?.(item.key)
                     }
                 >
+                    <span className="wallet-pill-value">
+                        {item.valor.toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                            maximumFractionDigits: 0,
+                        })}
+                    </span>
+
                     <div
                         className={`wallet-pill-bar ${
                             item.atual
