@@ -170,13 +170,11 @@ namespace SaveApp.Api.Services
         {
             if (dto.Balance <= 0) return ClampScore(5);
 
-            if (reserveMonths >= 6) return ClampScore(100);
-            if (reserveMonths >= 3) return ClampScore(85);
-            if (reserveMonths >= 1.5m) return ClampScore(65);
-            if (reserveMonths >= 0.75m) return ClampScore(48);
-            if (reserveMonths > 0) return ClampScore(30);
+            // Escala contínua: 0 meses de reserva ~ 15 pontos, 6+ meses ~ 100 pontos.
+            var ratio = Math.Min(reserveMonths / 6m, 1m);
+            var score = 15 + ratio * 85m;
 
-            return ClampScore(60);
+            return ClampScore((int)Math.Round(score));
         }
 
         private int CalculateConsistency(FinancialHealthAnalyzeRequestDto dto, decimal savingsRate)

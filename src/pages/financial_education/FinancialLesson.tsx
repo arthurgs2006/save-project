@@ -43,6 +43,13 @@ export default function FinancialLesson() {
             message: `Aula carregada: ${lesson.title}`,
             type: "info",
         });
+
+        const openedLessons: string[] = JSON.parse(localStorage.getItem("openedLessons") || "[]");
+        if (!openedLessons.includes(lesson.slug)) {
+            openedLessons.push(lesson.slug);
+            localStorage.setItem("openedLessons", JSON.stringify(openedLessons));
+            localStorage.setItem("lessonsOpened", String(openedLessons.length));
+        }
     }, [lesson]);
 
     function getUserName() {

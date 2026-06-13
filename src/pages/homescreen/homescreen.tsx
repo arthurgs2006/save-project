@@ -8,8 +8,6 @@ import { BASE_URL, BENEFITS_API_URL } from "../../config";
 
 import AccountHeader from "../../components/generic_components/accountHeader";
 import GraphicCard from "../../components/graphic_components/graphicCard";
-import EducationRecommendationCard from "../../components/education/EducationRecommendationCard";
-import { getEducationRecommendation, type EducationRecommendation } from "../../services/educationApi";
 import SaveScoreCard from "../../components/financial_health/SaveScoreCard";
 import { analyzeFinancialHealth, type FinancialScoreResponse } from "../../services/financialHealthApi";
 
@@ -215,7 +213,6 @@ export default function HomeScreen() {
     const [user, setUser] = useState<User | null>(null);
     const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
     const [activityTab, setActivityTab] = useState<"movements" | "recurring">("movements");
-    const [educationRecommendation, setEducationRecommendation] = useState<EducationRecommendation | null>(null);
     const [financialScore, setFinancialScore] = useState<FinancialScoreResponse | null>(null);
 
     const navigate = useNavigate();
@@ -357,18 +354,6 @@ export default function HomeScreen() {
         return { totalCredits, totalDebts, balance: totalCredits - totalDebts };
     }, [recurringCredits, recurringDebts, currentMonthKey]);
 
-    useEffect(() => {
-        async function loadEducation() {
-            if (!user?.id) return;
-            const rec = await getEducationRecommendation(user.id, "home", {
-                balance: Number(user.saldo_final || 0),
-                recurringCredits: recurringSummary.totalCredits,
-                recurringDebits:  recurringSummary.totalDebts,
-            });
-            setEducationRecommendation(rec);
-        }
-        loadEducation();
-    }, [user?.id, user?.saldo_final, recurringSummary.totalCredits, recurringSummary.totalDebts]);
 
     const projectedBalance = useMemo(() => {
         if (!user) return 0;
@@ -629,11 +614,6 @@ export default function HomeScreen() {
                                 if (monthKey === currentMonthKey) { setSelectedMonth(null); return; }
                                 setSelectedMonth((cur) => cur === monthKey ? null : monthKey);
                             }} />
-                    </section>
-
-                    {/* 5 ── RECOMENDAÇÃO EDUCACIONAL ───────────── */}
-                    <section className="home-education-section">
-                        <EducationRecommendationCard recommendation={educationRecommendation} />
                     </section>
 
                     {/* 6 ── FERRAMENTAS ────────────────────────── */}
